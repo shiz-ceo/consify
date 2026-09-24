@@ -1,5 +1,5 @@
 node_modules
-.next
+build
 .docsivi
 .source
-next-env.d.ts
+.react-router

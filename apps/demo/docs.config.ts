@@ -1,6 +1,6 @@
 import { defineConfig } from "docsivi";
-import { externalLinks } from "./custom/plugins/external-links";
-import { githubAlerts } from "./custom/plugins/github-alerts";
+import { externalLinks } from "./custom/plugins/external-links.ts";
+import { githubAlerts } from "./custom/plugins/github-alerts.ts";
 
 export default defineConfig({
   site: {

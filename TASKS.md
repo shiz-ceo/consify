@@ -15,9 +15,9 @@
 |---|---|
 | Что строим | Переиспользуемый каркас сайта документации, который запускается из коробки и кастомизируется без правки ядра |
 | Название | `docsivi` |
-| Схема | Ядро живёт в пакете `docsivi` (`packages/core`). Проект пользователя тонкий: `docs.config.ts`, `content/`, `custom/`, тонкий `app/` |
+| Схема | Ядро живёт в пакете `docsivi` (`packages/core`). Проект пользователя тонкий: `docs.config.ts`, `vite.config.ts`, `react-router.config.ts`, `content/`, `custom/` (папки `app/` нет, см. раздел про ветку `feature/react-router`) |
 | Обновление | `bun update docsivi`. Файлы пользователя ядро не перезаписывает |
-| Фреймворк | Только Next.js на первом этапе, ядро пишется так, чтобы Vite-адаптер можно было добавить позже |
+| Фреймворк | ~~Next.js~~ → **React Router (Vite)**, решение владельца 2026-09-24 (ветка `feature/react-router`; Next-версия осталась в `main`) |
 | Основа | Fumadocs + MDX + Tailwind CSS + Shiki + Twoslash + KaTeX |
 | Пакетный менеджер, рантайм, тесты | Bun (workspaces, `bun test`) |
 | Валидация | Zod (последняя версия), версию сверить с актуальной документацией перед установкой |
@@ -374,3 +374,40 @@
 - 2026-09-24: в ядро добавлено: конфигурируемая главная (`home` по языкам, `/docs` ведёт на версию по умолчанию), иконки Lucide в `meta.json`/frontmatter (`icon: Rocket`; в Lucide 1.x `Home` → `House`, `History` нет, взяли `ScrollText`; неизвестное имя даёт предупреждение при сборке).
 - 2026-09-24: находки демо. (1) **Компонент в заголовке ломает сборку** (`## Title <Since />`): заголовки попадают в оглавление, а оно строится вне области видимости MDX-компонентов. Решение: не ставить компоненты в заголовки (написано на странице «Custom components»). (2) В Twoslash `paths` не работает (виртуальная папка), надёжнее подключить библиотеку как обычную зависимость. (3) Типы Node для Twoslash: `compilerOptions.types: ["node"]`. (4) В MDX нельзя писать ``` сразу после `<Tab ...>` на той же строке: нужны пустые строки.
 - 2026-09-24: **известное предупреждение только в dev:** при переключении языка в консоли появляется `Encountered a script tag while rendering React component` (стек указывает на `RootProvider` в `root-layout.tsx`). Воспроизведено в `bun run demo`, в production-сборке (`next start`) того же сценария ошибки **нет**. Причина не в docsivi: `[lang]` стоит в корне, при смене языка Next пересоздаёт корневой layout, `next-themes` (внутри `RootProvider` Fumadocs, версия 0.4.6) заново монтируется на клиенте и снова рисует `<script>` для темы, а React 19 в dev на это ругается. Поведение и внешний вид страниц не страдают. Решение отложено (кандидаты: обновить `next-themes` при выходе исправления, либо отдельный `ThemeProvider` без скрипта в клиентском монтировании); при желании владельца берём в работу. В `.claude/launch.json` добавлена конфигурация `demo-prod` (порт 3400, `next start` после `next build`).
+
+---
+
+## Ветка `feature/react-router`: переход с Next.js на React Router + Vite (2026-09-24)
+
+Решение владельца: убрать Next.js полностью, всё описывать в конфигах роутера и «забыть». `main` содержит Next-версию (коммит `6a7cdc8`), эта ветка её заменяет. Пункты этапов 3, 11, 14, 17 выше, где упомянуты Next-специфичные вещи (`next.config`, `proxy.ts`, `generateStaticParams`, `turbopack.root`, `app/`), **заменены** описанным ниже.
+
+### Новая архитектура
+- **Проект пользователя = только конфиги:** `docs.config.ts`, `vite.config.ts` (`plugins: [docsivi(config)]`), `react-router.config.ts` (`defineRouterConfig(config)`), `content/`, `custom/`. Папки `app/` нет.
+- **Генерируется в `.docsivi/`** (gitignored, создаётся при запуске): `instance.ts` (макрос `defineDocs` из Fumadocs и `createDocsivi`), `app/root.tsx`, `app/routes.ts` (по одной строке-реэкспорту из пакета). React Router получает `appDirectory: ".docsivi/app"`.
+- **Маршруты лежат в пакете** (`packages/core/src/react-router/routes/*`): `/`, `/:lang`, `/:lang/docs/*`, `/:lang/llms.txt`, `/:lang/llms-full.txt`, `/:lang/og/*`, `/api/search`, `/sitemap.xml`, `/robots.txt`, `*` (404). Они берут экземпляр через алиас `docsivi:instance`.
+- **Vite-плагин `docsivi(config)`** собирает `fumadocsMdx` (MDX-опции идут через `globalOptions`, `source.config.ts` не нужен), `@tailwindcss/vite`, `reactRouter()` и связку (алиас, `ssr.noExternal`, `fs.allow`).
+- **CLI `docsivi dev|build|start|typegen`** запускает React Router CLI ядра, поэтому проект не зависит от `@react-router/dev` (в монорепозитории бинарник добавляется в `PATH` корневыми скриптами).
+- **Автоподхват компонентов** через `import.meta.glob("/custom/components/*.{tsx,jsx}")`: без генерации файла и слежения за папкой, HMR из коробки.
+- **Режимы:** `server` = `ssr: true` + пререндер страниц (проверено: настоящие 302/404 и API поиска в проде); `static` = `ssr: false` + пререндер (проверено: `/` и `/en/docs` через `meta refresh`, поиск в браузере). Список пререндера строит `prerenderPaths()` по файлам `content/docs` (страница × язык, OG, llms, sitemap, robots).
+- **Шрифт Geist** через `@fontsource-variable/geist(+mono)` вместо `next/font`. **OG** через `fumadocs-ui/og/takumi` (`takumi-js`), формат PNG.
+
+### Что проверено
+- Сборка демо (около 270 пререндеров, ~25 МБ из-за OG-PNG и Mermaid), `bun run check` (Biome, typecheck ядра и двух приложений, 43 теста).
+- Внешний проект вне монорепозитория с `bun link`: собирается **без** обходных путей (`.bin/docsivi` появляется, доработка `turbopack.root` больше не нужна).
+- В dev: гидратация, счётчик, переключение языка клиентской навигацией (`<html lang>` меняется), SEO-теги в серверном HTML (`title`, `canonical`, `hreflang`, Open Graph), поиск, sitemap, robots, OG, `llms.txt`, 404 со статусом 404.
+- Предупреждение `script tag` при переключении языка **исчезло** (корневой layout больше не пересоздаётся при смене языка).
+
+### Находки при переезде
+1. **React Router v8:** аргумент `meta` теперь `loaderData`, а не `data` (иначе теги молча не попадают в HTML).
+2. `redirect()` в loader при пререндере превращается в страницу с `meta refresh` и задержкой 2 с. Поэтому в серверном режиме `/{lang}/docs` (редирект на версию) не пререндерится, остаётся настоящий HTTP-редирект; в статике рендерим свой `Redirecting` с задержкой 0.
+3. В режиме `ssr:false` `loader` разрешён только у пререндеримых маршрутов: для 404 в статике используется маршрут без loader (`not-found-static`), режим передаётся в `routes.ts` через `process.env.DOCSIVI_DEPLOY_MODE`.
+4. Макрос Fumadocs вставляет импорт `fumadocs-mdx/runtime/macro` в сгенерированный файл проекта: плагин резолвит такие импорты из ядра, поэтому проекту `fumadocs-mdx` не нужен. Типы сгенерированного `instance.ts` отключены (`@ts-nocheck`), тип `docsivi` для маршрутов задаёт `docsivi:instance`.
+5. Vite предупреждает: импорты без расширения в `vite.config.ts` и `docs.config.ts` перестанут работать в будущем мажоре, в проектах пишем `./docs.config.ts`. В `tsconfig.base.json` было `jsx: preserve` (наследие Next), Vite компилировал TSX ядра «как есть», исправлено на `react-jsx`.
+6. `createRelativeLink` из Fumadocs асинхронный и серверный, в клиентском рендере не работает: сделан свой синхронный `RelativeLink` на `source.resolveHref`.
+7. Bun не создаёт `.bin/docsivi` для `workspace:*`-зависимостей (для `bun link` и установки из реестра создаёт).
+8. В dev при первом запуске в консоли шум `504 Outdated Optimize Dep` (оптимизатор зависимостей Vite), на работу не влияет; кандидат на `optimizeDeps.include`.
+9. Статический индекс поиска весит около 600 КБ на демо; в серверном режиме `/en/docs` даёт цепочку из трёх редиректов (слэш в конце от статики, затем наш редирект), конечный результат корректный.
+
+### Дальше на этой ветке
+- Описать в тасклисте актуальный порядок работ (документация каркаса, размер сборки, `optimizeDeps`, RSC-вариант, публикация `dist`).
+- Сборка ядра в JS перед публикацией остаётся актуальной (Vite сам собирает TS из `node_modules` через `ssr.noExternal`, но `react-router.config.ts` и `vite.config.ts` загружаются Node/esbuild).

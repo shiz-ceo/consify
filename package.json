@@ -8,12 +8,14 @@
   ],
   "scripts": {
     "test": "bun test",
-    "typecheck": "bun run --filter '*' typecheck",
+    "typecheck": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --filter '*' typecheck",
     "check": "bun run lint && bun run typecheck && bun test",
     "lint": "biome check .",
     "format": "biome check --write .",
-    "demo": "bun run --cwd apps/demo dev",
-    "starter": "bun run --cwd apps/starter dev"
+    "demo": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/demo dev --port 3300",
+    "starter": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/starter dev",
+    "build:demo": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/demo build",
+    "start:demo": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/demo start"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",

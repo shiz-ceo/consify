@@ -1,0 +1,38 @@
+#!/usr/bin/env node
+// `docsivi dev | build | start | typegen`: runs the React Router CLI that ships with docsivi,
+// so a project does not have to depend on @react-router/dev itself.
+import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
+
+const require = createRequire(import.meta.url);
+
+function bin(pkg, name) {
+  const dir = dirname(require.resolve(`${pkg}/package.json`));
+  const manifest = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
+  const rel = typeof manifest.bin === "string" ? manifest.bin : manifest.bin[name];
+  return join(dir, rel);
+}
+
+const [command, ...args] = process.argv.slice(2);
+const commands = {
+  dev: () => [bin("@react-router/dev", "react-router"), "dev", ...args],
+  build: () => [bin("@react-router/dev", "react-router"), "build", ...args],
+  typegen: () => [bin("@react-router/dev", "react-router"), "typegen", ...args],
+  start: () => [
+    bin("@react-router/serve", "react-router-serve"),
+    "./build/server/index.js",
+    ...args,
+  ],
+};
+
+if (!command || !(command in commands)) {
+  console.error(`Usage: docsivi <${Object.keys(commands).join("|")}>`);
+  process.exit(1);
+}
+
+const child = spawn(process.execPath, commands[command](), { stdio: "inherit" });
+child.on("exit", (code, signal) =>
+  signal ? process.kill(process.pid, signal) : process.exit(code ?? 0),
+);

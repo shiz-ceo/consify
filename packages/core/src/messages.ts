@@ -6,6 +6,8 @@ export const messageKeys = [
   "deprecatedVersion",
   "goToLatest",
   "editOnGithub",
+  "notFound",
+  "backToDocs",
 ] as const;
 export type MessageKey = (typeof messageKeys)[number];
 export type Messages = Record<MessageKey, string>;
@@ -18,12 +20,16 @@ const builtin: Record<string, Messages> = {
       "You are viewing the documentation for {version}, which is no longer maintained.",
     goToLatest: "Go to {latest}",
     editOnGithub: "Edit this page on GitHub",
+    notFound: "This page could not be found.",
+    backToDocs: "Back to the documentation",
   },
   ru: {
     documentation: "Документация",
     deprecatedVersion: "Вы читаете документацию для {version}, она больше не поддерживается.",
     goToLatest: "Перейти к {latest}",
     editOnGithub: "Редактировать страницу на GitHub",
+    notFound: "Такой страницы не существует.",
+    backToDocs: "Вернуться к документации",
   },
 };
 

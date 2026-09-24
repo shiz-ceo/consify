@@ -2,30 +2,19 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": ["node", "vite/client"],
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "jsx": "react-jsx",
     "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "skipLibCheck": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "allowImportingTsExtensions": true,
-    "skipLibCheck": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "allowJs": true,
-    "jsx": "react-jsx",
-    "incremental": true,
-    "noEmit": true,
-    "paths": { "@/*": ["./*"] },
-    "plugins": [{ "name": "next" }]
+    "noEmit": true
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": ["node_modules"]
+  "include": ["**/*.ts", "**/*.tsx", ".docsivi/**/*"],
+  "exclude": ["node_modules", "build"]
 }
