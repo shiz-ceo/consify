@@ -1,0 +1,259 @@
+---
+title: Introducing Lattice 2.0, the typed job queue for the whole stack
+description: Typed payloads from producer to worker, a scheduler that sleeps instead of polling, workflows, a dashboard and a core that is 3x smaller. Here is everything that changed and how to upgrade.
+date: 2026-09-10
+categories: [releases, product]
+tags: [release, typescript, scheduler, workflows, migration]
+authors: [ada, leo]
+cover: /blog/lattice-2.svg
+coverAlt: Abstract purple grid with concentric circles
+---
+
+Today we are releasing **Lattice 2.0**. It is the biggest release since the project started, and almost every item in it came from an issue, a discussion or a support thread. Thank you to the 214 contributors who made it happen.
+
+If you only have a minute, this is the summary:
+
+- **Typed payloads end to end.** One type describes a job, and the producer, the queue and the worker all share it.
+- **A scheduler that sleeps.** Idle CPU dropped from 4.2% to 0.3% on a busy instance.
+- **Workflows.** Chain jobs with retries, fan-out and fan-in, without a second system.
+- **A read-only dashboard** you can embed in your own admin panel.
+- **A smaller core.** 41 KB gzipped, down from 128 KB, with zero runtime dependencies.
+
+> [!NOTE]
+> Lattice 2.0 has breaking changes. The [migration section](#upgrading-from-19) lists all of them, and most projects need fewer than ten lines changed.
+
+## Why we rebuilt the core
+
+Lattice 1.x started as a weekend project: a thin wrapper around Redis lists with a nicer API. It grew, and along the way it collected three problems that no patch release could fix.
+
+1. **Payloads were `any` in disguise.** You could type a queue, but nothing stopped you from adding a job with the wrong shape from another service.
+2. **Polling.** Every worker asked the store for due jobs twice a second. At 200 workers that is 400 queries a second that mostly return nothing.
+3. **Everything was in the core.** Rate limiting, cron, metrics and the CLI all shipped to every user, even when they used none of it.
+
+Version 2 fixes each of these at the root, and we will go through them one by one.
+
+## Typed payloads, everywhere
+
+A job is now a value you define once and import everywhere. The definition carries the payload type, the result type and the default options.
+
+```ts title="jobs/send-email.ts" lineNumbers
+import { defineJob } from "lattice";
+
+export const sendEmail = defineJob<
+  { to: string; subject: string; html: string }, // payload
+  { messageId: string } // result
+>("send-email", {
+  attempts: 5,
+  backoff: { type: "exponential", delay: 2_000 },
+});
+```
+
+The producer no longer passes a name and a bag of data. It passes the definition, and TypeScript checks the rest:
+
+```ts title="api/signup.ts" {5-9}
+import { sendEmail } from "../jobs/send-email";
+import { queue } from "../queue";
+
+export async function signup(email: string) {
+  await queue.enqueue(sendEmail, {
+    to: email,
+    subject: "Welcome!",
+    html: "<h1>Hello</h1>",
+  });
+}
+```
+
+The highlighted lines are the whole call. If you rename `html` to `body` in the definition, this file stops compiling, which is exactly what you want at 3 a.m. instead of a page from production.
+
+### The worker side
+
+Handlers receive a fully typed job, and the return value is checked against the result type:
+
+```ts title="workers/email.ts" {3,6-8}
+import { sendEmail } from "../jobs/send-email";
+
+queue.process(sendEmail, async (job) => {
+  const { to, subject, html } = job.data;
+
+  const messageId = await mailer.send({ to, subject, html });
+  return { messageId };
+});
+```
+
+### Migrating a call site
+
+Changing the queue name into a definition is the most common edit in the migration. The diff below is real, it comes from our own dashboard:
+
+```ts title="dashboard/notify.ts"
+import { queue } from "./queue";
+import { sendEmail } from "./jobs/send-email";
+
+await queue.add("send-email", { to, subject, html }); // [!code --]
+await queue.enqueue(sendEmail, { to, subject, html }); // [!code ++]
+```
+
+<Figure src="/blog/scheduler.svg" alt="Diagram of a typed job flowing from producer to worker" caption="One definition is shared by the producer, the queue and the worker." />
+
+## A scheduler that sleeps
+
+The old scheduler asked "is anything due?" on a timer. The new one asks "when is the next thing due?" and sleeps until then. Under the hood it is a hashed timer wheel, and we wrote a separate [post about how it works](./scheduler-internals) if you want the details.
+
+The practical effect is easy to measure:
+
+<Benchmark title="Idle CPU on a 2 vCPU instance" unit="%" lowerIsBetter rows={[{ label: "Lattice 1.9", value: 4.2 }, { label: "Lattice 2.0", value: 0.3, highlight: true }]} note="10,000 scheduled jobs, 200 workers, Redis 8 on the same network." />
+
+The change landed in <PR n={412} />, and the follow-up that made wake-ups precise to one millisecond is <PR n={468} />.
+
+### Delayed and repeating jobs
+
+Scheduling is part of the enqueue call, and it is typed too:
+
+```ts title="jobs/report.ts" lineNumbers {6,11}
+import { queue } from "./queue";
+import { weeklyReport } from "./jobs/weekly-report";
+
+// run once, in ten minutes
+await queue.enqueue(weeklyReport, { team: "growth" }, {
+  delay: "10m",
+});
+
+// run every Monday at 09:00 in the team's time zone
+await queue.repeat(weeklyReport, { team: "growth" }, {
+  cron: "0 9 * * 1",
+  timezone: "Europe/Berlin",
+});
+```
+
+## Workflows
+
+Most real jobs are not alone. You resize an image, then run moderation, then notify the author. In 1.x you wired that together with events and a lot of hope. In 2.0 it is a first-class concept.
+
+```ts title="workflows/publish-photo.ts" {4-6}
+import { defineWorkflow } from "lattice";
+
+export const publishPhoto = defineWorkflow("publish-photo", (flow) =>
+  flow
+    .step(resize)
+    .step(moderate, { after: resize })
+    .step(notify, { after: moderate }),
+);
+```
+
+Every step is a normal job with its own retries. If `moderate` fails permanently, `notify` never runs and the workflow ends in a `failed` state that you can inspect and retry from the failing step.
+
+<Expand title="What happens on a crash in the middle of a step?">
+
+The step is retried according to its own options. Steps must be idempotent, and Lattice passes a stable `job.id` and an `attempt` number so you can deduplicate side effects. State between steps lives in the store, not in memory, so a process restart never loses the position in the workflow.
+
+</Expand>
+
+### Fan-out and fan-in
+
+Run the same job for many inputs and continue when all of them are done:
+
+```ts title="workflows/thumbnails.ts"
+export const thumbnails = defineWorkflow("thumbnails", (flow) =>
+  flow
+    .map(resizeTo, (input) => input.sizes.map((size) => ({ url: input.url, size })))
+    .reduce(collectUrls),
+);
+```
+
+## Choose your store
+
+The core no longer ships a Redis client. You pick a store adapter, and each adapter is its own package:
+
+| Adapter | Package | Best for | Persistence |
+| --- | --- | --- | --- |
+| Redis | `@lattice/redis` | High throughput, many workers | Optional (AOF) |
+| PostgreSQL | `@lattice/postgres` | You already run Postgres, transactions with your data | Always |
+| SQLite | `@lattice/sqlite` | Single node apps, tests, edge | Always |
+| Memory | `@lattice/memory` | Unit tests | None |
+
+Switching is a one-line change, and the definitions above stay exactly the same:
+
+```ts tab="Redis"
+import { createQueue } from "lattice";
+import { redis } from "@lattice/redis";
+
+export const queue = createQueue({ store: redis(process.env.REDIS_URL) });
+```
+
+```ts tab="PostgreSQL"
+import { createQueue } from "lattice";
+import { postgres } from "@lattice/postgres";
+
+export const queue = createQueue({ store: postgres(process.env.DATABASE_URL) });
+```
+
+```ts tab="SQLite"
+import { createQueue } from "lattice";
+import { sqlite } from "@lattice/sqlite";
+
+export const queue = createQueue({ store: sqlite("./queue.db") });
+```
+
+> [!TIP]
+> With the PostgreSQL adapter you can enqueue a job inside the same transaction that writes your data. Either both happen or neither does, and you never send an email for an order that was rolled back.
+
+## The dashboard
+
+We shipped a read-only dashboard that shows queues, workflows, failures and the latency of every job. It is a single React component, so you can mount it in your existing admin panel behind your existing auth:
+
+```tsx title="admin/queues.tsx"
+import { Dashboard } from "@lattice/dashboard";
+import { queue } from "../queue";
+
+export function Queues() {
+  return <Dashboard queue={queue} refreshEvery={2_000} />;
+}
+```
+
+<Embed url="https://example.com" title="Lattice dashboard preview" />
+
+## Performance
+
+We benchmarked version 2 against version 1.9 and against the two queues people compare us with most. The setup, the scripts and the raw numbers are in the repository so you can rerun them.
+
+<Benchmark title="Jobs processed per second" unit="jobs/s" rows={[{ label: "Lattice 2.0", value: 48000, highlight: true }, { label: "Lattice 1.9", value: 31000 }, { label: "Queue A", value: 39000 }, { label: "Queue B", value: 52000 }]} note="4 vCPU, Redis 8, 1 KB payloads. Queue B is faster on tiny payloads; see our benchmarks post for the full picture." />
+
+And the size of the core, which matters for serverless cold starts:
+
+<Benchmark title="Core size, gzipped" unit="KB" lowerIsBetter rows={[{ label: "Lattice 1.9", value: 128 }, { label: "Lattice 2.0", value: 41, highlight: true }]} />
+
+## Upgrading from 1.9
+
+Upgrade in three steps, and none of them needs downtime.
+
+1. **Install the store adapter** you use. The core does not include a Redis client anymore.
+2. **Replace queue names with definitions.** A codemod does 90% of it.
+3. **Rename `add` to `enqueue`.** The old name still works and prints a warning until 3.0.
+
+```bash
+bun add lattice@2 @lattice/redis
+bunx lattice-codemod v2 ./src
+```
+
+### Breaking changes
+
+<Expand title="The full list">
+
+- `queue.add()` is now `queue.enqueue()`. `add` is deprecated.
+- Node 18 is no longer supported. Lattice 2 needs Node 20 or newer, Bun 1.2+ or Deno 2.
+- The Redis client is no longer bundled. Install `@lattice/redis`.
+- `job.progress()` is now `job.reportProgress()`.
+- Events were renamed: `completed` is `job:completed`, `failed` is `job:failed`.
+- The CLI moved to its own package, `@lattice/cli`.
+
+</Expand>
+
+> [!WARNING]
+> Workers on 1.x and 2.x can share a Redis instance during a rolling deploy, but only if you enable `compat: 1` on the 2.x workers. Remove it after the last 1.x worker is gone.
+
+## What is next
+
+The next quarter is about the dashboard (write actions, alerts) and about making workflows durable across deploys. If you want to influence the order, open a discussion or tell us about your use case.
+
+<CTA title="Upgrade to Lattice 2.0" description="The migration guide takes about ten minutes, and the codemod does most of it." href="/docs" label="Read the guide" />
+
+Thank you for reading, and for building on Lattice.

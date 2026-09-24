@@ -71,7 +71,7 @@ function linkedPackageDir(cwd: string): string | undefined {
  */
 export function docsivi(config: Readonly<DocsConfig>): PluginOption[] {
   const cwd = process.cwd();
-  scaffold(cwd);
+  scaffold(cwd, config);
   const linked = linkedPackageDir(cwd);
   const basePath = config.deploy.basePath;
 
@@ -93,7 +93,10 @@ export function docsivi(config: Readonly<DocsConfig>): PluginOption[] {
     config: () => ({
       ...(basePath ? { base: `${basePath}/` } : {}),
       resolve: {
-        alias: { "docsivi:instance": join(cwd, generatedDir, "instance.ts") },
+        alias: {
+          "docsivi:instance": join(cwd, generatedDir, "instance.ts"),
+          "docsivi:blog": join(cwd, generatedDir, "blog.ts"),
+        },
         // route modules and the theme come from the docsivi package, keep one copy of React
         dedupe: ["react", "react-dom", "react-router"],
       },

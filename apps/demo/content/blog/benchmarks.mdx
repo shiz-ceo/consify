@@ -1,0 +1,17 @@
+---
+title: Lattice benchmarks, honestly
+description: Numbers from a reproducible setup, including where we are slower.
+date: 2026-06-18
+categories: [engineering, releases]
+tags: [performance, benchmarks]
+authors: [ada]
+cover: /blog/benchmarks.svg
+---
+
+Benchmarks are easy to bend. Here are ours, with the script, and with the cases we lose.
+
+<Benchmark title="Jobs per second" unit="jobs/s" rows={[{ label: "Lattice", value: 48000, highlight: true }, { label: "Queue A", value: 39000 }, { label: "Queue B", value: 52000 }]} note="Queue B is faster on tiny payloads." />
+
+## Method
+
+Everything ran on the same 4 vCPU machine with Redis 8. The script lives in the repository.

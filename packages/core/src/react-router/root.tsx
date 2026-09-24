@@ -66,8 +66,11 @@ export default function App() {
 export function ErrorBoundary() {
   const error = useRouteError();
   const { lang } = useParams();
-  if (isRouteErrorResponse(error) && error.status === 404)
-    return <NotFound {...(lang ? { lang } : {})} />;
+  if (isRouteErrorResponse(error) && error.status === 404) {
+    // `/docs` matches the `:lang` route, so the segment is only a language when it is configured
+    const known = lang && docsivi.config.i18n.languages.includes(lang);
+    return <NotFound {...(known ? { lang } : {})} />;
+  }
 
   const details = isRouteErrorResponse(error)
     ? error.statusText

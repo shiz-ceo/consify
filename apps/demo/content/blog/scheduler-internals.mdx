@@ -1,0 +1,31 @@
+---
+title: How the Lattice scheduler sleeps
+description: A look inside the timer wheel that replaced polling in version 2.
+date: 2026-08-21
+categories: [engineering]
+tags: [scheduler, internals, performance]
+authors: [ada]
+cover: /blog/scheduler.svg
+---
+
+Polling is simple, and it is also wasteful. This post explains the timer wheel we built to replace it.
+
+## The problem
+
+Every worker asked the store for due jobs every 500 ms. With 200 workers that is 400 queries per second that mostly return nothing.
+
+## A hashed timer wheel
+
+Jobs are placed into buckets by due time. The scheduler only wakes for the next non-empty bucket.
+
+```ts
+const bucket = Math.floor(job.runAt / tick) % wheel.length;
+wheel[bucket].push(job);
+```
+
+<Figure src="/blog/scheduler.svg" alt="Timer wheel" caption="Jobs land in buckets; empty buckets cost nothing." />
+
+## What we learned
+
+1. Measure idle cost, not only peak throughput.
+2. Keep the wheel in memory and the truth in the store.

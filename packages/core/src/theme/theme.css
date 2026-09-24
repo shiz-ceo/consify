@@ -132,3 +132,21 @@ html > body[data-scroll-locked] {
     display: none;
   }
 }
+
+/* Highlighted code lines (`{2,4-6}` or `// [!code highlight]`): a violet band with an accent edge. */
+:root {
+  --docsivi-highlight: 139 92 246;
+}
+
+pre .line.highlighted {
+  --fd-counter-color: rgb(var(--docsivi-highlight));
+  background-color: rgb(var(--docsivi-highlight) / 0.14);
+}
+
+pre .line.highlighted::after {
+  border-left: 2px solid rgb(var(--docsivi-highlight));
+}
+
+.dark pre .line.highlighted {
+  background-color: rgb(var(--docsivi-highlight) / 0.18);
+}

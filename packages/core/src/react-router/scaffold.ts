@@ -1,5 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { blogDir, checkPosts, publishedFiles, scanPosts } from "../blog/scan.ts";
+import type { DocsConfig } from "../config/index.ts";
 
 /** Generated files live here (gitignored). React Router's `appDirectory` points at `.docsivi/app`. */
 export const generatedDir = ".docsivi";
@@ -40,10 +42,55 @@ ${hasCustomCss ? 'import "../../custom/theme.css";\n' : ""}export { default, Err
 `;
 }
 
+/**
+ * Source of `.docsivi/blog.ts`. Only the published posts are listed in `files`, so a draft or a
+ * post dated in the future is never compiled: it cannot reach the browser or the build output.
+ */
+export function renderBlog(files: readonly string[] | undefined): string {
+  if (files === undefined) {
+    return `${header}\nexport const blog = null;\n`;
+  }
+  const collection =
+    files.length === 0
+      ? "{ entries: [], get: () => undefined }"
+      : `defineCollections({
+  type: "doc",
+  dir: "content/blog",
+  // Only published posts (no drafts, no future dates), read when the site starts.
+  files: ${JSON.stringify(files)},
+  async: true,
+  schema: postFrontmatterSchema,
+  postprocess: { includeProcessedMarkdown: true },
+})`;
+  return `${header}
+// @ts-nocheck: the project does not depend on fumadocs-mdx, so its macro has no types here.
+import { createBlog, postFrontmatterSchema } from "docsivi";
+import { defineCollections } from "fumadocs-mdx/macro";
+import config from "../docs.config.ts";
+
+const posts = ${collection};
+
+export const blog = createBlog(config, posts);
+`;
+}
+
 export function renderRoutes(): string {
   return `${header}
 export { default } from "docsivi/react-router/routes";
 `;
+}
+
+/** Published post files for `.docsivi/blog.ts`, or `undefined` when the blog is not enabled. */
+function blogFiles(cwd: string, config: Readonly<DocsConfig> | undefined): string[] | undefined {
+  if (!config?.blog) return undefined;
+  const posts = scanPosts(cwd, config.i18n.languages);
+  const problems = checkPosts(posts, {
+    categories: config.blog.categories.map((c) => c.id),
+    authors: Object.keys(config.blog.authors),
+  });
+  if (problems.length > 0)
+    throw new Error(`Invalid blog posts:\n${problems.map((p) => `  - ${p}`).join("\n")}`);
+  return publishedFiles(posts).map((post) => post.path);
 }
 
 function writeIfChanged(path: string, content: string): void {
@@ -56,9 +103,10 @@ function writeIfChanged(path: string, content: string): void {
  * Writes the thin files React Router needs into `.docsivi/`, so a project keeps only
  * `docs.config.ts`, `vite.config.ts` and `react-router.config.ts`. Safe to call repeatedly.
  */
-export function scaffold(cwd: string = process.cwd()): void {
+export function scaffold(cwd: string = process.cwd(), config?: Readonly<DocsConfig>): void {
   const hasCustomCss = existsSync(join(cwd, "custom/theme.css"));
   writeIfChanged(join(cwd, generatedDir, "instance.ts"), renderInstance());
   writeIfChanged(join(cwd, appDirectory, "root.tsx"), renderRoot(hasCustomCss));
   writeIfChanged(join(cwd, appDirectory, "routes.ts"), renderRoutes());
+  writeIfChanged(join(cwd, generatedDir, "blog.ts"), renderBlog(blogFiles(cwd, config)));
 }

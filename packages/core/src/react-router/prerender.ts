@@ -1,5 +1,6 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
+import { publishedFiles, scanPosts } from "../blog/scan.ts";
 import type { DocsConfig } from "../config/index.ts";
 
 /**
@@ -64,5 +65,17 @@ export function prerenderPaths(
   }
   // the API reference (Scalar) is one page per language
   if (config.openapi) for (const lang of languages) paths.push(`/${lang}/api`);
+  if (config.blog) {
+    // only published posts: a draft has no page, so it cannot be built by accident
+    const slugs = new Set(publishedFiles(scanPosts(cwd, languages)).map((p) => p.slug));
+    for (const lang of languages) {
+      paths.push(`/${lang}/blog`);
+      if (config.blog.rss) paths.push(`/${lang}/blog/rss.xml`);
+      for (const slug of slugs) {
+        paths.push(`/${lang}/blog/${slug}`);
+        paths.push(`/${lang}/blog/${slug}/og.png`);
+      }
+    }
+  }
   return [...new Set(paths)];
 }

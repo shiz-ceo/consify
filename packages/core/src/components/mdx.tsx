@@ -9,6 +9,7 @@ import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { MDXComponents } from "mdx/types";
 import type { DocsConfig } from "../config/index.ts";
 import { Badge } from "./badge.tsx";
+import { Authors, Benchmark, CTA, Embed, Expand, Figure, PR } from "./blog/mdx.tsx";
 import { Mermaid } from "./mermaid.tsx";
 import { Video } from "./video.tsx";
 
@@ -18,8 +19,15 @@ export const builtinComponents = {
   ...Twoslash,
   Accordion,
   Accordions,
+  Authors,
   Badge,
   Banner,
+  Benchmark,
+  CTA,
+  Embed,
+  Expand,
+  Figure,
+  PR,
   File,
   Files,
   Folder,

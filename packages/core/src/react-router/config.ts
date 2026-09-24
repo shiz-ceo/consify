@@ -10,7 +10,7 @@ import { appDirectory, scaffold } from "./scaffold.ts";
  * app pre-rendered to plain files for any static host.
  */
 export function defineRouterConfig(docsConfig: Readonly<DocsConfig>): Config {
-  scaffold();
+  scaffold(process.cwd(), docsConfig);
   const { mode, basePath } = docsConfig.deploy;
   // read by `routes.ts`, which is evaluated after this config
   process.env.DOCSIVI_DEPLOY_MODE = mode;

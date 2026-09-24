@@ -1,5 +1,6 @@
 import { uiTranslations } from "fumadocs-ui/i18n";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
+import { localized } from "./blog/labels.ts";
 import type { Docsivi } from "./instance.ts";
 import { resolveHref } from "./links.ts";
 import { getMessages } from "./messages.ts";
@@ -26,6 +27,15 @@ export function baseOptions({ config }: Docsivi, lang: string): BaseLayoutProps 
       },
       ...(config.openapi
         ? [{ type: "main" as const, text: config.openapi.title, url: `/${lang}/api` }]
+        : []),
+      ...(config.blog
+        ? [
+            {
+              type: "main" as const,
+              text: localized(config, lang, config.blog.title) ?? getMessages(config, lang).blog,
+              url: `/${lang}/blog`,
+            },
+          ]
         : []),
       ...config.nav.map((item) => ({
         type: "main" as const,

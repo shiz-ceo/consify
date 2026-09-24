@@ -40,7 +40,21 @@ export default defineConfig({
   // A separate API reference page (top navigation), generated from an OpenAPI schema
   openapi: { input: "./openapi.json", title: "API" },
 
-  nav: [{ title: "Changelog", url: "/docs/v2/changelog" }],
+  // The blog is a page of the top navigation. The short changelog stays in the docs.
+  blog: {
+    description: "Releases, engineering notes and stories from the Lattice team.",
+    categories: [
+      { id: "releases", label: { en: "Releases", ru: "Релизы" } },
+      { id: "engineering", label: { en: "Engineering", ru: "Инженерия" } },
+      { id: "customers", label: { en: "Customers", ru: "Клиенты" } },
+      { id: "product", label: { en: "Product", ru: "Продукт" } },
+    ],
+    authors: {
+      ada: { name: "Ada Novak", role: "Core maintainer", url: "https://github.com/example" },
+      leo: { name: "Leo Brandt", role: "Developer relations" },
+      mira: { name: "Mira Sato", role: "Product designer" },
+    },
+  },
 
   home: {
     en: {

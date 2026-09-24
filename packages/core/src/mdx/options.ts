@@ -5,6 +5,7 @@ import { createFileSystemTypesCache } from "fumadocs-twoslash/cache-fs";
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
 import type { DocsConfig } from "../config/index.ts";
+import { transformerLineRanges } from "./line-highlight.ts";
 
 type MdxOptions = NonNullable<GlobalConfig["mdxOptions"]>;
 
@@ -38,6 +39,7 @@ export function createMdxOptions(config: Readonly<DocsConfig>): MdxOptions {
       langs: [...new Set(shikiLangs)],
       transformers: [
         ...(rehypeCodeDefaultOptions.transformers ?? []),
+        transformerLineRanges,
         ...(features.twoslash
           ? [
               transformerTwoslash({

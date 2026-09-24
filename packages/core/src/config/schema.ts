@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import { z } from "zod";
+import { idPattern } from "../blog/schema.ts";
 import { messageKeys } from "../messages.ts";
 import type { DocsPlugin } from "../plugins/types.ts";
 
@@ -183,6 +184,63 @@ const openapiSchema = z.strictObject({
   title: z.string().min(1).default("API"),
 });
 
+const localizedText = z.union([z.string().min(1), z.record(languageCode, z.string().min(1))]);
+
+const blogSchema = z
+  .strictObject({
+    /** Heading of the blog page. Defaults to the translated word "Blog". */
+    title: localizedText.optional(),
+    description: localizedText.optional(),
+    /** Posts per page of the list. */
+    perPage: z.number().int().min(1).max(100).default(12),
+    /** Categories of the list filter. A post lists the ids it belongs to. */
+    categories: z
+      .array(
+        z.strictObject({
+          id: z.string().regex(idPattern, "must be lowercase letters, digits and `-`"),
+          label: localizedText,
+        }),
+      )
+      .prefault([]),
+    /** People who write posts, by id. A post lists the ids of its authors. */
+    authors: z
+      .record(
+        z.string(),
+        z.strictObject({
+          name: z.string().min(1),
+          role: z.string().optional(),
+          /** Path or URL of the avatar. */
+          avatar: z.string().optional(),
+          url: z.string().optional(),
+        }),
+      )
+      .prefault({}),
+    /** Share buttons (X, LinkedIn, Bluesky) on a post. */
+    share: z.boolean().default(true),
+    /** An RSS feed at `/{lang}/blog/rss.xml`. */
+    rss: z.boolean().default(true),
+  })
+  .superRefine((blog, ctx) => {
+    const ids = blog.categories.map((c) => c.id);
+    const dup = ids.find((c, i) => ids.indexOf(c) !== i);
+    if (dup !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["categories"],
+        message: `duplicate category id "${dup}"`,
+      });
+    }
+    for (const authorId of Object.keys(blog.authors)) {
+      if (!idPattern.test(authorId)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["authors", authorId],
+          message: `author id "${authorId}" must be lowercase letters, digits and \`-\``,
+        });
+      }
+    }
+  });
+
 const deploySchema = z.strictObject({
   /**
    * `server`: a Node server (`next start`, Docker). `static`: `output: "export"`, plain files for any
@@ -237,6 +295,8 @@ export const docsConfigSchema = z
     home: z.record(languageCode, homeSchema).optional(),
     /** API reference generated from an OpenAPI schema, on its own page at `/{lang}/api`. */
     openapi: openapiSchema.optional(),
+    /** A blog: articles in `content/blog`, a list with filters and search, an RSS feed. */
+    blog: blogSchema.optional(),
     deploy: deploySchema.prefault({}),
     /** Custom MDX components, keyed by the name used in `.mdx` files. */
     components: z.record(z.string(), z.unknown()).default({}),
