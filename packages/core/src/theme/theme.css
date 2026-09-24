@@ -97,11 +97,38 @@
   }
 }
 
+/* The canvas, the page and the overscroll area all use the page color, whatever loads later. */
+html,
+body {
+  background-color: var(--background);
+}
+
 html {
+  color-scheme: light;
   scrollbar-gutter: stable;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 html > body[data-scroll-locked] {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;
+}
+
+/*
+ * Pages without a docs sidebar (home, API, 404: SiteLayout). Below the `lg` breakpoint the
+ * layout keeps its sidebar, which then only holds the site links (the mobile menu). From `lg` up
+ * the links are in the header, so the empty sidebar column is removed.
+ */
+@media (min-width: 1024px) {
+  #nd-notebook-layout[data-site-layout] {
+    --fd-sidebar-width: 0px !important;
+    --fd-sidebar-col: 0px !important;
+  }
+
+  #nd-notebook-layout[data-site-layout] [data-sidebar-placeholder] {
+    display: none;
+  }
 }

@@ -44,7 +44,7 @@ export default function ApiScalarRoute({
   useEffect(() => setMounted(true), []);
 
   return (
-    <SiteLayout docsivi={docsivi} lang={loaderData.lang}>
+    <SiteLayout docsivi={docsivi} lang={loaderData.lang} sidebarToggle>
       <div className="min-h-[70vh] flex-1">
         {mounted ? (
           <Suspense fallback={null}>

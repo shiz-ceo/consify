@@ -1,0 +1,97 @@
+/*
+ * The Scalar API reference dressed like the docs, so the API page does not look like another
+ * site. The numbers are those of the docs sidebar: 268px wide, 36px items, 8px radius, 16px side
+ * padding, Geist 14px, hover `accent/50`, active `primary/10`.
+ *
+ * Scalar renders in the page (no shadow DOM), so these rules can reach it. Selectors that use
+ * Scalar's own class names are marked; they are pinned by the exact Scalar version in package.json.
+ * To go back to Scalar's own look, delete this file's import in components/scalar-reference.tsx.
+ */
+.scalar-app {
+  /* our header is sticky and 56px tall: Scalar's sticky sidebar starts below it */
+  --scalar-custom-header-height: 56px;
+  --refs-header-height: 56px;
+  --refs-sidebar-width: 268px;
+  /* side padding 16px like ours (Scalar: 12px) */
+  --scalar-sidebar-padding: 1rem;
+
+  --scalar-font: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --scalar-font-code: "Geist Mono Variable", ui-monospace, SFMono-Regular, monospace;
+
+  --scalar-radius: 8px;
+  --scalar-radius-lg: 10px;
+  --scalar-radius-xl: 12px;
+
+  /* Scalar's colors are ours, so the two can never drift apart (also with a custom theme) */
+  --scalar-background-1: var(--background);
+  --scalar-background-2: var(--card);
+  --scalar-color-1: var(--foreground);
+  --scalar-color-2: var(--muted-foreground);
+  --scalar-border-color: var(--border);
+
+  --scalar-sidebar-item-hover-background: color-mix(in oklab, var(--accent) 50%, transparent);
+  --scalar-sidebar-item-hover-color: color-mix(in oklab, var(--accent-foreground) 80%, transparent);
+  --scalar-sidebar-item-active-background: color-mix(in oklab, var(--primary) 10%, transparent);
+  --scalar-sidebar-color-active: var(--primary);
+}
+
+/* Scalar class names from here on. */
+
+/* items: 36px high and 8px radius like ours (Scalar: 32px and 3px) */
+.scalar-app .t-doc__sidebar .peer\/button {
+  line-height: 1.25rem;
+  border-radius: 0.5rem;
+}
+
+/* no "Powered by Scalar" label under the sidebar (Scalar is MIT licensed, no credit is required) */
+.scalar-app .t-doc__sidebar .darklight-reference > div:last-child:not(:only-child) {
+  display: none;
+}
+
+/* the bottom block (Open API Client) has the same side padding as the items */
+.scalar-app .t-doc__sidebar .darklight-reference {
+  padding-inline: var(--scalar-sidebar-padding);
+}
+
+/* Scalar's own search is replaced by the search in the site header (see search-bridge.tsx) */
+.scalar-app .t-doc__sidebar > div:has(> button.bg-sidebar-b-search) {
+  display: none;
+}
+
+/*
+ * The button at the right of the header (the one that hides the sidebar on docs pages) also hides
+ * Scalar's sidebar: the layout marks itself with `data-sidebar-collapsed`.
+ *
+ * The page is heavy, so animating the width of a column would re-wrap the text on every frame and
+ * stutter. Instead the layout changes once, and only `transform` moves: the sidebar slides here
+ * (250ms, the easing of the docs sidebar) and the content slides in scalar-reference.tsx.
+ */
+#nd-notebook-layout[data-sidebar-collapsed="true"] .scalar-app {
+  grid-template-columns: 0px 1fr;
+}
+
+.scalar-app .t-doc__sidebar {
+  transition:
+    transform 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0s;
+  will-change: transform, opacity;
+}
+
+#nd-notebook-layout[data-sidebar-collapsed="true"] .scalar-app .t-doc__sidebar {
+  transform: translateX(-100%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  /* hidden only after it has slid out */
+  transition:
+    transform 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0s 250ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scalar-app .t-doc__sidebar {
+    transition: none !important;
+  }
+}

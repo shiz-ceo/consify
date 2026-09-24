@@ -10,13 +10,20 @@ import {
   useParams,
   useRouteError,
 } from "react-router";
-import StaticSearchDialog from "../components/static-search.tsx";
+import { ServerSearchDialog, StaticSearchBridge } from "../components/search-bridge.tsx";
 import { createTranslations } from "../layout-options.tsx";
 import { themeToCss } from "../theme/tokens.ts";
 import { NotFound } from "./not-found-view.tsx";
 import { docsivi } from "./shared.ts";
 
 const translations = createTranslations(docsivi);
+
+/**
+ * Sets the theme class on <html> before the first paint, from the same storage key that
+ * next-themes (inside RootProvider) uses. Its own script sits in <body>, a moment too late: the
+ * page canvas could be painted in the wrong color first.
+ */
+const earlyTheme = `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||((t===null||t==="system")&&matchMedia("(prefers-color-scheme: dark)").matches);var r=document.documentElement;r.classList.remove("light","dark");r.classList.add(d?"dark":"light");r.style.colorScheme=d?"dark":"light"}catch(e){}})()`;
 const themeCss = themeToCss(docsivi.config.theme);
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -29,6 +36,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="light dark" />
+        <script dangerouslySetInnerHTML={{ __html: earlyTheme }} />
         <Meta />
         <Links />
         {themeCss ? <style id="docsivi-theme">{themeCss}</style> : null}
@@ -36,9 +45,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body className="flex min-h-screen flex-col">
         <RootProvider
           i18n={i18nProvider(translations, language)}
-          {...(docsivi.config.deploy.mode === "static"
-            ? { search: { SearchDialog: StaticSearchDialog } }
-            : {})}
+          search={{
+            SearchDialog:
+              docsivi.config.deploy.mode === "static" ? StaticSearchBridge : ServerSearchDialog,
+          }}
         >
           {children}
         </RootProvider>
