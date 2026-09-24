@@ -92,6 +92,10 @@ await queue.add("send-email", { to, subject, html }); // [!code --]
 await queue.enqueue(sendEmail, { to, subject, html }); // [!code ++]
 ```
 
+Every image, GIF and video in a post gets a thin border that takes the tint of the media under it. Here is a GIF whose colors slowly drift, and the frame follows them:
+
+![A demo animation with changing colors](/blog/colors.gif)
+
 <Figure src="/blog/scheduler.svg" alt="Diagram of a typed job flowing from producer to worker" caption="One definition is shared by the producer, the queue and the worker." />
 
 ## A scheduler that sleeps

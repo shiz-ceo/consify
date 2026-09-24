@@ -24,6 +24,18 @@ const translations = createTranslations(docsivi);
  * page canvas could be painted in the wrong color first.
  */
 const earlyTheme = `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||((t===null||t==="system")&&matchMedia("(prefers-color-scheme: dark)").matches);var r=document.documentElement;r.classList.remove("light","dark");r.classList.add(d?"dark":"light");r.style.colorScheme=d?"dark":"light"}catch(e){}})()`;
+
+/** The configured favicon, or a rounded square with the first letter of the site name. */
+function iconHref(): string {
+  const { site, deploy } = docsivi.config;
+  if (site.favicon) {
+    return site.favicon.startsWith("/") ? `${deploy.basePath ?? ""}${site.favicon}` : site.favicon;
+  }
+  const letter = [...site.name][0]?.toUpperCase() ?? "D";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#111"/><text x="16" y="23" font-family="system-ui,sans-serif" font-size="20" font-weight="700" text-anchor="middle" fill="#fff">${letter.replace(/[<&>]/g, "")}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+const faviconHref = iconHref();
 const themeCss = themeToCss(docsivi.config.theme);
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -38,6 +50,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="light dark" />
         <script dangerouslySetInnerHTML={{ __html: earlyTheme }} />
+        <link rel="icon" href={faviconHref} />
         <Meta />
         <Links />
         {themeCss ? <style id="docsivi-theme">{themeCss}</style> : null}

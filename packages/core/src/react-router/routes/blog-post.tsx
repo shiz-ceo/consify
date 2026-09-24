@@ -11,8 +11,9 @@ import { relatedPosts } from "../../blog/posts.ts";
 import { PostCard } from "../../components/blog/blog-list.tsx";
 import { BlogProvider } from "../../components/blog/context.tsx";
 import { AuthorLine, Chip, formatDate, PostCover } from "../../components/blog/post-parts.tsx";
-import { Reveal } from "../../components/blog/reveal.tsx";
+import { Reveal, RevealGroup } from "../../components/blog/reveal.tsx";
 import { ShareButtons } from "../../components/blog/share-buttons.tsx";
+import { SmoothAnchors } from "../../components/blog/smooth-anchors.tsx";
 import { getMDXComponents } from "../../components/mdx.tsx";
 import { resolveHref } from "../../links.ts";
 import { format, getMessages } from "../../messages.ts";
@@ -158,7 +159,8 @@ export default function BlogPostRoute({ loaderData }: { loaderData: PostData }) 
         <PostCover post={post} eager className="mx-auto mt-10 aspect-[16/8] w-full max-w-6xl" />
 
         {/* left: meta and share, center: text, right: table of contents */}
-        <div className="mt-12 grid gap-x-10 xl:grid-cols-[14rem_minmax(0,1fr)_16rem]">
+        <SmoothAnchors />
+        <RevealGroup className="mt-12 grid gap-x-10 xl:grid-cols-[14rem_minmax(0,1fr)_16rem]">
           <aside className="hidden xl:block">
             <Reveal className="sticky top-24 space-y-6 text-sm text-fd-muted-foreground">
               <p>
@@ -175,7 +177,7 @@ export default function BlogPostRoute({ loaderData }: { loaderData: PostData }) 
             </Reveal>
           </aside>
 
-          <article className="mx-auto w-full min-w-0 max-w-3xl">
+          <article data-blog-post className="mx-auto w-full min-w-0 max-w-3xl">
             <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-3 text-sm text-fd-muted-foreground xl:hidden">
               <span>{format(messages.minRead, { minutes: String(post.readingTime) })}</span>
               {shareBlock}
@@ -214,7 +216,7 @@ export default function BlogPostRoute({ loaderData }: { loaderData: PostData }) 
 
           {toc.length > 0 ? (
             <aside className="hidden xl:block">
-              <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-hidden">
+              <Reveal className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-hidden">
                 <TOCProvider toc={toc}>
                   <TOCScrollArea>
                     <TOCItems>
@@ -224,10 +226,10 @@ export default function BlogPostRoute({ loaderData }: { loaderData: PostData }) 
                     </TOCItems>
                   </TOCScrollArea>
                 </TOCProvider>
-              </div>
+              </Reveal>
             </aside>
           ) : null}
-        </div>
+        </RevealGroup>
 
         {related.length > 0 ? (
           <section className="mx-auto mt-20 max-w-6xl border-t border-fd-border pt-10">

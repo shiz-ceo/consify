@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { MdxImage } from "../media.tsx";
 import { type BlogAuthor, useBlog } from "./context.tsx";
 
 /** <Authors ids={["ada", "grace"]} /> shows people from `blog.authors` inside a post. */
@@ -133,12 +134,7 @@ export function Figure({
 }) {
   return (
     <figure className="not-prose my-6">
-      <img
-        src={src}
-        alt={alt}
-        loading="lazy"
-        className="w-full rounded-xl border border-fd-border"
-      />
+      <MdxImage src={src} alt={alt} className="w-full" />
       {caption ? (
         <figcaption className="mt-2 text-center text-sm text-fd-muted-foreground">
           {caption}

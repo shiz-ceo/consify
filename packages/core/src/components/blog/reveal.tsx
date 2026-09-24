@@ -1,20 +1,20 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from "react";
+
+const RevealContext = createContext(true);
 
 /**
- * Fades its children in (with a small rise) the first time it scrolls into view. Used for the side
- * columns of a post, which stay hidden while the title and the cover are on screen.
+ * The container of the side columns of a post. They are shown while the container is in the upper
+ * three quarters of the screen and hidden again when the reader scrolls back above it, so the
+ * effect repeats in both directions and every column changes state at the same moment.
  */
-export function Reveal({
+export function RevealGroup({
   children,
   className = "",
-  delay = 0,
 }: {
   children: ReactNode;
   className?: string;
-  /** Milliseconds to wait before the transition starts. */
-  delay?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState(false);
@@ -26,14 +26,8 @@ export function Reveal({
       setShown(true);
       return;
     }
-    // the column counts as reached once its top is in the upper 3/4 of the screen
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setShown(true);
-          observer.disconnect();
-        }
-      },
+      ([entry]) => setShown(entry?.isIntersecting ?? false),
       { rootMargin: "0px 0px -25% 0px" },
     );
     observer.observe(node);
@@ -41,10 +35,20 @@ export function Reveal({
   }, []);
 
   return (
+    <RevealContext.Provider value={shown}>
+      <div ref={ref} className={className}>
+        {children}
+      </div>
+    </RevealContext.Provider>
+  );
+}
+
+/** Fades in (with a small rise) while its `RevealGroup` is reached. */
+export function Reveal({ children, className = "" }: { children: ReactNode; className?: string }) {
+  const shown = useContext(RevealContext);
+  return (
     <div
-      ref={ref}
-      style={{ transitionDelay: shown ? `${delay}ms` : "0ms" }}
-      className={`transition-[opacity,translate] duration-700 ease-out motion-reduce:transition-none ${
+      className={`transition-[opacity,translate] duration-500 ease-out motion-reduce:transition-none ${
         shown ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
       } ${className}`}
     >

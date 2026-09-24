@@ -17,6 +17,8 @@ const siteSchema = z.strictObject({
   url: z.url().optional(),
   /** Path or URL of the logo. */
   logo: z.string().optional(),
+  /** Path (from `public/`) or URL of the favicon. Without it a letter icon is generated from the name. */
+  favicon: z.string().optional(),
   /** Source repository, used for "Edit on GitHub". */
   github: z
     .strictObject({

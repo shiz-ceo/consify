@@ -10,6 +10,7 @@ import type { MDXComponents } from "mdx/types";
 import type { DocsConfig } from "../config/index.ts";
 import { Badge } from "./badge.tsx";
 import { Authors, Benchmark, CTA, Embed, Expand, Figure, PR } from "./blog/mdx.tsx";
+import { MdxImage, MdxVideo } from "./media.tsx";
 import { Mermaid } from "./mermaid.tsx";
 import { Video } from "./video.tsx";
 
@@ -17,6 +18,8 @@ import { Video } from "./video.tsx";
 export const builtinComponents = {
   ...defaultMdxComponents,
   ...Twoslash,
+  img: MdxImage,
+  video: MdxVideo,
   Accordion,
   Accordions,
   Authors,

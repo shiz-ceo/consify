@@ -21,5 +21,5 @@ export async function loader({ params }: { params: Record<string, string | undef
     postUrl: (post) => absoluteUrl(`/${lang}/blog/${post.slug}`),
     categoryLabels: categoryLabels(config, lang),
   });
-  return new Response(xml, { headers: { "Content-Type": "application/rss+xml; charset=utf-8" } });
+  return new Response(xml, { headers: { "Content-Type": "application/xml; charset=utf-8" } });
 }

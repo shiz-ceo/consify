@@ -150,3 +150,17 @@ pre .line.highlighted::after {
 .dark pre .line.highlighted {
   background-color: rgb(var(--docsivi-highlight) / 0.18);
 }
+
+/* Border over images, GIFs and videos (see components/media.tsx): translucent, so it takes the tint of the media. */
+.docsivi-media-border {
+  border: 1px solid rgb(0 0 0 / 0.12);
+}
+
+.dark .docsivi-media-border {
+  border-color: rgb(255 255 255 / 0.14);
+}
+
+/* Headings of a blog post stop below the header when reached from the table of contents. */
+[data-blog-post] :is(h2, h3, h4) {
+  scroll-margin-top: 6rem;
+}

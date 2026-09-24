@@ -7,6 +7,7 @@ export default defineConfig({
     name: "Lattice",
     description: "A typed job queue for TypeScript. Documentation demo built with docsivi.",
     url: "https://lattice.example.dev",
+    favicon: "/favicon.svg",
     github: { repo: "example/lattice" },
   },
 
