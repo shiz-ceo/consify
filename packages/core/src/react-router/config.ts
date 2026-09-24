@@ -1,6 +1,5 @@
 import type { Config } from "@react-router/dev/config";
 import type { DocsConfig } from "../config/index.ts";
-import { apiPageUrls } from "./openapi-source.ts";
 import { prerenderPaths } from "./prerender.ts";
 import { appDirectory, scaffold } from "./scaffold.ts";
 
@@ -19,6 +18,6 @@ export function defineRouterConfig(docsConfig: Readonly<DocsConfig>): Config {
     appDirectory,
     ssr: mode !== "static",
     ...(basePath ? { basename: basePath } : {}),
-    prerender: async () => prerenderPaths(docsConfig, process.cwd(), await apiPageUrls(docsConfig)),
+    prerender: () => prerenderPaths(docsConfig),
   };
 }

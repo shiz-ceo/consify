@@ -1,176 +1,721 @@
 {
   "openapi": "3.1.0",
-  "info": {
-    "title": "Lattice HTTP API",
-    "version": "2.2.0",
-    "description": "Add jobs to Lattice queues and inspect them over HTTP. Run `lattice serve` to start the server."
-  },
-  "servers": [{ "url": "http://localhost:8080", "description": "Local server" }],
-  "tags": [
-    { "name": "Jobs", "description": "Add, read and remove jobs." },
-    { "name": "Queues", "description": "Queue statistics." }
-  ],
   "paths": {
-    "/v2/queues/{name}/jobs": {
-      "post": {
-        "operationId": "addJob",
-        "tags": ["Jobs"],
-        "summary": "Add a job",
-        "description": "Stores a job in the queue. Resolves once the job is durable.",
-        "parameters": [{ "$ref": "#/components/parameters/QueueName" }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/NewJob" },
-              "example": {
-                "data": { "to": "ada@example.com" },
-                "options": { "priority": "high", "retries": 5 }
+    "/v1/api/v1/common/user/me": {
+      "get": {
+        "description": "\nRetrieves complete profile information about the currently authenticated user.\n\nThe shape of the response depends on the authenticated user's person type:\n* **Student** - returned when the user's person type is `person_type.student`\n* **Teacher** - returned when the user's person type is `person_type.teacher`\n\nThis endpoint returns detailed profile data including:\n* Personal identification (UUID, type)\n* Full name (first name, middle name, last name)\n* Demographic information (birth date, gender)\n* Residency information (citizenship, country, dormitory)\n* Role-specific data (academic stages for students, academic positions for teachers)\n\n**Authentication Required:** Yes - JWT Bearer token must be provided in Authorization header\n\n**Response contains:** Complete profile data of the authenticated user, shaped as either a Student or a Teacher\n      ",
+        "operationId": "UserController_getMe_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "\nSuccessfully retrieved the current user's profile.\n\nReturns a complete Student or Teacher profile depending on the authenticated user's person type.\n        ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                },
+                "examples": {
+                  "student": {
+                    "summary": "Student Profile",
+                    "description": "Example of a student person profile with complete information",
+                    "value": {
+                      "uuid": "550e8400-e29b-41d4-a716-446655440000",
+                      "type": "person_type.student",
+                      "lastname": "Иванов",
+                      "firstName": "Иван",
+                      "middleName": "Иванович",
+                      "birthDate": "2004-03-15T00:00:00.000Z",
+                      "gender": "gender.male",
+                      "createdAt": "2024-09-15T10:30:00.000Z",
+                      "citizenship": "Russia",
+                      "country": "Russia",
+                      "dormitory": "№5",
+                      "stages": [
+                        {
+                          "uuid": "660e8400-e29b-41d4-a716-446655440001",
+                          "alias": "bmstu-24-ivt",
+                          "group": {
+                            "code": "ИУ7-11Б",
+                            "uuid": "770e8400-e29b-41d4-a716-446655440002",
+                            "title": "ИУ7-11Б",
+                            "diplom": 1,
+                            "semester": 3,
+                            "specialityTitle": "Информатика и вычислительная техника",
+                            "specializationTitle": "Программное обеспечение вычислительной техники"
+                          },
+                          "start": "2022",
+                          "state": "active",
+                          "studyType": "stage.bachelor",
+                          "cardNumber": "1234567",
+                          "enrollment": "budget",
+                          "startDate": "2022-09-01",
+                          "endDate": "2026-06-30",
+                          "subdivision": "ИУ"
+                        }
+                      ]
+                    }
+                  },
+                  "teacher": {
+                    "summary": "Teacher Profile",
+                    "description": "Example of a teacher person profile with complete information",
+                    "value": {
+                      "uuid": "550e8400-e29b-41d4-a716-446655440000",
+                      "type": "person_type.teacher",
+                      "lastname": "Петров",
+                      "firstName": "Пётр",
+                      "middleName": "Петрович",
+                      "birthDate": "1980-05-20T00:00:00.000Z",
+                      "gender": "gender.male",
+                      "createdAt": "2024-09-15T10:30:00.000Z",
+                      "citizenship": "Russia",
+                      "country": "Russia",
+                      "dormitory": "",
+                      "positions": [
+                        {
+                          "uuid": "660e8400-e29b-41d4-a716-446655440001",
+                          "alias": "ivt-professor",
+                          "department_uid": "770e8400-e29b-41d4-a716-446655440002",
+                          "positionTitle": "Доцент",
+                          "employment_type": "full_time",
+                          "startDate": "2015-09-01",
+                          "endDate": "2030-06-30"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "\nUnauthorized - Authentication failed or token is missing/invalid.\n\nThis error occurs when:\n* No Authorization header is provided\n* Authorization header is malformed\n* JWT token is invalid or expired\n* Token signature verification fails\n        ",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "no-token": {
+                    "summary": "No Token Provided",
+                    "value": {
+                      "status": 401,
+                      "type": "UNAUTHORIZED",
+                      "code": "NO_TOKEN",
+                      "message": "Authorization header is missing or empty",
+                      "metadata": {},
+                      "timestamp": "2026-09-24T11:34:04.010Z",
+                      "path": "api/v1/common/user/me"
+                    }
+                  },
+                  "invalid-token": {
+                    "summary": "Invalid Token",
+                    "value": {
+                      "status": 401,
+                      "type": "UNAUTHORIZED",
+                      "code": "INVALID_TOKEN",
+                      "message": "Token is invalid or malformed",
+                      "metadata": {},
+                      "timestamp": "2026-09-24T11:34:04.010Z",
+                      "path": "api/v1/common/user/me"
+                    }
+                  },
+                  "expired-token": {
+                    "summary": "Token Expired",
+                    "value": {
+                      "status": 401,
+                      "type": "UNAUTHORIZED",
+                      "code": "TOKEN_EXPIRED",
+                      "message": "Token has expired. Please refresh your authentication",
+                      "metadata": {},
+                      "timestamp": "2026-09-24T11:34:04.010Z",
+                      "path": "api/v1/common/user/me"
+                    }
+                  }
+                }
               }
             }
           }
         },
-        "responses": {
-          "201": {
-            "description": "The stored job.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Job" } } }
-          },
-          "404": { "$ref": "#/components/responses/NotFound" }
-        }
+        "summary": "Get Current User Profile",
+        "tags": ["User"]
       }
     },
-    "/v2/queues/{name}/jobs/{id}": {
+    "/v1/api/v1/common/scope/group/{uuid}": {
       "get": {
-        "operationId": "getJob",
-        "tags": ["Jobs"],
-        "summary": "Get a job",
+        "description": "\nRetrieves an academic group by its unique identifier, together with the list of participants (students) currently enrolled in it.\n\n**Response contains:** Group details (code, name, department, speciality/specialization, term dates) plus a short profile for every participant of the group.\n    ",
+        "operationId": "GroupController_getById_v1",
         "parameters": [
-          { "$ref": "#/components/parameters/QueueName" },
-          { "$ref": "#/components/parameters/JobId" }
+          {
+            "name": "uuid",
+            "required": true,
+            "in": "path",
+            "description": "Group UUID",
+            "schema": {}
+          }
         ],
         "responses": {
           "200": {
-            "description": "The job.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Job" } } }
-          },
-          "404": { "$ref": "#/components/responses/NotFound" }
-        }
-      },
-      "delete": {
-        "operationId": "removeJob",
-        "tags": ["Jobs"],
-        "summary": "Remove a waiting job",
-        "description": "Only jobs that have not started can be removed.",
-        "parameters": [
-          { "$ref": "#/components/parameters/QueueName" },
-          { "$ref": "#/components/parameters/JobId" }
-        ],
-        "responses": {
-          "204": { "description": "The job was removed." },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "description": "The job already started." }
-        }
-      }
-    },
-    "/v2/queues/{name}/stats": {
-      "get": {
-        "operationId": "getStats",
-        "tags": ["Queues"],
-        "summary": "Queue statistics",
-        "parameters": [{ "$ref": "#/components/parameters/QueueName" }],
-        "responses": {
-          "200": {
-            "description": "Counters of the queue.",
+            "description": "Successfully retrieved the group and its participants.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/QueueStats" },
-                "example": { "waiting": 12, "active": 2, "failed": 0 }
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDetails"
+                },
+                "examples": {
+                  "group": {
+                    "summary": "Group with participants",
+                    "value": {
+                      "uuid": "770e8400-e29b-41d4-a716-446655440002",
+                      "code": "ИУ7-11Б",
+                      "name": "ИУ7-11Б",
+                      "departmentUid": "880e8400-e29b-41d4-a716-446655440003",
+                      "specialityTitle": "Информатика и вычислительная техника",
+                      "specializationTitle": "Программное обеспечение вычислительной техники",
+                      "startDate": "2022-09-01",
+                      "endDate": "2026-06-30",
+                      "participants": [
+                        {
+                          "uuid": "550e8400-e29b-41d4-a716-446655440000",
+                          "lastname": "Иванов",
+                          "firstName": "Иван",
+                          "middleName": "Иванович"
+                        }
+                      ]
+                    }
+                  }
+                }
               }
             }
           },
-          "404": { "$ref": "#/components/responses/NotFound" }
-        }
+          "400": {
+            "description": "\nBad Request - the provided group UUID is malformed.\n        ",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid-uuid": {
+                    "summary": "Invalid Group UUID",
+                    "value": {
+                      "status": 400,
+                      "type": "BAD_REQUEST",
+                      "code": "INVALID_UUID",
+                      "message": "Group UUID is not a valid UUID",
+                      "metadata": {},
+                      "timestamp": "2026-09-24T11:34:04.010Z",
+                      "path": "api/v1/common/scope/group/:uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Group by ID",
+        "tags": ["Group"]
+      }
+    },
+    "/v1/api/v1/common/scope/department": {
+      "get": {
+        "description": "\nRetrieves the departments (chairs) whose head/parent department matches the given `parentUid` (e.g. all chairs belonging to a faculty).\n    ",
+        "operationId": "DepartmentController_getChildren_v1",
+        "parameters": [
+          {
+            "name": "parentUid",
+            "required": true,
+            "in": "query",
+            "description": "Head (parent) department UUID",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the list of child departments.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepartmentList"
+                },
+                "examples": {
+                  "departments": {
+                    "summary": "Child departments of a faculty",
+                    "value": [
+                      {
+                        "uuid": "880e8400-e29b-41d4-a716-446655440003",
+                        "abbreviation": "ИУ7",
+                        "parentUid": "990e8400-e29b-41d4-a716-446655440004",
+                        "isOpen": true
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "\nBad Request - the provided parentUid is malformed.\n        ",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid-uuid": {
+                    "summary": "Invalid Parent Department UUID",
+                    "value": {
+                      "status": 400,
+                      "type": "BAD_REQUEST",
+                      "code": "INVALID_UUID",
+                      "message": "parentUid is not a valid UUID",
+                      "metadata": {},
+                      "timestamp": "2026-09-24T11:34:04.010Z",
+                      "path": "api/v1/common/scope/department"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get Departments by Parent Department",
+        "tags": ["Department"]
       }
     }
   },
+  "info": {
+    "title": "Bmstu LK API",
+    "description": "OpenAPI docs",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "User",
+      "description": "User operations",
+      "parent": "Common"
+    }
+  ],
+  "servers": [],
   "components": {
-    "parameters": {
-      "QueueName": {
-        "name": "name",
-        "in": "path",
-        "required": true,
-        "description": "Queue name, for example `emails`.",
-        "schema": { "type": "string" }
-      },
-      "JobId": {
-        "name": "id",
-        "in": "path",
-        "required": true,
-        "description": "Job id returned by `addJob`.",
-        "schema": { "type": "string", "format": "uuid" }
-      }
-    },
     "schemas": {
-      "NewJob": {
-        "type": "object",
-        "required": ["data"],
-        "properties": {
-          "data": {
-            "type": "object",
-            "description": "Job data, any JSON object.",
-            "additionalProperties": true
+      "Me": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Student"
           },
-          "options": { "$ref": "#/components/schemas/JobOptions" }
-        }
-      },
-      "JobOptions": {
+          {
+            "$ref": "#/components/schemas/Teacher"
+          }
+        ],
         "type": "object",
-        "properties": {
-          "retries": {
-            "type": "integer",
-            "minimum": 0,
-            "default": 3,
-            "description": "Retries after a failure."
-          },
-          "delay": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Milliseconds before the job becomes available."
-          },
-          "priority": { "type": "string", "enum": ["low", "normal", "high"], "default": "normal" }
-        }
-      },
-      "Job": {
-        "type": "object",
-        "required": ["id", "data", "attempts"],
-        "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "data": { "type": "object", "additionalProperties": true },
-          "attempts": {
-            "type": "integer",
-            "description": "How many times processing was attempted."
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "person_type.student": "#/components/schemas/Student",
+            "person_type.teacher": "#/components/schemas/Teacher"
           }
         }
       },
-      "QueueStats": {
+      "Student": {
         "type": "object",
-        "required": ["waiting", "active", "failed"],
         "properties": {
-          "waiting": { "type": "integer" },
-          "active": { "type": "integer" },
-          "failed": { "type": "integer" }
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+          },
+          "type": {
+            "type": "string",
+            "const": "person_type.student"
+          },
+          "lastname": {
+            "type": "string",
+            "description": "Фамилия человека"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "middleName": {
+            "type": ["string", "null"]
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "gender": {
+            "type": "string",
+            "enum": ["gender.male", "gender.female"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "citizenship": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "dormitory": {
+            "type": "string"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StudentStage"
+            }
+          }
+        },
+        "required": [
+          "uuid",
+          "type",
+          "lastname",
+          "firstName",
+          "middleName",
+          "birthDate",
+          "gender",
+          "createdAt",
+          "citizenship",
+          "country",
+          "dormitory",
+          "stages"
+        ],
+        "additionalProperties": false
+      },
+      "StudentStage": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "group": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "uuid": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "title": {
+                "type": "string"
+              },
+              "diplom": {
+                "type": "number"
+              },
+              "semester": {
+                "type": "number"
+              },
+              "specialityTitle": {
+                "type": "string"
+              },
+              "specializationTitle": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "uuid",
+              "title",
+              "diplom",
+              "semester",
+              "specialityTitle",
+              "specializationTitle"
+            ],
+            "additionalProperties": false
+          },
+          "start": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "studyType": {
+            "type": "string",
+            "enum": ["stage.bachelor"]
+          },
+          "cardNumber": {
+            "type": "string"
+          },
+          "enrollment": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "subdivision": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "alias",
+          "group",
+          "start",
+          "state",
+          "studyType",
+          "cardNumber",
+          "enrollment",
+          "startDate",
+          "endDate",
+          "subdivision"
+        ],
+        "additionalProperties": false
+      },
+      "Teacher": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+          },
+          "type": {
+            "type": "string",
+            "const": "person_type.teacher"
+          },
+          "lastname": {
+            "type": "string",
+            "description": "Фамилия человека"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "middleName": {
+            "type": ["string", "null"]
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "gender": {
+            "type": "string",
+            "enum": ["gender.male", "gender.female"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "citizenship": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "dormitory": {
+            "type": "string"
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeacherPosition"
+            }
+          }
+        },
+        "required": [
+          "uuid",
+          "type",
+          "lastname",
+          "firstName",
+          "middleName",
+          "birthDate",
+          "gender",
+          "createdAt",
+          "citizenship",
+          "country",
+          "dormitory",
+          "positions"
+        ],
+        "additionalProperties": false
+      },
+      "TeacherPosition": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "department_uid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "positionTitle": {
+            "type": "string"
+          },
+          "employment_type": {
+            "type": "string",
+            "enum": ["full_time", "part_time"]
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          }
+        },
+        "required": [
+          "uuid",
+          "alias",
+          "department_uid",
+          "positionTitle",
+          "employment_type",
+          "startDate",
+          "endDate"
+        ],
+        "additionalProperties": false
+      },
+      "GroupDetails": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "code": {
+            "type": ["string", "null"]
+          },
+          "name": {
+            "type": "string"
+          },
+          "departmentUid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "specialityTitle": {
+            "type": ["string", "null"]
+          },
+          "specializationTitle": {
+            "type": ["string", "null"]
+          },
+          "startDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "endDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PersonShort"
+            }
+          }
+        },
+        "required": [
+          "uuid",
+          "code",
+          "name",
+          "departmentUid",
+          "specialityTitle",
+          "specializationTitle",
+          "startDate",
+          "endDate",
+          "participants"
+        ],
+        "additionalProperties": false
+      },
+      "PersonShort": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+          },
+          "lastname": {
+            "type": "string",
+            "description": "Фамилия человека"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "middleName": {
+            "type": ["string", "null"]
+          }
+        },
+        "required": ["uuid", "lastname", "firstName", "middleName"],
+        "additionalProperties": false
+      },
+      "DepartmentList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Department"
         }
       },
-      "Error": {
+      "Department": {
         "type": "object",
-        "required": ["code", "message"],
-        "properties": { "code": { "type": "string" }, "message": { "type": "string" } }
-      }
-    },
-    "responses": {
-      "NotFound": {
-        "description": "The queue or job does not exist.",
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "abbreviation": {
+            "type": "string"
+          },
+          "parentUid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isOpen": {
+            "type": "boolean"
+          }
+        },
+        "required": ["uuid", "abbreviation", "parentUid", "isOpen"],
+        "additionalProperties": false
       }
     }
   }
