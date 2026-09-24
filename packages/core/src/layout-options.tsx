@@ -23,6 +23,9 @@ export function baseOptions({ config }: Docsivi, lang: string): BaseLayoutProps 
         text: getMessages(config, lang).documentation,
         url: defaultDocsPath(config, lang) ?? `/${lang}/docs`,
       },
+      ...(config.openapi
+        ? [{ type: "main" as const, text: config.openapi.title, url: `/${lang}/api` }]
+        : []),
       ...config.nav.map((item) => ({
         type: "main" as const,
         text: item.title,

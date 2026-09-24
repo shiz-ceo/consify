@@ -43,6 +43,8 @@ function listFiles(dir: string): string[] {
 export function prerenderPaths(
   config: Readonly<DocsConfig>,
   cwd: string = process.cwd(),
+  /** Extra URLs, e.g. the API reference pages. */
+  extra: readonly string[] = [],
 ): string[] {
   const { languages } = config.i18n;
   const slugs = collectSlugs(listFiles(join(cwd, "content/docs")), languages);
@@ -62,5 +64,10 @@ export function prerenderPaths(
       if (config.features.og) paths.push(`/${lang}/og/${path ? `${path}/` : ""}image.png`);
     }
   }
+  // `/{lang}/api` is the API reference entry (it redirects to the first operation)
+  if (config.openapi) {
+    for (const lang of languages) if (isStatic) paths.push(`/${lang}/api`);
+  }
+  paths.push(...extra);
   return [...new Set(paths)];
 }

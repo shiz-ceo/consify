@@ -176,6 +176,13 @@ const homeSchema = z.strictObject({
     .prefault([]),
 });
 
+const openapiSchema = z.strictObject({
+  /** OpenAPI schema file(s) or URL(s). Files are relative to the project root. */
+  input: z.union([z.string().min(1), z.array(z.string().min(1)).min(1)]),
+  /** Label of the link in the top navigation. */
+  title: z.string().min(1).default("API"),
+});
+
 const deploySchema = z.strictObject({
   /**
    * `server`: a Node server (`next start`, Docker). `static`: `output: "export"`, plain files for any
@@ -228,6 +235,8 @@ export const docsConfigSchema = z
     twoslash: twoslashSchema.prefault({}),
     /** Home page content per language. Missing languages fall back to the default language. */
     home: z.record(languageCode, homeSchema).optional(),
+    /** API reference generated from an OpenAPI schema, on its own page at `/{lang}/api`. */
+    openapi: openapiSchema.optional(),
     deploy: deploySchema.prefault({}),
     /** Custom MDX components, keyed by the name used in `.mdx` files. */
     components: z.record(z.string(), z.unknown()).default({}),

@@ -194,3 +194,25 @@ describe("plugins", () => {
     );
   });
 });
+
+describe("openapi", () => {
+  test("is optional and takes a single schema or a list, title defaults to API", () => {
+    expect(parseDocsConfig(minimal).openapi).toBeUndefined();
+    expect(parseDocsConfig({ ...minimal, openapi: { input: "./openapi.json" } }).openapi).toEqual({
+      input: "./openapi.json",
+      title: "API",
+    });
+    const many = parseDocsConfig({
+      ...minimal,
+      openapi: { input: ["./a.json", "https://example.com/b.json"], title: "Reference" },
+    });
+    expect(many.openapi?.title).toBe("Reference");
+  });
+
+  test("an empty input or an unknown field is rejected", () => {
+    expect(() => parseDocsConfig({ ...minimal, openapi: { input: [] } })).toThrow();
+    expect(() => parseDocsConfig({ ...minimal, openapi: { input: "a.json", path: "x" } })).toThrow(
+      /Unrecognized key: "path"/,
+    );
+  });
+});

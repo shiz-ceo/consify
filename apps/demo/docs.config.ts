@@ -37,6 +37,9 @@ export default defineConfig({
 
   plugins: [githubAlerts, externalLinks],
 
+  // A separate API reference page (top navigation), generated from an OpenAPI schema
+  openapi: { input: "./openapi.json", title: "API" },
+
   nav: [{ title: "Changelog", url: "/docs/v2/changelog" }],
 
   home: {

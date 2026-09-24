@@ -1,0 +1,177 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Lattice HTTP API",
+    "version": "2.2.0",
+    "description": "Add jobs to Lattice queues and inspect them over HTTP. Run `lattice serve` to start the server."
+  },
+  "servers": [{ "url": "http://localhost:8080", "description": "Local server" }],
+  "tags": [
+    { "name": "Jobs", "description": "Add, read and remove jobs." },
+    { "name": "Queues", "description": "Queue statistics." }
+  ],
+  "paths": {
+    "/v2/queues/{name}/jobs": {
+      "post": {
+        "operationId": "addJob",
+        "tags": ["Jobs"],
+        "summary": "Add a job",
+        "description": "Stores a job in the queue. Resolves once the job is durable.",
+        "parameters": [{ "$ref": "#/components/parameters/QueueName" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/NewJob" },
+              "example": {
+                "data": { "to": "ada@example.com" },
+                "options": { "priority": "high", "retries": 5 }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The stored job.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Job" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/v2/queues/{name}/jobs/{id}": {
+      "get": {
+        "operationId": "getJob",
+        "tags": ["Jobs"],
+        "summary": "Get a job",
+        "parameters": [
+          { "$ref": "#/components/parameters/QueueName" },
+          { "$ref": "#/components/parameters/JobId" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The job.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Job" } } }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "operationId": "removeJob",
+        "tags": ["Jobs"],
+        "summary": "Remove a waiting job",
+        "description": "Only jobs that have not started can be removed.",
+        "parameters": [
+          { "$ref": "#/components/parameters/QueueName" },
+          { "$ref": "#/components/parameters/JobId" }
+        ],
+        "responses": {
+          "204": { "description": "The job was removed." },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "description": "The job already started." }
+        }
+      }
+    },
+    "/v2/queues/{name}/stats": {
+      "get": {
+        "operationId": "getStats",
+        "tags": ["Queues"],
+        "summary": "Queue statistics",
+        "parameters": [{ "$ref": "#/components/parameters/QueueName" }],
+        "responses": {
+          "200": {
+            "description": "Counters of the queue.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/QueueStats" },
+                "example": { "waiting": 12, "active": 2, "failed": 0 }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "QueueName": {
+        "name": "name",
+        "in": "path",
+        "required": true,
+        "description": "Queue name, for example `emails`.",
+        "schema": { "type": "string" }
+      },
+      "JobId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Job id returned by `addJob`.",
+        "schema": { "type": "string", "format": "uuid" }
+      }
+    },
+    "schemas": {
+      "NewJob": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Job data, any JSON object.",
+            "additionalProperties": true
+          },
+          "options": { "$ref": "#/components/schemas/JobOptions" }
+        }
+      },
+      "JobOptions": {
+        "type": "object",
+        "properties": {
+          "retries": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 3,
+            "description": "Retries after a failure."
+          },
+          "delay": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Milliseconds before the job becomes available."
+          },
+          "priority": { "type": "string", "enum": ["low", "normal", "high"], "default": "normal" }
+        }
+      },
+      "Job": {
+        "type": "object",
+        "required": ["id", "data", "attempts"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "data": { "type": "object", "additionalProperties": true },
+          "attempts": {
+            "type": "integer",
+            "description": "How many times processing was attempted."
+          }
+        }
+      },
+      "QueueStats": {
+        "type": "object",
+        "required": ["waiting", "active", "failed"],
+        "properties": {
+          "waiting": { "type": "integer" },
+          "active": { "type": "integer" },
+          "failed": { "type": "integer" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": { "code": { "type": "string" }, "message": { "type": "string" } }
+      }
+    },
+    "responses": {
+      "NotFound": {
+        "description": "The queue or job does not exist.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    }
+  }
+}

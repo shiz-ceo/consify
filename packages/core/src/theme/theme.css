@@ -5,6 +5,7 @@
 @import "fumadocs-ui/css/preset.css";
 @import "fumadocs-twoslash/twoslash.css";
 @import "katex/dist/katex.css";
+@import "fumadocs-openapi/css/preset.css";
 
 /* Let Tailwind see the classes used by docsivi components. */
 @source "../";

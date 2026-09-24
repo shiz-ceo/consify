@@ -11,6 +11,7 @@ export default [
   index(file("root-redirect.tsx")),
   route(":lang", file("home.tsx")),
   route(":lang/docs/*", file("docs.tsx")),
+  route(":lang/api/*", file("api-reference.tsx")),
   route(":lang/llms.txt", file("llms.ts")),
   route(":lang/llms-full.txt", file("llms-full.ts")),
   route(":lang/og/*", file("og.ts")),

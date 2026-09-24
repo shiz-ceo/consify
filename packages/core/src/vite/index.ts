@@ -10,6 +10,41 @@ import type { DocsConfig } from "../config/index.ts";
 import { createMdxOptions } from "../mdx/options.ts";
 import { generatedDir, scaffold } from "../react-router/scaffold.ts";
 
+/**
+ * Client dependencies of docsivi that Vite would otherwise discover one by one while the page
+ * loads, re-optimizing and reloading in the middle of the first visit (which breaks hydration).
+ * `docsivi > x` resolves `x` from the docsivi package, so a project does not have to depend on them.
+ */
+const prebundle = [
+  "fumadocs-core/i18n",
+  "fumadocs-core/search/client",
+  "fumadocs-core/search/client/orama-static",
+  "fumadocs-core/source",
+  "fumadocs-core/source/client",
+  "fumadocs-core/source/plugins/lucide-icons",
+  "fumadocs-mdx/runtime/macro",
+  "fumadocs-openapi/ui",
+  "fumadocs-twoslash/ui",
+  "fumadocs-ui/components/accordion",
+  "fumadocs-ui/components/banner",
+  "fumadocs-ui/components/callout",
+  "fumadocs-ui/components/dialog/search",
+  "fumadocs-ui/components/files",
+  "fumadocs-ui/components/steps",
+  "fumadocs-ui/components/tabs",
+  "fumadocs-ui/components/type-table",
+  "fumadocs-ui/contexts/i18n",
+  "fumadocs-ui/i18n",
+  "fumadocs-ui/layouts/docs",
+  "fumadocs-ui/layouts/docs/page",
+  "fumadocs-ui/layouts/home",
+  "fumadocs-ui/mdx",
+  "fumadocs-ui/provider/react-router",
+  "mermaid",
+  "next-themes",
+  "zod",
+];
+
 /** Directory of the docsivi package when it is linked from outside the project (`bun link`). */
 function linkedPackageDir(cwd: string): string | undefined {
   try {
@@ -63,6 +98,7 @@ export function docsivi(config: Readonly<DocsConfig>): PluginOption[] {
       },
       // The package ships TypeScript sources, so Vite has to compile it instead of externalizing it.
       ssr: { noExternal: ["docsivi"] },
+      optimizeDeps: { include: prebundle.map((dep) => `docsivi > ${dep}`) },
       server: {
         fs: { allow: [searchForWorkspaceRoot(cwd), cwd, ...(linked ? [linked] : [])] },
       },
