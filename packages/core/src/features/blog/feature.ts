@@ -1,5 +1,5 @@
+import type { Feature } from "../../shared/feature.ts";
 import { getMessages } from "../../shared/messages.ts";
-import type { Feature } from "../types.ts";
 import { localized } from "./labels.ts";
 
 export const blog: Feature = {

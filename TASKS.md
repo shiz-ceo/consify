@@ -432,8 +432,9 @@
 
 ### Реорганизация папок ядра (2026-09-24)
 `packages/core/src` разложен по фичам вместо слоёв:
-- `features/<имя>/` (docs, blog, api-reference, search, home, seo, site): маршруты, данные, UI, стили и при необходимости пререндер и sitemap одной фичи лежат вместе. Удалить фичу = удалить папку и строку в списке.
+- `features/<имя>/` (home, docs, api-reference, blog): разделы сайта, которые включаются конфигом: маршруты, данные, UI, стили и при необходимости пререндер и sitemap одной фичи лежат вместе. Удалить фичу = удалить папку и строку в списке.
 - `features/types.ts`, `features/index.ts`: дескриптор фичи `{id, dir, enabled, routes, nav}`. Список маршрутов, ссылок верхней навигации, пререндера (`features/prerender.ts`) и sitemap (`features/sitemap.ts`) собирается из фич, а не перечисляет их по имени.
+- `system/<имя>/` (site, search, seo): то, что нужно любому сайту независимо от конфига (редирект с `/` и 404, поиск, sitemap и robots). Описываются тем же `feature.ts`, но без пункта в навигации и без `enabled`; список в `system/index.ts`.
 - `shared/`: общее для всех фич (layout, ui, links, messages, versions, instance, router-хелперы).
 - `build/router`, `build/vite`: всё, что работает при сборке (scaffold, routes, prerender, plugin, root).
 - Остались на месте: `config/`, `plugins/`, `mdx/`, `theme/`, `index.ts`.

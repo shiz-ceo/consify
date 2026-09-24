@@ -10,7 +10,7 @@ import {
   useParams,
   useRouteError,
 } from "react-router";
-import { ServerSearchDialog, StaticSearchBridge } from "../../features/search/search-bridge.tsx";
+import { ServerSearchDialog, StaticSearchBridge } from "../../system/search/search-bridge.tsx";
 import { createTranslations } from "../../shared/layout/layout-options.tsx";
 import { themeToCss } from "../../theme/tokens.ts";
 import { NotFound } from "../../shared/layout/not-found-view.tsx";

@@ -1,4 +1,4 @@
-import type { PrerenderPaths } from "../types.ts";
+import type { PrerenderPaths } from "../../shared/feature.ts";
 import { publishedFiles, scanPosts } from "./scan.ts";
 
 /** Only published posts: a draft has no page, so it cannot be built by accident. */

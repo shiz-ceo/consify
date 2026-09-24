@@ -1,5 +1,5 @@
+import { sitemapSources } from "../../../features/sitemap.ts";
 import { absoluteUrl, docsivi } from "../../../shared/router.ts";
-import { sitemapSources } from "../../sitemap.ts";
 
 const escape = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

@@ -1,6 +1,6 @@
+import type { Feature } from "../../shared/feature.ts";
 import { getMessages } from "../../shared/messages.ts";
 import { defaultDocsPath } from "../../shared/versions.ts";
-import type { Feature } from "../types.ts";
 
 export const docs: Feature = {
   id: "docs",

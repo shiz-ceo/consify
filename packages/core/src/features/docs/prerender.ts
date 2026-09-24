@@ -1,6 +1,6 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import type { PrerenderPaths } from "../types.ts";
+import type { PrerenderPaths } from "../../shared/feature.ts";
 import { collectSlugs } from "./slugs.ts";
 
 function listFiles(dir: string): string[] {

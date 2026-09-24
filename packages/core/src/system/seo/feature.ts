@@ -1,4 +1,4 @@
-import type { Feature } from "../types.ts";
+import type { Feature } from "../../shared/feature.ts";
 
 export const seo: Feature = {
   id: "seo",

@@ -1,4 +1,4 @@
-import type { Feature } from "../types.ts";
+import type { Feature } from "../../shared/feature.ts";
 
 /** The parts of the site that belong to no page: the language redirect and the 404 page. */
 export const site: Feature = {
