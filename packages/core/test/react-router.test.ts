@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { collectSlugs, prerenderPaths } from "../src/build/router/prerender.ts";
+import { appDirectory, generatedDir, scaffold } from "../src/build/router/scaffold.ts";
 import { defineConfig } from "../src/config/index.ts";
-import { componentsFromGlob } from "../src/instance.ts";
-import { collectSlugs, prerenderPaths } from "../src/react-router/prerender.ts";
-import { appDirectory, generatedDir, scaffold } from "../src/react-router/scaffold.ts";
+import { componentsFromGlob } from "../src/shared/instance.ts";
 
 let cwd: string;
 beforeEach(() => {

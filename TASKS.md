@@ -429,3 +429,14 @@
 - MDX-компоненты ядра: Authors, Expand, PR, Benchmark, Figure, Embed, CTA.
 - Демо: 5 постов (один с переводом), черновик и отложенный пост для проверки утечек. Тесты: 73 проходят.
 - Не сделано: docs-страница «как писать посты», проверка статичного режима в браузере, реальные PNG-обложки (в демо SVG).
+
+### Реорганизация папок ядра (2026-09-24)
+`packages/core/src` разложен по фичам вместо слоёв:
+- `features/<имя>/` (docs, blog, api-reference, search, home, seo, site): маршруты, данные, UI, стили и при необходимости пререндер и sitemap одной фичи лежат вместе. Удалить фичу = удалить папку и строку в списке.
+- `features/types.ts`, `features/index.ts`: дескриптор фичи `{id, dir, enabled, routes, nav}`. Список маршрутов, ссылок верхней навигации, пререндера (`features/prerender.ts`) и sitemap (`features/sitemap.ts`) собирается из фич, а не перечисляет их по имени.
+- `shared/`: общее для всех фич (layout, ui, links, messages, versions, instance, router-хелперы).
+- `build/router`, `build/vite`: всё, что работает при сборке (scaffold, routes, prerender, plugin, root).
+- Остались на месте: `config/`, `plugins/`, `mdx/`, `theme/`, `index.ts`.
+- Публичные имена в `exports` пакета не менялись, только пути внутри. Формат проекта пользователя тот же.
+- Как добавить фичу: папка с `feature.ts`, строка в `features/index.ts` (и в `prerender.ts` / `sitemap.ts`, если есть что пререндерить или добавить в sitemap).
+- Проверено: `bun run check` (73 теста), сборка демо (80 html) и стартера, dev.

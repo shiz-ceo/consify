@@ -5,15 +5,15 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./vite": "./src/vite/index.ts",
-    "./react-router": "./src/react-router/config.ts",
-    "./react-router/routes": "./src/react-router/routes.ts",
-    "./react-router/root": "./src/react-router/root.tsx",
-    "./components": "./src/components/index.ts",
+    "./vite": "./src/build/vite/index.ts",
+    "./react-router": "./src/build/router/config.ts",
+    "./react-router/routes": "./src/build/router/routes.ts",
+    "./react-router/root": "./src/build/router/root.tsx",
+    "./components": "./src/shared/ui/index.ts",
     "./plugins": "./src/plugins/index.ts",
     "./theme.css": "./src/theme/theme.css",
     "./package.json": "./package.json",
-    "./react-router/instance": "./src/react-router/instance.d.ts"
+    "./react-router/instance": "./src/build/router/instance.d.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

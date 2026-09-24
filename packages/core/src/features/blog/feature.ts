@@ -1,0 +1,22 @@
+import { getMessages } from "../../shared/messages.ts";
+import type { Feature } from "../types.ts";
+import { localized } from "./labels.ts";
+
+export const blog: Feature = {
+  id: "blog",
+  dir: import.meta.url,
+  enabled: (config) => config.blog !== undefined,
+  routes: () => [
+    { path: ":lang/blog", file: "routes/blog.tsx" },
+    { path: ":lang/blog/rss.xml", file: "routes/blog-feed.ts" },
+    { path: ":lang/blog/:slug/og.png", file: "routes/blog-og.tsx" },
+    { path: ":lang/blog/*", file: "routes/blog-post.tsx" },
+  ],
+  nav: (config, lang) =>
+    config.blog
+      ? {
+          text: localized(config, lang, config.blog.title) ?? getMessages(config, lang).blog,
+          url: `/${lang}/blog`,
+        }
+      : undefined,
+};

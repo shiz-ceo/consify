@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { removals, stripScalarCredit } from "../src/vite/scalar-credit.ts";
+import { removals, stripScalarCredit } from "../src/features/api-reference/scalar-credit.ts";
 
 const [apiReference, footer] = removals as [(typeof removals)[number], (typeof removals)[number]];
 

@@ -1,8 +1,8 @@
 import type { ComponentType } from "react";
 import { z } from "zod";
-import { idPattern } from "../blog/schema.ts";
-import { messageKeys } from "../messages.ts";
+import { idPattern } from "../features/blog/schema.ts";
 import type { DocsPlugin } from "../plugins/types.ts";
+import { messageKeys } from "../shared/messages.ts";
 
 /** BCP-47-like language tag: `en`, `ru`, `pt-BR`. */
 const languageCode = z

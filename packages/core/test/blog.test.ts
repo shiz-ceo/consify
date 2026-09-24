@@ -2,8 +2,9 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { buildRss } from "../src/blog/feed.ts";
-import { authorNames, categoryLabels, localized } from "../src/blog/labels.ts";
+import { defineConfig } from "../src/config/index.ts";
+import { buildRss } from "../src/features/blog/feed.ts";
+import { authorNames, categoryLabels, localized } from "../src/features/blog/labels.ts";
 import {
   type BlogPost,
   collectTags,
@@ -15,10 +16,14 @@ import {
   readingTime,
   relatedPosts,
   sortByDate,
-} from "../src/blog/posts.ts";
-import { checkPosts, publishedFiles, readFrontmatter, scanPosts } from "../src/blog/scan.ts";
-import { postFrontmatterSchema } from "../src/blog/schema.ts";
-import { defineConfig } from "../src/config/index.ts";
+} from "../src/features/blog/posts.ts";
+import {
+  checkPosts,
+  publishedFiles,
+  readFrontmatter,
+  scanPosts,
+} from "../src/features/blog/scan.ts";
+import { postFrontmatterSchema } from "../src/features/blog/schema.ts";
 
 const post = (slug: string, extra: Partial<BlogPost> = {}): BlogPost => ({
   slug,

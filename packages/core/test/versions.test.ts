@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { defineConfig } from "../src/config/index.ts";
-import { resolveHref } from "../src/links.ts";
-import { format, getMessages } from "../src/messages.ts";
-import { defaultDocsPath, deprecationOf, versionFromSlug } from "../src/versions.ts";
+import { resolveHref } from "../src/shared/links.ts";
+import { format, getMessages } from "../src/shared/messages.ts";
+import { defaultDocsPath, deprecationOf, versionFromSlug } from "../src/shared/versions.ts";
 
 const versioned = defineConfig({
   site: { name: "D" },
