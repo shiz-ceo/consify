@@ -9,6 +9,7 @@ import { type Plugin, type PluginOption, searchForWorkspaceRoot } from "vite";
 import type { DocsConfig } from "../config/index.ts";
 import { createMdxOptions } from "../mdx/options.ts";
 import { generatedDir, scaffold } from "../react-router/scaffold.ts";
+import { scalarCreditPlugin } from "./scalar-credit.ts";
 
 /**
  * Client dependencies of docsivi that Vite would otherwise discover one by one while the page
@@ -98,7 +99,11 @@ export function docsivi(config: Readonly<DocsConfig>): PluginOption[] {
       },
       // The package ships TypeScript sources, so Vite has to compile it instead of externalizing it.
       ssr: { noExternal: ["docsivi"] },
-      optimizeDeps: { include: prebundle.map((dep) => `docsivi > ${dep}`) },
+      optimizeDeps: {
+        include: prebundle.map((dep) => `docsivi > ${dep}`),
+        // the pre-bundling of dependencies (dev) is a separate build, it needs the plugin too
+        rolldownOptions: { plugins: [scalarCreditPlugin()] },
+      },
       server: {
         fs: { allow: [searchForWorkspaceRoot(cwd), cwd, ...(linked ? [linked] : [])] },
       },
@@ -109,6 +114,7 @@ export function docsivi(config: Readonly<DocsConfig>): PluginOption[] {
     fumadocsMdx({ globalOptions: { mdxOptions: createMdxOptions(config) } }),
     tailwindcss(),
     reactRouter(),
+    scalarCreditPlugin(),
     wiring,
   ];
 }
