@@ -1,6 +1,5 @@
-import { HomeLayout } from "fumadocs-ui/layouts/home";
 import { lazy, Suspense, useEffect, useState } from "react";
-import { baseOptions } from "../../layout-options.tsx";
+import { SiteLayout } from "../../site-layout.tsx";
 import { buildMeta, docsivi, requireLang } from "../shared.ts";
 
 const ScalarReference = lazy(() => import("../../components/scalar-reference.tsx"));
@@ -45,7 +44,7 @@ export default function ApiScalarRoute({
   useEffect(() => setMounted(true), []);
 
   return (
-    <HomeLayout {...baseOptions(docsivi, loaderData.lang)}>
+    <SiteLayout docsivi={docsivi} lang={loaderData.lang}>
       <div className="min-h-[70vh] flex-1">
         {mounted ? (
           <Suspense fallback={null}>
@@ -53,6 +52,6 @@ export default function ApiScalarRoute({
           </Suspense>
         ) : null}
       </div>
-    </HomeLayout>
+    </SiteLayout>
   );
 }

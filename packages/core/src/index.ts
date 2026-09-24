@@ -7,6 +7,7 @@ export {
   type Docsivi,
   type DocsPageData,
 } from "./instance.ts";
+export { resolveHref } from "./links.ts";
 export { format, getMessages, type MessageKey, type Messages } from "./messages.ts";
 export { type DocsPlugin, definePlugin } from "./plugins/index.ts";
 export { defaultDocsPath, deprecationOf, versionFromSlug } from "./versions.ts";

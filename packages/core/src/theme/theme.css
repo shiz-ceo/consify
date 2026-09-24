@@ -15,63 +15,68 @@
  * imported after this file.
  */
 @layer base {
+  /*
+   * Colors follow the Scalar API reference, so the docs and the API page look like one site.
+   * Light: #fff / #f6f6f6 / #e7e7e7 surfaces, #1b1b1b text, #dfdfdf lines.
+   * Dark:  #0f0f0f / #1a1a1a / #272727 surfaces, #e7e7e7 text, #2d2d2d lines.
+   */
   :root {
-    --radius: 0.625rem;
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    --radius: 0.5rem;
+    --background: #fff;
+    --foreground: #1b1b1b;
+    --card: #f6f6f6;
+    --card-foreground: #1b1b1b;
+    --popover: #fff;
+    --popover-foreground: #1b1b1b;
+    --primary: #000;
+    --primary-foreground: #fff;
+    --secondary: #f6f6f6;
+    --secondary-foreground: #1b1b1b;
+    --muted: #f6f6f6;
+    --muted-foreground: #757575;
+    --accent: #f6f6f6;
+    --accent-foreground: #1b1b1b;
     --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --border: #dfdfdf;
+    --input: #dfdfdf;
+    --ring: #8e8e8e;
+    --sidebar: #fff;
+    --sidebar-foreground: #1b1b1b;
+    --sidebar-primary: #000;
+    --sidebar-primary-foreground: #fff;
+    --sidebar-accent: #f6f6f6;
+    --sidebar-accent-foreground: #1b1b1b;
+    --sidebar-border: #dfdfdf;
+    --sidebar-ring: #8e8e8e;
   }
 
   .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
+    --background: #0f0f0f;
+    --foreground: #e7e7e7;
+    --card: #1a1a1a;
+    --card-foreground: #e7e7e7;
+    --popover: #1a1a1a;
+    --popover-foreground: #e7e7e7;
+    --primary: #fff;
+    --primary-foreground: #000;
+    --secondary: #1a1a1a;
+    --secondary-foreground: #e7e7e7;
+    --muted: #1a1a1a;
+    --muted-foreground: #a4a4a4;
+    --accent: #1a1a1a;
+    --accent-foreground: #e7e7e7;
     --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --border: #2d2d2d;
+    --input: #2d2d2d;
+    --ring: #797979;
+    --sidebar: #0f0f0f;
+    --sidebar-foreground: #e7e7e7;
+    --sidebar-primary: #fff;
+    --sidebar-primary-foreground: #000;
+    --sidebar-accent: #1a1a1a;
+    --sidebar-accent-foreground: #e7e7e7;
+    --sidebar-border: #2d2d2d;
+    --sidebar-ring: #797979;
   }
 
   body {

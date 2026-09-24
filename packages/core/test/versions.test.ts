@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { defineConfig } from "../src/config/index.ts";
+import { resolveHref } from "../src/links.ts";
 import { format, getMessages } from "../src/messages.ts";
 import { defaultDocsPath, deprecationOf, versionFromSlug } from "../src/versions.ts";
 
@@ -59,5 +60,16 @@ describe("messages", () => {
         i18n: { languages: ["en"], messages: { en: { nope: "x" } } },
       }),
     ).toThrow();
+  });
+});
+
+describe("resolveHref", () => {
+  test("prefixes the language, `/docs` opens the default version, external links stay", () => {
+    expect(resolveHref(versioned, "ru", "/docs")).toBe("/ru/docs/v2");
+    expect(resolveHref(plain, "en", "/docs")).toBe("/en/docs");
+    expect(resolveHref(versioned, "en", "/docs/v2/changelog")).toBe("/en/docs/v2/changelog");
+    expect(resolveHref(versioned, "en", "https://example.com/x")).toBe("https://example.com/x");
+    expect(resolveHref(versioned, "en", "//cdn.example.com")).toBe("//cdn.example.com");
+    expect(resolveHref(versioned, "en", "#top")).toBe("#top");
   });
 });

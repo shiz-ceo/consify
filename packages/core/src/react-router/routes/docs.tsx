@@ -1,13 +1,13 @@
 import { useFumadocsLoader } from "fumadocs-core/source/client";
 import { Callout } from "fumadocs-ui/components/callout";
-import { DocsLayout } from "fumadocs-ui/layouts/docs";
-import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/docs/page";
+import { DocsLayout } from "fumadocs-ui/layouts/notebook";
+import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/notebook/page";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { ComponentProps } from "react";
 import { use } from "react";
 import { redirect } from "react-router";
 import { getMDXComponents } from "../../components/mdx.tsx";
-import { baseOptions } from "../../layout-options.tsx";
+import { docsLayoutOptions } from "../../layout-options.tsx";
 import { format, getMessages } from "../../messages.ts";
 import { defaultDocsPath, deprecationOf } from "../../versions.ts";
 import { Redirecting } from "../redirecting.tsx";
@@ -152,7 +152,7 @@ function Content({ data }: { data: PageData }) {
 function View({ loaderData }: { loaderData: PageData }) {
   const { pageTree } = useFumadocsLoader(loaderData as never) as { pageTree: never };
   return (
-    <DocsLayout {...baseOptions(docsivi, loaderData.lang)} tree={pageTree}>
+    <DocsLayout {...docsLayoutOptions(docsivi, loaderData.lang)} tree={pageTree}>
       <Content data={loaderData} />
     </DocsLayout>
   );

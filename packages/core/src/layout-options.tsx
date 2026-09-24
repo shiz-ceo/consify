@@ -1,6 +1,7 @@
 import { uiTranslations } from "fumadocs-ui/i18n";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import type { Docsivi } from "./instance.ts";
+import { resolveHref } from "./links.ts";
 import { getMessages } from "./messages.ts";
 import { defaultDocsPath } from "./versions.ts";
 
@@ -29,9 +30,18 @@ export function baseOptions({ config }: Docsivi, lang: string): BaseLayoutProps 
       ...config.nav.map((item) => ({
         type: "main" as const,
         text: item.title,
-        url: item.url,
+        url: resolveHref(config, lang, item.url),
         ...(item.external ? { external: true } : {}),
       })),
     ],
   };
+}
+
+/**
+ * Options for the docs layout. The navigation is a bar on top of the page, the same as on the home
+ * and API pages, so the header does not change when a reader moves between them.
+ */
+export function docsLayoutOptions(docsivi: Docsivi, lang: string) {
+  const options = baseOptions(docsivi, lang);
+  return { ...options, nav: { ...options.nav, mode: "top" as const } };
 }

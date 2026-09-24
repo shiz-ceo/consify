@@ -1,19 +1,11 @@
-import { HomeLayout } from "fumadocs-ui/layouts/home";
 import { icons } from "lucide-react";
 import { Link } from "react-router";
 import type { DocsConfig } from "../../config/index.ts";
-import { baseOptions } from "../../layout-options.tsx";
-import { defaultDocsPath } from "../../versions.ts";
+import { resolveHref as resolve } from "../../links.ts";
+import { SiteLayout } from "../../site-layout.tsx";
 import { buildMeta, docsivi, requireLang } from "../shared.ts";
 
 type Home = NonNullable<DocsConfig["home"]>[string];
-
-/** `/docs` → default version, other `/x` → `/{lang}/x`, absolute URLs and anchors are kept. */
-function resolveHref(lang: string, href: string): string {
-  if (href === "/docs") return defaultDocsPath(docsivi.config, lang) ?? `/${lang}/docs`;
-  if (href.startsWith("/") && !href.startsWith("//")) return `/${lang}${href}`;
-  return href;
-}
 
 function Anchor({ to, ...props }: { to: string } & React.ComponentProps<"a">) {
   return /^(https?:)?\/\//.test(to) ? <a href={to} {...props} /> : <Link to={to} {...props} />;
@@ -35,12 +27,12 @@ export default function HomePage({ loaderData }: { loaderData: { lang: string } 
   const home: Home | undefined = config.home?.[lang] ?? config.home?.[config.i18n.defaultLanguage];
 
   return (
-    <HomeLayout {...baseOptions(docsivi, lang)}>
+    <SiteLayout docsivi={docsivi} lang={lang}>
       {!home ? (
         <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
           <h1 className="text-3xl font-bold">{config.site.name}</h1>
           {config.site.description ? <p>{config.site.description}</p> : null}
-          <Link className="font-semibold underline" to={resolveHref(lang, "/docs")}>
+          <Link className="font-semibold underline" to={resolve(docsivi.config, lang, "/docs")}>
             Documentation
           </Link>
         </main>
@@ -59,7 +51,7 @@ export default function HomePage({ loaderData }: { loaderData: { lang: string } 
               {home.hero.actions.map((action) => (
                 <Anchor
                   key={action.href + action.label}
-                  to={resolveHref(lang, action.href)}
+                  to={resolve(docsivi.config, lang, action.href)}
                   className={
                     action.variant === "primary"
                       ? "rounded-full bg-fd-primary px-5 py-2.5 text-sm font-medium text-fd-primary-foreground transition-opacity hover:opacity-90"
@@ -88,7 +80,7 @@ export default function HomePage({ loaderData }: { loaderData: { lang: string } 
                 return feature.href ? (
                   <Anchor
                     key={feature.title}
-                    to={resolveHref(lang, feature.href)}
+                    to={resolve(docsivi.config, lang, feature.href)}
                     className={`${className} transition-colors hover:bg-fd-accent`}
                   >
                     {body}
@@ -103,6 +95,6 @@ export default function HomePage({ loaderData }: { loaderData: { lang: string } 
           ) : null}
         </main>
       )}
-    </HomeLayout>
+    </SiteLayout>
   );
 }

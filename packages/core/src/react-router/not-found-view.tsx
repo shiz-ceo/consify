@@ -1,7 +1,6 @@
-import { HomeLayout } from "fumadocs-ui/layouts/home";
 import { Link } from "react-router";
-import { baseOptions } from "../layout-options.tsx";
 import { getMessages } from "../messages.ts";
+import { SiteLayout } from "../site-layout.tsx";
 import { defaultDocsPath } from "../versions.ts";
 import { docsivi } from "./shared.ts";
 
@@ -10,7 +9,7 @@ export function NotFound({ lang }: { lang?: string }) {
   const language = lang ?? docsivi.i18n.defaultLanguage;
   const messages = getMessages(docsivi.config, language);
   return (
-    <HomeLayout {...baseOptions(docsivi, language)}>
+    <SiteLayout docsivi={docsivi} lang={language}>
       <div className="flex flex-1 flex-col items-center justify-center p-4 text-center">
         <h1 className="mb-2 text-xl font-bold">404</h1>
         <p className="mb-4 text-fd-muted-foreground">{messages.notFound}</p>
@@ -21,6 +20,6 @@ export function NotFound({ lang }: { lang?: string }) {
           {messages.backToDocs}
         </Link>
       </div>
-    </HomeLayout>
+    </SiteLayout>
   );
 }
