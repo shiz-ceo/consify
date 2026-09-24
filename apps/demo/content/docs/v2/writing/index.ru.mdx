@@ -1,0 +1,44 @@
+---
+title: Обзор
+description: Как написаны страницы этого сайта
+---
+
+Каждая страница здесь — обычный файл `.mdx`: Markdown и React-компоненты там, где они нужны. Сайт собран на **docsivi**, фреймворке документации поверх Fumadocs.
+
+## Папка с содержимым
+
+<Files>
+  <Folder name="content/docs" defaultOpen>
+    <File name="meta.json" />
+    <Folder name="v2" defaultOpen>
+      <File name="meta.json" />
+      <File name="index.mdx" />
+      <File name="index.ru.mdx" />
+      <Folder name="concepts">
+        <File name="meta.json" />
+        <File name="jobs.mdx" />
+      </Folder>
+    </Folder>
+    <Folder name="v1" />
+  </Folder>
+</Files>
+
+- **Папка** — это раздел. Её `meta.json` задаёт заголовок, иконку и порядок страниц.
+- **Файл** — это страница. Её frontmatter задаёт `title`, `description` и `icon`.
+- `index.ru.mdx` — русская версия `index.mdx`. Непереведённые страницы открываются на английском.
+
+## Страница
+
+````mdx title="content/docs/v2/concepts/jobs.mdx"
+---
+title: Задачи
+description: Что такое задача
+icon: Package
+---
+
+Обычный **Markdown** работает, как и компоненты:
+
+<Callout type="info">Привет из выноски.</Callout>
+````
+
+Дальше: [встроенные компоненты](./components.mdx).

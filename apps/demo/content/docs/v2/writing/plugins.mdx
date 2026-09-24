@@ -1,0 +1,50 @@
+---
+title: Plugins
+description: Extend the Markdown pipeline and the code blocks
+---
+
+A plugin is one object. Every field is optional:
+
+```ts title="custom/plugins/my-plugin.ts"
+import { definePlugin } from "docsivi/plugins";
+
+export const myPlugin = definePlugin({
+  name: "my-plugin",
+  remark: [],     // Markdown → mdast
+  rehype: [],     // HTML tree
+  shiki: {        // code blocks
+    transformers: [],
+    langs: [],
+  },
+  components: {}, // MDX components
+});
+```
+
+Register it in `docs.config.ts`:
+
+```ts title="docs.config.ts"
+plugins: [myPlugin],
+```
+
+## Example: GitHub-style alerts
+
+This site uses a small remark plugin so that plain Markdown quotes turn into callouts:
+
+````md
+> [!WARNING]
+> This is written as a blockquote.
+````
+
+> [!WARNING]
+> This is written as a blockquote, and rendered as a callout.
+
+> [!TIP]
+> Other types: `NOTE`, `TIP`, `IMPORTANT`, `WARNING` and `CAUTION`.
+
+## Example: external links
+
+Another plugin opens absolute links in a new tab: [example.com](https://example.com).
+
+## Order
+
+Plugins run in the order they are listed, after the built-in behavior. A typo in a plugin field is reported when the site starts.

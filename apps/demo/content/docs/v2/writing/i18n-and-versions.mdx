@@ -1,0 +1,41 @@
+---
+title: Languages and versions
+description: Translate pages and keep several versions of the docs
+---
+
+## Languages
+
+List them in `docs.config.ts`:
+
+```ts
+i18n: {
+  defaultLanguage: "en",
+  languages: ["en", "ru"],
+  labels: { en: "English", ru: "Русский" },
+}
+```
+
+A translation is a sibling file with the language code: `jobs.mdx` and `jobs.ru.mdx`. A page with no translation is shown in the default language, so you can translate gradually. The same goes for `meta.json` and `meta.ru.json`.
+
+## Versions
+
+Every version is a folder marked as a root in its `meta.json`:
+
+```json title="content/docs/v2/meta.json"
+{ "title": "v2 (latest)", "root": "version" }
+```
+
+Then list them in the config:
+
+```ts
+versions: {
+  list: [
+    { id: "v2", label: "v2 (latest)", status: "latest" },
+    { id: "v1", label: "v1", status: "deprecated" },
+  ],
+}
+```
+
+- A **switcher** appears in the sidebar and keeps your place when a page exists in both versions.
+- A **deprecated** version shows a banner that points to the latest one. Open the [v1 docs](/en/docs/v1) to see it.
+- Versions and languages combine: `v1/guide.ru.mdx` is the Russian page of version 1.

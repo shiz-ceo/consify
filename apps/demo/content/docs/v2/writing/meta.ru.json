@@ -1,0 +1,14 @@
+{
+  "title": "Как писать документацию",
+  "icon": "PenLine",
+  "pages": [
+    "index",
+    "components",
+    "code-blocks",
+    "math-and-diagrams",
+    "custom-components",
+    "plugins",
+    "theming",
+    "i18n-and-versions"
+  ]
+}

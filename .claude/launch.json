@@ -1,0 +1,55 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "starter",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "--cwd",
+        "apps/starter",
+        "dev",
+        "--port",
+        "3100"
+      ],
+      "port": 3100
+    },
+    {
+      "name": "starter-static",
+      "runtimeExecutable": "bunx",
+      "runtimeArgs": [
+        "serve",
+        "apps/starter/out",
+        "-l",
+        "3200"
+      ],
+      "port": 3200
+    },
+    {
+      "name": "demo",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "--cwd",
+        "apps/demo",
+        "dev",
+        "--port",
+        "3300"
+      ],
+      "port": 3300
+    },
+    {
+      "name": "demo-prod",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "--cwd",
+        "apps/demo",
+        "start",
+        "--port",
+        "3400"
+      ],
+      "port": 3400
+    }
+  ]
+}

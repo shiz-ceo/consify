@@ -1,0 +1,20 @@
+---
+title: Errors
+description: Error codes raised by Lattice
+---
+
+Every error is a `LatticeError` with a stable `code`:
+
+| Code | Meaning | What to do |
+| ---- | ------- | ---------- |
+| `QUEUE_CLOSED` | You used a queue after closing it | Create a new queue |
+| `JOB_TIMEOUT` | A handler ran longer than its limit | Raise the limit or split the job |
+| `BACKEND_UNAVAILABLE` | The backend could not be reached | Retry; check network and credentials |
+
+```ts twoslash
+import { LatticeError } from "lattice";
+
+function isTimeout(error: unknown) {
+  return error instanceof LatticeError && error.code === "JOB_TIMEOUT";
+}
+```

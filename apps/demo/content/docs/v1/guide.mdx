@@ -1,0 +1,15 @@
+---
+title: Guide
+description: Queues and workers in v1
+icon: BookOpen
+---
+
+## Attempts
+
+`attempts` is the **total** number of tries, including the first one:
+
+```ts
+await queue.add(data, { attempts: 3 });
+```
+
+In v2 this option is called `retries` and counts only the retries. See [Migrating from v1](/en/docs/v2/migration).

@@ -1,0 +1,45 @@
+---
+title: Math and diagrams
+description: KaTeX formulas and Mermaid diagrams
+---
+
+## Math
+
+Inline math sits in a sentence: the sum of the first $n$ numbers is $\frac{n(n+1)}{2}$.
+
+Display math gets its own line:
+
+$$
+\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
+$$
+
+Formulas are rendered at build time with KaTeX, so there is no flash.
+
+## Diagrams
+
+Use a fenced `mermaid` block:
+
+```mermaid
+sequenceDiagram
+  participant P as Producer
+  participant Q as Queue
+  participant W as Worker
+  P->>Q: add(job)
+  Q-->>P: stored
+  W->>Q: take()
+  Q-->>W: job
+  W->>Q: complete(job)
+```
+
+```mermaid
+stateDiagram-v2
+  [*] --> waiting
+  waiting --> active: worker takes job
+  active --> completed: handler resolved
+  active --> waiting: handler threw, retries left
+  active --> failed: handler threw, no retries
+  completed --> [*]
+  failed --> [*]
+```
+
+Diagrams follow the light and dark theme.

@@ -1,0 +1,29 @@
+---
+title: Queues
+description: Named, typed containers for jobs
+---
+
+A queue has a **name** and a **data type**. Two queues with the same name in different processes talk to the same storage.
+
+```ts twoslash
+import { createQueue } from "lattice";
+
+const reports = createQueue<{ month: string }>("reports");
+
+const stats = await reports.stats();
+//    ^?
+```
+
+## Priorities
+
+Jobs with a higher `priority` are taken before older jobs with a lower one. Within one priority, jobs run in the order they were added.
+
+| Priority | Typical use |
+| -------- | ----------- |
+| `high`   | Password resets, payment webhooks |
+| `normal` | Most jobs |
+| `low`    | Reports, cleanups, backfills |
+
+## Naming
+
+Use `kebab-case` names that describe the *work*, not the code that does it: `send-email`, not `email-service`.

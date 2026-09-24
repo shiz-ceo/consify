@@ -1,0 +1,45 @@
+---
+title: Введение
+description: Что такое Lattice и когда его использовать
+icon: House
+---
+
+Lattice — **типизированная очередь задач** для TypeScript. Вы описываете данные задачи один раз, а компилятор проверяет каждого отправителя, воркер и обработчик.
+
+> [!NOTE]
+> Этот сайт — **демо** фреймворка документации docsivi. Lattice — вымышленная библиотека, но примеры кода настоящие: наведите курсор на любой идентификатор в блоке `twoslash`, и увидите типы, проверенные компилятором TypeScript.
+
+## Почему Lattice
+
+<Cards>
+  <Card title="Типы от начала до конца" description="Тип задачи проходит от места, где её добавляют, до воркера, который её обрабатывает." />
+  <Card title="Повторы и backoff" description="Упавшие задачи повторяются с экспоненциальной задержкой, а окончательные сбои попадают в очередь недоставленных." />
+  <Card title="Сменные бэкенды" description="Память для тестов, Redis или Postgres для продакшена, либо ваш собственный бэкенд." />
+</Cards>
+
+## Первый взгляд
+
+```ts twoslash
+import { createQueue, createWorker } from "lattice";
+
+interface EmailJob {
+  to: string;
+  template: "welcome" | "invoice";
+}
+
+const emails = createQueue<EmailJob>("emails");
+//    ^?
+
+await emails.add({ to: "ada@example.com", template: "welcome" });
+
+createWorker(emails, async (job) => {
+  console.log(`Отправляем ${job.data.template} на ${job.data.to}`);
+});
+```
+
+## Что дальше
+
+- Впервые здесь? Пройдите [быстрый старт](./quickstart.mdx).
+- Нужна общая картина? Прочитайте [основные понятия](./concepts/index.mdx).
+- Ищете конкретную функцию? Откройте [справочник API](./api/index.mdx).
+- Интересно, как написан этот сайт? Смотрите [как писать документацию](./writing/index.mdx).

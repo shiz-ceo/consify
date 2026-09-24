@@ -1,0 +1,36 @@
+---
+title: Jobs
+description: What a job is and how its type is checked
+---
+
+A job is the data you pass to `queue.add`, wrapped with an id and bookkeeping.
+
+```ts twoslash
+import type { Job } from "lattice";
+
+declare const job: Job<{ userId: string }>;
+
+job.data.userId;
+//   ^?
+job.attempts;
+//  ^?
+```
+
+## Options
+
+Options change how the job is scheduled and retried:
+
+<TypeTable
+  type={{
+    retries: { description: "How many times a failed job is retried.", type: "number", default: "3" },
+    delay: { description: "Milliseconds before the job becomes available.", type: "number" },
+    priority: { description: "Higher priority jobs are taken first.", type: '"low" | "normal" | "high"', default: '"normal"' },
+  }}
+/>
+
+## Identity
+
+Every job gets a unique `id`. To make a job **idempotent**, derive the id from your own data so that adding the same job twice keeps only one copy.
+
+> [!IMPORTANT]
+> Job data must be serializable. Functions, class instances and circular structures cannot be stored by persistent backends.

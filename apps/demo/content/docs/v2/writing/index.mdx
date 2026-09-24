@@ -1,0 +1,56 @@
+---
+title: Overview
+description: How the pages of this site are written
+---
+
+Every page here is a plain `.mdx` file: Markdown, plus React components where you need them. The site is built with **docsivi**, a documentation framework on top of Fumadocs.
+
+## The content folder
+
+<Files>
+  <Folder name="content/docs" defaultOpen>
+    <File name="meta.json" />
+    <Folder name="v2" defaultOpen>
+      <File name="meta.json" />
+      <File name="index.mdx" />
+      <File name="index.ru.mdx" />
+      <Folder name="concepts">
+        <File name="meta.json" />
+        <File name="jobs.mdx" />
+      </Folder>
+    </Folder>
+    <Folder name="v1" />
+  </Folder>
+</Files>
+
+- A **folder** is a section. Its `meta.json` sets the title, icon and page order.
+- A **file** is a page. Its frontmatter sets `title`, `description` and `icon`.
+- `index.ru.mdx` is the Russian version of `index.mdx`. Untranslated pages fall back to English.
+
+## A page
+
+````mdx title="content/docs/v2/concepts/jobs.mdx"
+---
+title: Jobs
+description: What a job is
+icon: Package
+---
+
+Regular **Markdown** works, and so do components:
+
+<Callout type="info">Hello from a callout.</Callout>
+````
+
+## `meta.json`
+
+```json title="meta.json"
+{
+  "title": "Guides",
+  "icon": "Compass",
+  "pages": ["scheduling", "retries", "---Advanced---", "advanced"]
+}
+```
+
+`"---Advanced---"` renders a separator with a label. Any [Lucide](https://lucide.dev/icons) icon name works in `icon`.
+
+Next: the [built-in components](./components.mdx).

@@ -1,0 +1,69 @@
+---
+title: Быстрый старт
+description: Отправьте и обработайте первую задачу за пять минут
+icon: Rocket
+---
+
+<Steps>
+<Step>
+
+### Опишите задачу
+
+Аргумент типа — это контракт между отправителем и воркером.
+
+```ts twoslash title="queue.ts"
+import { createQueue } from "lattice";
+
+export interface ResizeImage {
+  url: string;
+  width: number;
+}
+
+export const images = createQueue<ResizeImage>("images");
+```
+
+</Step>
+<Step>
+
+### Добавьте задачу
+
+`add` завершается, когда задача сохранена. Данные неверной формы — это ошибка компиляции, а не сюрприз во время работы:
+
+```ts twoslash
+import { createQueue } from "lattice";
+interface ResizeImage { url: string; width: number }
+const images = createQueue<ResizeImage>("images");
+// ---cut---
+await images.add({ url: "https://example.com/a.png", width: 640 });
+
+// @errors: 2353
+await images.add({ url: "https://example.com/a.png", height: 480 });
+```
+
+</Step>
+<Step>
+
+### Обработайте её
+
+```ts twoslash title="worker.ts"
+import { createQueue, createWorker } from "lattice";
+interface ResizeImage { url: string; width: number }
+const images = createQueue<ResizeImage>("images");
+// ---cut---
+const worker = createWorker(
+  images,
+  async (job) => {
+    console.log(`Меняем размер ${job.data.url} до ${job.data.width}px`);
+  },
+  { concurrency: 4 },
+);
+
+process.on("SIGTERM", () => worker.close());
+```
+
+</Step>
+</Steps>
+
+<Counter />
+
+Вот и весь цикл. Прочитайте [основные понятия](./concepts/index.mdx), чтобы понять, как связаны задачи, очереди и воркеры.

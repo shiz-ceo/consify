@@ -1,0 +1,31 @@
+---
+title: Workers
+description: Processing jobs with concurrency and graceful shutdown
+---
+
+A worker takes jobs from a queue and calls your handler.
+
+```ts twoslash
+import { createQueue, createWorker } from "lattice";
+
+const jobs = createQueue<{ id: number }>("demo");
+
+const worker = createWorker(jobs, async (job) => {
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  console.log("done", job.data.id);
+}, { concurrency: 2 });
+```
+
+## Frequently asked
+
+<Accordions type="single">
+  <Accordion title="What happens if my handler throws?">
+    The job is retried according to its `retries` option. After the last attempt it moves to the dead-letter queue.
+  </Accordion>
+  <Accordion title="How do I stop a worker safely?">
+    Call `worker.close()`. It stops taking new jobs and resolves after active jobs finish.
+  </Accordion>
+  <Accordion title="Can one process run several workers?">
+    Yes. Each worker has its own concurrency limit, so you can give slow queues fewer slots.
+  </Accordion>
+</Accordions>

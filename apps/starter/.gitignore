@@ -1,0 +1,5 @@
+node_modules
+.next
+.docsivi
+.source
+next-env.d.ts

@@ -1,0 +1,95 @@
+---
+title: Code blocks
+description: Titles, highlighting, diffs and compiler-checked types
+---
+
+## Title and highlighted lines
+
+````mdx
+```ts title="server.ts" {2,4-5}
+````
+
+```ts title="server.ts" {2,4-5}
+import { createQueue } from "lattice";
+const emails = createQueue<{ to: string }>("emails");
+
+await emails.add({ to: "ada@example.com" });
+await emails.add({ to: "grace@example.com" });
+```
+
+## Highlight and diff markers
+
+Use comments at the end of a line:
+
+```ts
+const retries = 3; // [!code highlight]
+const backoff = "linear"; // [!code --]
+const backoff = "exponential"; // [!code ++]
+```
+
+## Tabs per variant
+
+```ts tab="Producer"
+await queue.add({ to: "ada@example.com" });
+```
+
+```ts tab="Worker"
+createWorker(queue, async (job) => {
+  console.log(job.data.to);
+});
+```
+
+## Line numbers
+
+```ts lineNumbers
+function fibonacci(n: number): number {
+  return n < 2 ? n : fibonacci(n - 1) + fibonacci(n - 2);
+}
+```
+
+## Twoslash: types that are checked
+
+Add `twoslash` after the language and the block is compiled. Hover any identifier below.
+
+```ts twoslash
+import { createQueue, type Job } from "lattice";
+
+const queue = createQueue<{ path: string }>("files");
+
+async function handle(job: Job<{ path: string }>) {
+  return job.data.path.toUpperCase();
+}
+```
+
+### Print a type with `^?`
+
+```ts twoslash
+import { createQueue } from "lattice";
+
+const stats = await createQueue<number>("n").stats();
+//    ^?
+```
+
+### Expected errors with `@errors`
+
+```ts twoslash
+import { createQueue } from "lattice";
+const q = createQueue<{ id: number }>("ids");
+// @errors: 2322
+await q.add({ id: "not a number" });
+```
+
+### Hide setup with `---cut---`
+
+Everything above the marker is compiled but not shown.
+
+```ts twoslash
+import { createQueue } from "lattice";
+const q = createQueue<{ id: number }>("ids");
+// ---cut---
+const job = await q.add({ id: 1 });
+//    ^?
+```
+
+> [!TIP]
+> Blocks **without** `twoslash` are only highlighted and cost nothing at build time. Use Twoslash where the types are the point.

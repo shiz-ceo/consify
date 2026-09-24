@@ -1,0 +1,21 @@
+---
+title: Introduction
+description: Lattice v1
+icon: House
+---
+
+Lattice v1 is the untyped predecessor of the current version. Jobs are plain objects and queues are created with `new Queue(name)`.
+
+```ts
+import { Queue, Worker } from "lattice";
+
+const queue = new Queue("emails");
+await queue.add({ to: "ada@example.com" });
+
+new Worker("emails", async (job) => {
+  console.log(job.data.to);
+});
+```
+
+> [!WARNING]
+> v1 no longer receives fixes. Follow the [migration guide](/en/docs/v2/migration) to upgrade.

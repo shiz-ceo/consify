@@ -1,0 +1,52 @@
+{
+  "name": "docsivi",
+  "version": "0.0.0",
+  "description": "Customizable documentation site foundation built on Fumadocs",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./next": "./src/next/index.ts",
+    "./next-config": "./src/next/config.ts",
+    "./components": "./src/components/index.ts",
+    "./theme.css": "./src/theme/theme.css",
+    "./source-config": "./src/source-config.ts",
+    "./plugins": "./src/plugins/index.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "fumadocs-core": "16.15.13",
+    "fumadocs-mdx": "15.4.3",
+    "fumadocs-twoslash": "4.0.1",
+    "fumadocs-ui": "16.15.13",
+    "geist": "1.7.2",
+    "katex": "0.18.9",
+    "lucide-react": "1.47.0",
+    "mermaid": "12.0.0",
+    "next-themes": "0.4.6",
+    "rehype-katex": "7.0.1",
+    "remark-math": "6.0.0",
+    "shiki": "4.4.3",
+    "tailwindcss": "4.3.3",
+    "unified": "11.0.5",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/katex": "0.16.8",
+    "@types/mdx": "2.0.14",
+    "@types/node": "24",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "next": "16.3.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "peerDependencies": {
+    "next": "^16.3.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  }
+}

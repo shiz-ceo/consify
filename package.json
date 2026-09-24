@@ -1,0 +1,23 @@
+{
+  "name": "docsivi-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "apps/demo/lattice"
+  ],
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "bun run --filter '*' typecheck",
+    "check": "bun run lint && bun run typecheck && bun test",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "demo": "bun run --cwd apps/demo dev",
+    "starter": "bun run --cwd apps/starter dev"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "@types/bun": "^1.4.2",
+    "typescript": "^7.0.2"
+  }
+}

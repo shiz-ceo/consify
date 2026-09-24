@@ -1,0 +1,57 @@
+---
+title: Custom components
+description: Add your own React components to MDX
+---
+
+Drop a file into `custom/components/` and use it in any page. **No import, no registration.** The file name is the tag name, the default export is the component.
+
+<Files>
+  <Folder name="custom" defaultOpen>
+    <Folder name="components" defaultOpen>
+      <File name="ApiEndpoint.tsx" />
+      <File name="Since.tsx" />
+      <File name="Counter.tsx" />
+      <File name="Release.tsx" />
+    </Folder>
+  </Folder>
+</Files>
+
+## Examples used on this site
+
+### `ApiEndpoint`
+
+````mdx
+<ApiEndpoint method="POST" path="/v2/queues/{name}/jobs" />
+````
+
+<ApiEndpoint method="POST" path="/v2/queues/{name}/jobs" />
+
+### `Since`
+
+````mdx
+Recurring jobs <Since version="2.1" />
+````
+
+Recurring jobs <Since version="2.1" />
+
+### `Counter`, an interactive component
+
+Client components work too. Add `"use client"` at the top of the file.
+
+<Counter start={2} />
+
+## The component
+
+```tsx title="custom/components/Since.tsx"
+export default function Since({ version }: { version: string }) {
+  return <span className="rounded-full border px-2 py-0.5 text-xs">since {version}</span>;
+}
+```
+
+> [!WARNING]
+> Do not put a component inside a **heading**. Headings feed the table of contents, which is built outside the page and cannot see MDX components. Put the component in the text below the heading.
+
+> [!NOTE]
+> A custom component with the same name as a built-in one **replaces** it. That is how you restyle `Callout` or `Card` for your project.
+
+The registry is regenerated while the dev server runs, so a new file is available immediately.

@@ -1,0 +1,21 @@
+---
+title: Changelog
+description: Release notes
+icon: ScrollText
+---
+
+<Release version="2.2.0" date="2026-09-10">
+  - **Added** `worker.close()` timeout option.
+  - **Fixed** a race when two workers took the same delayed job.
+</Release>
+
+<Release version="2.1.0" date="2026-08-30">
+  - **Added** recurring jobs with `schedule()` <Since version="2.1" />.
+  - **Added** OpenTelemetry events.
+</Release>
+
+<Release version="2.0.0" date="2026-07-01">
+  - **Breaking** typed queues with `createQueue<Data>()`. See [Migrating from v1](./migration.mdx).
+  - **Breaking** `attempts` renamed to `retries`.
+  - **Added** the HTTP API.
+</Release>

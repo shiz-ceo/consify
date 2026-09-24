@@ -1,0 +1,5 @@
+{
+  "title": "Справочник API",
+  "icon": "Code",
+  "pages": ["index", "create-queue", "queue", "worker", "errors", "rest"]
+}

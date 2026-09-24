@@ -1,0 +1,5 @@
+/* Project styles. Imported after docsivi/theme.css, so they win over the core theme. */
+.custom-hello {
+  border-left: 3px solid var(--primary);
+  padding-left: 0.75rem;
+}

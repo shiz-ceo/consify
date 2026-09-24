@@ -1,0 +1,24 @@
+---
+title: HTTP API
+description: Add and inspect jobs over HTTP
+---
+
+Run `lattice serve` to expose the queue over HTTP. All bodies are JSON.
+
+<ApiEndpoint method="POST" path="/v2/queues/{name}/jobs" />
+
+Adds a job.
+
+<ApiEndpoint method="GET" path="/v2/queues/{name}/stats" />
+
+Returns `{ "waiting": 0, "active": 0, "failed": 0 }`.
+
+<ApiEndpoint method="DELETE" path="/v2/queues/{name}/jobs/{id}" />
+
+Removes a waiting job.
+
+```bash
+curl -X POST http://localhost:8080/v2/queues/emails/jobs \
+  -H "content-type: application/json" \
+  -d '{ "data": { "to": "ada@example.com" }, "options": { "priority": "high" } }'
+```

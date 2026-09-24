@@ -1,0 +1,43 @@
+---
+title: Migrating from v1
+description: What changed in v2 and how to update
+icon: ArrowRightLeft
+---
+
+<Callout type="warn" title="Breaking changes">
+  v2 changes how queues are created and how the type of a job is declared.
+</Callout>
+
+## Queues are created with a type argument
+
+```diff
+- const queue = new Queue("emails");
++ const queue = createQueue<{ to: string }>("emails");
+```
+
+## Workers take the queue
+
+```diff
+- new Worker("emails", handler);
++ createWorker(queue, handler);
+```
+
+## Options moved
+
+<TypeTable
+  type={{
+    attempts: { description: "Renamed to `retries`. It now counts retries, not total attempts.", type: "number" },
+    backoff: { description: "Removed. Backoff is always exponential with jitter.", type: "removed" },
+  }}
+/>
+
+## Steps
+
+<Steps>
+<Step>Update the package to `lattice@2`.</Step>
+<Step>Replace `new Queue` with `createQueue<T>`.</Step>
+<Step>Replace `new Worker` with `createWorker`.</Step>
+<Step>Rename `attempts` to `retries` and subtract one.</Step>
+</Steps>
+
+The old docs are still available as [v1](/en/docs/v1).

@@ -1,0 +1,26 @@
+---
+title: Testing
+description: Test jobs without a real backend
+---
+
+The in-memory backend runs jobs synchronously when you call `drain()`, so tests stay fast and deterministic.
+
+```ts title="email.test.ts"
+import { expect, test } from "bun:test";
+import { createQueue, createWorker } from "lattice";
+
+test("sends the welcome email", async () => {
+  const sent: string[] = [];
+  const queue = createQueue<{ to: string }>("emails");
+  createWorker(queue, async (job) => {
+    sent.push(job.data.to);
+  });
+
+  await queue.add({ to: "ada@example.com" });
+
+  expect(sent).toContain("ada@example.com");
+});
+```
+
+> [!NOTE]
+> Keep handlers small and side-effect free where you can: extract the logic into a function and test that directly.

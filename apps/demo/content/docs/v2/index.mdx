@@ -1,0 +1,45 @@
+---
+title: Introduction
+description: What Lattice is and when to use it
+icon: House
+---
+
+Lattice is a **typed job queue** for TypeScript. You describe the data of a job once, and the compiler checks every producer, worker and handler against it.
+
+> [!NOTE]
+> This site is a **demo** of the docsivi documentation framework. Lattice is a fictional library, but the code samples on these pages are real: hover any identifier in a `twoslash` block to see types checked by the TypeScript compiler.
+
+## Why Lattice
+
+<Cards>
+  <Card title="End-to-end types" description="A job type flows from the place that adds a job to the worker that processes it." />
+  <Card title="Retries and backoff" description="Failed jobs retry with exponential backoff, and permanent failures land in a dead-letter queue." />
+  <Card title="Pluggable backends" description="Memory for tests, Redis or Postgres for production, or your own backend." />
+</Cards>
+
+## A first look
+
+```ts twoslash
+import { createQueue, createWorker } from "lattice";
+
+interface EmailJob {
+  to: string;
+  template: "welcome" | "invoice";
+}
+
+const emails = createQueue<EmailJob>("emails");
+//    ^?
+
+await emails.add({ to: "ada@example.com", template: "welcome" });
+
+createWorker(emails, async (job) => {
+  console.log(`Sending ${job.data.template} to ${job.data.to}`);
+});
+```
+
+## Where to go next
+
+- New here? Follow the [Quickstart](./quickstart.mdx).
+- Want the mental model? Read [Core concepts](./concepts/index.mdx).
+- Looking for a specific function? Open the [API reference](./api/index.mdx).
+- Curious how this site is written? See [Writing docs](./writing/index.mdx).

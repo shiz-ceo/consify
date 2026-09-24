@@ -1,0 +1,34 @@
+---
+title: Observability
+description: Metrics, traces and logs
+---
+
+Lattice emits events you can turn into metrics or traces.
+
+| Event | Fired when |
+| ----- | ---------- |
+| `job:added` | A job is stored |
+| `job:started` | A worker takes a job |
+| `job:completed` | The handler resolved |
+| `job:failed` | The handler threw |
+
+## OpenTelemetry
+
+```ts title="telemetry.ts"
+import { trace } from "@opentelemetry/api";
+import { onEvent } from "lattice/events";
+
+const tracer = trace.getTracer("lattice");
+
+onEvent("job:started", (job) => {
+  tracer.startSpan(`job ${job.id}`).end();
+});
+```
+
+## What to alert on
+
+<Steps>
+<Step>Queue **age**: how long the oldest waiting job has been waiting.</Step>
+<Step>Failure **rate**: failed jobs divided by started jobs.</Step>
+<Step>Dead-letter **size**: it should stay near zero.</Step>
+</Steps>
