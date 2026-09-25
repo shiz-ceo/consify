@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { type CSSProperties, lazy, Suspense, useEffect, useRef, useState } from "react";
+import { CompactFooter } from "../../../shared/layout/site-footer.tsx";
 import { SiteLayout } from "../../../shared/layout/site-layout.tsx";
 import { buildMeta, docsivi, requireLang } from "../../../shared/router.ts";
 
@@ -43,13 +44,38 @@ export default function ApiScalarRoute({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  // The footer overlaps the bottom of Scalar's content, which is padded by the footer's height
+  // (`scalar.css`), so that the sidebar of Scalar keeps going down beside the footer.
+  const footerRef = useRef<HTMLDivElement>(null);
+  const [footerHeight, setFooterHeight] = useState(0);
+  useEffect(() => {
+    const node = footerRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver(() => setFooterHeight(node.offsetHeight));
+    observer.observe(node);
+    setFooterHeight(node.offsetHeight);
+    return () => observer.disconnect();
+  }, [mounted]);
+
   return (
-    <SiteLayout docsivi={docsivi} lang={loaderData.lang} sidebarToggle>
-      <div className="min-h-[70vh] flex-1">
+    <SiteLayout docsivi={docsivi} lang={loaderData.lang} sidebarToggle footer={false}>
+      <div
+        className="docsivi-api flex flex-1 flex-col"
+        style={{ "--docsivi-footer-h": `${footerHeight}px` } as CSSProperties}
+      >
+        <div className="min-h-[70vh] flex-1">
+          {mounted ? (
+            <Suspense fallback={null}>
+              <ScalarReference source={loaderData.source} />
+            </Suspense>
+          ) : null}
+        </div>
         {mounted ? (
-          <Suspense fallback={null}>
-            <ScalarReference source={loaderData.source} />
-          </Suspense>
+          <div ref={footerRef} className="docsivi-api-footer">
+            <div className="docsivi-api-footer-inner">
+              <CompactFooter docsivi={docsivi} lang={loaderData.lang} />
+            </div>
+          </div>
         ) : null}
       </div>
     </SiteLayout>

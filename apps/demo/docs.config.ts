@@ -41,6 +41,44 @@ export default defineConfig({
   // A separate API reference page (top navigation), generated from an OpenAPI schema
   openapi: { input: "./openapi.json", title: "API" },
 
+  footer: {
+    description: {
+      en: "A typed job queue for TypeScript. Documentation demo built with docsivi.",
+      ru: "Типизированная очередь задач для TypeScript. Демо документации на docsivi.",
+    },
+    columns: [
+      {
+        title: { en: "Product", ru: "Продукт" },
+        links: [
+          { title: { en: "Documentation", ru: "Документация" }, url: "/docs" },
+          { title: "API", url: "/api" },
+          { title: { en: "Blog", ru: "Блог" }, url: "/blog" },
+        ],
+      },
+      {
+        title: { en: "Resources", ru: "Ресурсы" },
+        links: [
+          { title: { en: "Quickstart", ru: "Быстрый старт" }, url: "/docs/v2/quickstart" },
+          { title: { en: "Changelog", ru: "Изменения" }, url: "/docs/v2/changelog" },
+          { title: "RSS", url: "/blog/rss.xml", external: true },
+        ],
+      },
+      {
+        title: { en: "Community", ru: "Сообщество" },
+        links: [
+          { title: "GitHub", url: "https://github.com/example/lattice" },
+          { title: "Discord", url: "https://discord.gg/example" },
+        ],
+      },
+    ],
+    social: [
+      { type: "github", url: "https://github.com/example/lattice" },
+      { type: "x", url: "https://x.com/example" },
+      { type: "discord", url: "https://discord.gg/example" },
+      { type: "rss", url: "/en/blog/rss.xml" },
+    ],
+  },
+
   // The blog is a page of the top navigation. The short changelog stays in the docs.
   blog: {
     description: "Releases, engineering notes and stories from the Lattice team.",

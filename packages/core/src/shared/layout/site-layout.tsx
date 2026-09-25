@@ -3,6 +3,7 @@ import { DocsLayout } from "fumadocs-ui/layouts/notebook";
 import type { ReactNode } from "react";
 import type { Docsivi } from "../instance.ts";
 import { docsLayoutOptions } from "./layout-options.tsx";
+import { SiteFooter } from "./site-footer.tsx";
 
 const noPages: PageTree.Root = { name: "", children: [] };
 
@@ -19,21 +20,27 @@ export function SiteLayout({
   docsivi,
   lang,
   sidebarToggle = false,
+  footer = true,
   children,
 }: {
   docsivi: Docsivi;
   lang: string;
   sidebarToggle?: boolean;
+  /** Whether to show the footer. Off for the API page: Scalar has its own full-height layout. */
+  footer?: boolean;
   children: ReactNode;
 }) {
   return (
-    <DocsLayout
-      {...docsLayoutOptions(docsivi, lang)}
-      tree={noPages}
-      sidebar={{ collapsible: sidebarToggle }}
-      containerProps={{ "data-site-layout": "" } as Record<string, string>}
-    >
-      <div className="flex min-w-0 flex-col [grid-area:main]">{children}</div>
-    </DocsLayout>
+    <>
+      <DocsLayout
+        {...docsLayoutOptions(docsivi, lang)}
+        tree={noPages}
+        sidebar={{ collapsible: sidebarToggle }}
+        containerProps={{ "data-site-layout": "" } as Record<string, string>}
+      >
+        <div className="flex min-w-0 flex-col [grid-area:main]">{children}</div>
+      </DocsLayout>
+      {footer ? <SiteFooter docsivi={docsivi} lang={lang} /> : null}
+    </>
   );
 }

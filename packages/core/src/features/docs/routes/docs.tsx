@@ -8,6 +8,7 @@ import { use } from "react";
 import { redirect } from "react-router";
 import { docsLayoutOptions } from "../../../shared/layout/layout-options.tsx";
 import { Redirecting } from "../../../shared/layout/redirecting.tsx";
+import { CompactFooter } from "../../../shared/layout/site-footer.tsx";
 import { format, getMessages } from "../../../shared/messages.ts";
 import { buildMeta, docsivi, isStatic, requireLang } from "../../../shared/router.ts";
 import { getMDXComponents } from "../../../shared/ui/mdx.tsx";
@@ -103,13 +104,15 @@ function Content({ data }: { data: PageData }) {
     return <Anchor href={href ? source.resolveHref(href, page as never) : href} {...props} />;
   }
 
+  const compactFooter = <CompactFooter docsivi={docsivi} lang={data.lang} editUrl={editUrl} />;
+
   return (
     <DocsPage
       toc={toc}
       full={entry.full}
       tableOfContent={{ enabled: config.features.toc }}
       breadcrumb={{ enabled: config.features.breadcrumbs }}
-      footer={{ enabled: config.features.pagination }}
+      footer={{ enabled: config.features.pagination, children: compactFooter }}
     >
       {deprecated ? (
         <Callout type="warn">
@@ -134,17 +137,8 @@ function Content({ data }: { data: PageData }) {
         <Body
           components={getMDXComponents(config, { a: RelativeLink }, docsivi.customComponents)}
         />
-        {editUrl ? (
-          <a
-            className="mt-8 inline-block text-sm text-fd-muted-foreground underline"
-            href={editUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {messages.editOnGithub}
-          </a>
-        ) : null}
       </DocsBody>
+      {config.features.pagination ? null : compactFooter}
     </DocsPage>
   );
 }

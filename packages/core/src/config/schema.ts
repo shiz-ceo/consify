@@ -188,6 +188,38 @@ const openapiSchema = z.strictObject({
 
 const localizedText = z.union([z.string().min(1), z.record(languageCode, z.string().min(1))]);
 
+export const socialTypes = [
+  "github",
+  "x",
+  "bluesky",
+  "linkedin",
+  "discord",
+  "youtube",
+  "rss",
+] as const;
+
+const footerLinkSchema = z.strictObject({
+  title: localizedText,
+  /** Like `nav`: `/docs` opens the docs, `/x` gets the language, absolute URLs are kept. */
+  url: z.string().min(1),
+  external: z.boolean().optional(),
+});
+
+const footerSchema = z.strictObject({
+  /** A short text under the name of the site. */
+  description: localizedText.optional(),
+  /** Columns of links. Without them the footer lists the sections of the site that are on. */
+  columns: z
+    .array(z.strictObject({ title: localizedText, links: z.array(footerLinkSchema).min(1) }))
+    .optional(),
+  /** Icons with links to the accounts of the project. */
+  social: z
+    .array(z.strictObject({ type: z.enum(socialTypes), url: z.string().min(1) }))
+    .default([]),
+  /** The line at the bottom. Defaults to `© {year} {site name}`. */
+  legal: localizedText.optional(),
+});
+
 const blogSchema = z
   .strictObject({
     /** Heading of the blog page. Defaults to the translated word "Blog". */
@@ -299,6 +331,8 @@ export const docsConfigSchema = z
     openapi: openapiSchema.optional(),
     /** A blog: articles in `content/blog`, a list with filters and search, an RSS feed. */
     blog: blogSchema.optional(),
+    /** The footer of every page. On by default (a column of the sections), `false` removes it. */
+    footer: z.union([z.literal(false), footerSchema]).optional(),
     deploy: deploySchema.prefault({}),
     /** Custom MDX components, keyed by the name used in `.mdx` files. */
     components: z.record(z.string(), z.unknown()).default({}),

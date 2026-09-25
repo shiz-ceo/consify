@@ -95,3 +95,41 @@
     transition: none !important;
   }
 }
+
+/*
+ * The footer under the API reference lines up with the sections of Scalar: it is pushed right by
+ * the width of Scalar's sidebar (and slides back when the sidebar is hidden) and has the same
+ * inset as the sections.
+ *
+ * It overlaps the bottom of Scalar's content: `main` is padded by the height of the footer and the
+ * footer is pulled up over that space. The sidebar of Scalar is sticky inside the same grid row,
+ * so it keeps going down to the very bottom of the page, next to the footer.
+ */
+.docsivi-api .references-rendered {
+  padding-bottom: var(--docsivi-footer-h, 0px);
+}
+
+.docsivi-api-footer {
+  position: relative;
+  z-index: 1;
+  margin-top: calc(var(--docsivi-footer-h, 0px) * -1);
+  transition: padding-left 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.docsivi-api-footer-inner {
+  padding-inline: 24px;
+}
+
+@media (min-width: 1000px) {
+  .docsivi-api-footer {
+    padding-left: 268px;
+  }
+
+  #nd-notebook-layout[data-sidebar-collapsed="true"] .docsivi-api-footer {
+    padding-left: 0;
+  }
+
+  .docsivi-api-footer-inner {
+    padding-inline: 60px;
+  }
+}

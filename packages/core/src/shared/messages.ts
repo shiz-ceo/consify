@@ -25,6 +25,8 @@ export const messageKeys = [
   "page",
   "rss",
   "postedBy",
+  "footerSections",
+  "footerRights",
 ] as const;
 export type MessageKey = (typeof messageKeys)[number];
 export type Messages = Record<MessageKey, string>;
@@ -56,6 +58,8 @@ const builtin: Record<string, Messages> = {
     page: "Page {page}",
     rss: "RSS feed",
     postedBy: "By",
+    footerSections: "Explore",
+    footerRights: "All rights reserved.",
   },
   ru: {
     documentation: "Документация",
@@ -81,6 +85,8 @@ const builtin: Record<string, Messages> = {
     page: "Страница {page}",
     rss: "RSS-лента",
     postedBy: "Автор",
+    footerSections: "Разделы",
+    footerRights: "Все права защищены.",
   },
 };
 

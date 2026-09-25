@@ -216,3 +216,34 @@ describe("openapi", () => {
     );
   });
 });
+
+describe("footer", () => {
+  test("is not set by default and can be turned off", () => {
+    expect(defineConfig(minimal).footer).toBeUndefined();
+    expect(defineConfig({ ...minimal, footer: false }).footer).toBe(false);
+  });
+
+  test("accepts columns, social icons and per-language texts", () => {
+    const config = defineConfig({
+      ...minimal,
+      footer: {
+        description: { en: "Hello" },
+        columns: [{ title: "Product", links: [{ title: { en: "Docs" }, url: "/docs" }] }],
+        social: [{ type: "github", url: "https://github.com/x/y" }],
+      },
+    });
+    expect(config.footer).toMatchObject({ social: [{ type: "github" }] });
+  });
+
+  test("rejects an unknown social network", () => {
+    expect(() =>
+      defineConfig({ ...minimal, footer: { social: [{ type: "myspace", url: "x" }] } } as never),
+    ).toThrow(DocsConfigError);
+  });
+
+  test("rejects a column without links", () => {
+    expect(() =>
+      defineConfig({ ...minimal, footer: { columns: [{ title: "Empty", links: [] }] } }),
+    ).toThrow(DocsConfigError);
+  });
+});
