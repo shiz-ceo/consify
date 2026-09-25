@@ -12,3 +12,4 @@ dist
 build
 .react-router
 .idea
+packages/create-consify/template

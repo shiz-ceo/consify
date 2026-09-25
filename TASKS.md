@@ -497,3 +497,33 @@
 ### Переименование docsivi → consify (2026-09-25)
 Переименовано везде: пакет `consify` (импорты `consify`, `consify/vite`, …), CLI `consify`, папка генерации `.consify/`, алиасы `consify:instance|blog|home`, переменные `CONSIFY_*`, CSS-классы и `data-consify-*`, плагины `consify:*`, типы (`Consify`, `createConsify`), скилл `skills/consify-docs`, названия workspace (`consify-demo`, `consify-docs`, `consify-starter`, `consify-monorepo`), пост `how-consify-was-made`, `bun.lock`. Проверено: `bun run check` (97 тестов), сборки demo, docs, starter, `docs:check`.
 - Осталось за пределами кода: переименовать папку проекта на диске и git remote, если имя репозитория меняется (в `site.github` сейчас `shiz-ceo/consify`); проверить, свободно ли имя `consify` в npm перед публикацией; `.idea` не трогал.
+
+### Подготовка к публикации (2026-09-25)
+Сделано (не закоммичено):
+- **Сборка ядра в JS (17.6):** `packages/core/scripts/build.ts` собирает `out/` (`dist/` с `.js` и `.d.ts`, стили, `bin`, README, LICENSE, `package.json` с `exports` на `dist`). В репозитории пакет по-прежнему работает из `src/`. Файлы маршрутов в `feature.ts` теперь без расширения (`resolveRouteFile` подбирает `.tsx`/`.ts`/`.js`), чтобы работать и из `src/`, и из `dist/`. `docsLayoutOptions` получил явный тип результата (иначе `.d.ts` не собирались).
+- **Проверка установки вне монорепозитория:** `bun run check:package`: сборка, `bun pm pack`, проект, созданный `create-consify`, установка tarball, `build` и `typecheck`. Проходит.
+- **Метаданные пакета:** `LICENSE` (MIT, держатель `Shiz-Ceo`; лицензию владелец не подтверждал), `license`, `repository`, `homepage`, `bugs`, `keywords`, `engines` (`node >=22`, не проверено на 22), `publishConfig`, README пакета, версия 0.1.0.
+- **`create-consify`** (`packages/create-consify`): вопросы (папка, имя, языки, менеджер, установка), флаги, шаблон из `apps/starter` + скилл, `package.json` с `consify ^0.1.0`. Шаблон собирается `bun run prepare:template` (в git не хранится). 9 тестов.
+- **Стартер:** страницы Welcome и A guide показывают компоненты (Callout, Cards, Steps, Tabs, TypeTable), код с подсветкой.
+- **CI и репозиторий:** `.github/workflows/ci.yml` (check, docs:check, сборки, check:package), `release.yml` (публикация по тегу `v*`, нужен секрет `NPM_TOKEN`), шаблоны issue и PR, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md` (в нём плейсхолдер `<contact email>`), `CHANGELOG.md` 0.1.0.
+- **tsconfig** приложений: `rootDirs` и `.react-router/types` в `include` (пропала красная ошибка в `+routes.ts`).
+
+Осталось / решить:
+- Уязвимости в транзитивных зависимостях (`bun audit`: 15, из них 5 high): `undici` (через `@scalar/json-magic`), `lodash-es` (Mermaid), `@ai-sdk/provider-utils` (Scalar). `bun audit fix` не помогает, нужно обновить `@scalar/api-reference-react` и `mermaid` и перепроверить удаление «Powered by Scalar» (`scalar-credit.ts` привязан к версии).
+- Подтвердить лицензию, имя пакета в npm и `<contact email>`; создать репозиторий и секрет `NPM_TOKEN`.
+- Не проверено: работа на npm/pnpm/yarn и Node 22 (по решению владельца отложено).
+
+Ещё сделано на этом этапе (не закоммичено):
+- **Блог без опубликованных постов в static:** маршруты постов и OG-картинок исключаются, если нет ни одного опубликованного поста (`route-list.ts`, `hasPublishedPosts`), иначе сборка падала с «invalid route exports».
+- **`fallback: hide` в static:** страница поста возвращает `redirectTo` и рисует `Redirecting` (как документация), а не бросает `redirect`.
+- **`header.hideSearchOn`:** теперь выключает и сам диалог поиска (`RootProvider search.enabled`), значит и сочетание Cmd/Ctrl+K. Разделы страниц заданы через `export const handle = { page }`, корень читает их через `useMatches`.
+- **`bun run check:build`:** проверяет результат сборки демо (страницы на обоих языках, SEO-теги, hreflang, canonical и `lang` откатной страницы, sitemap, RSS, нет утечек черновиков и отложенных постов). Входит в CI.
+- Проверено в браузере: на странице блога нет кнопки поиска, в документации поиск открывается.
+
+### Уязвимости зависимостей (2026-09-25)
+- `@scalar/api-reference-react` 0.9.72 → 0.9.74: это сняло `undici` (через `@scalar/json-magic`), 15 → 3 замечания.
+- Остались `lodash-es` (Mermaid: `chevrotain` закрепляет 4.17.23) и `@ai-sdk/provider-utils` (агент-чат Scalar, у нас выключен). Mermaid 12.0.0 уже последняя версия. Закрыто `overrides` в корневом `package.json` (`lodash-es` 4.18.1, `@ai-sdk/provider-utils` 4.0.33): `bun audit` = 0 замечаний.
+- Важно: `overrides` действуют только в этом репозитории. У пользователей пакета транзитивные `lodash-es` 4.17.23 и `provider-utils` 4.0.5 остаются, пока Mermaid и Scalar сами их не обновят (Mermaid разбирает текст диаграмм, который пишет автор документации, `provider-utils` не используется). Следить за обновлениями Mermaid и Scalar перед релизом.
+- Удаление «Powered by Scalar» после обновления проверено: плагин не предупреждает о несовпадении, на странице `/en/api` надписи нет (сайдбар, операции и наш футер на месте); осталась рабочая кнопка «Open API Client».
+
+Решения владельца (2026-09-25): лицензия MIT подтверждена; контакт в `CODE_OF_CONDUCT.md`: 132019318+shiz-ceo@users.noreply.github.com.

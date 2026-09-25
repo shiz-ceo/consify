@@ -1,7 +1,29 @@
 {
   "name": "consify",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Customizable documentation site foundation built on Fumadocs",
+  "license": "MIT",
+  "keywords": [
+    "documentation",
+    "docs",
+    "mdx",
+    "fumadocs",
+    "react-router",
+    "vite",
+    "i18n",
+    "blog",
+    "static-site"
+  ],
+  "author": "Shiz-Ceo",
+  "homepage": "https://github.com/shiz-ceo/consify#readme",
+  "bugs": {
+    "url": "https://github.com/shiz-ceo/consify/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiz-ceo/consify.git",
+    "directory": "packages/core"
+  },
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
@@ -17,7 +39,9 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "test": "bun test"
+    "test": "bun test",
+    "build": "bun run scripts/build.ts",
+    "check:package": "bun run scripts/check-package.ts"
   },
   "dependencies": {
     "@fontsource-variable/geist": "5.3.0",
@@ -25,7 +49,7 @@
     "@react-router/dev": "8.4.0",
     "@react-router/node": "8.4.0",
     "@react-router/serve": "8.4.0",
-    "@scalar/api-reference-react": "0.9.72",
+    "@scalar/api-reference-react": "0.9.74",
     "@tailwindcss/vite": "4.3.3",
     "fumadocs-core": "16.15.13",
     "fumadocs-mdx": "15.4.3",
@@ -64,5 +88,11 @@
   },
   "bin": {
     "consify": "./bin/consify"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

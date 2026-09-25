@@ -44,6 +44,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const matches = useMatches();
   const language =
     lang && consify.config.i18n.languages.includes(lang) ? lang : consify.i18n.defaultLanguage;
+  // sections without a search (`header.hideSearchOn`) have no search dialog and no shortcut either
+  const page = matches
+    .map((match) => (match.handle as { page?: string } | undefined)?.page)
+    .findLast((value) => value !== undefined);
+  const searchHidden =
+    page !== undefined && (consify.config.header?.hideSearchOn as string[] | undefined)?.includes(page);
   // a page shown without a translation is written in another language than the address says
   const contentLanguage = matches
     .map((match) => (match.loaderData as { contentLanguage?: string } | undefined)?.contentLanguage)
@@ -65,6 +71,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <RootProvider
           i18n={i18nProvider(translations, language)}
           search={{
+            enabled: !searchHidden,
             SearchDialog:
               consify.config.deploy.mode === "static" ? StaticSearchBridge : ServerSearchDialog,
           }}

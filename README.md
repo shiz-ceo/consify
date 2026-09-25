@@ -6,6 +6,7 @@ touching your content. See [TASKS.md](TASKS.md) for the plan and the log of deci
 
 ## Structure
 
+- `packages/create-consify`: the project generator (`bunx create-consify`).
 - `packages/core`: the `consify` package (config, plugins, components, theme, React Router adapter, Vite plugin, CLI).
 - `apps/docs`: the documentation of consify itself (English and Russian, versioned as `v0`, with a blog), built with consify.
 - `apps/starter`: the minimal template for a new docs site.

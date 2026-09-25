@@ -34,4 +34,4 @@ export {
 } from "./shared/slots.ts";
 export { defaultDocsPath, deprecationOf, versionFromSlug } from "./shared/versions.ts";
 
-export const version = "0.0.0";
+export const version = "0.1.0";

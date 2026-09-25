@@ -5,8 +5,8 @@ export const site: Feature = {
   id: "site",
   dir: import.meta.url,
   routes: ({ isStatic }) => [
-    { index: true, file: "routes/root-redirect.tsx" },
+    { index: true, file: "routes/root-redirect" },
     // In static mode a loader is only allowed on pre-rendered routes, so the 404 has none.
-    { path: "*", file: isStatic ? "routes/not-found-static.tsx" : "routes/not-found.tsx" },
+    { path: "*", file: isStatic ? "routes/not-found-static" : "routes/not-found" },
   ],
 };

@@ -1,4 +1,5 @@
 import { uiTranslations } from "fumadocs-ui/i18n";
+import type { DocsLayoutProps } from "fumadocs-ui/layouts/notebook";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import { enabledFeatures } from "../../features/index.ts";
 import type { PageId } from "../feature.ts";
@@ -84,7 +85,11 @@ export function baseOptions(consify: Consify, lang: string, page?: PageId): Base
  * Options for the docs layout. The navigation is a bar on top of the page, the same as on the home
  * and API pages, so the header does not change when a reader moves between them.
  */
-export function docsLayoutOptions(consify: Consify, lang: string, page?: PageId) {
+export function docsLayoutOptions(
+  consify: Consify,
+  lang: string,
+  page?: PageId,
+): Omit<DocsLayoutProps, "tree" | "children"> {
   const options = baseOptions(consify, lang, page);
   return { ...options, nav: { ...options.nav, mode: "top" as const } };
 }

@@ -1,0 +1,46 @@
+name: Release
+
+# Publishes `consify` and `create-consify` to npm when a tag like v0.1.0 is pushed.
+# Needs the secret NPM_TOKEN (an npm automation token).
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+      - name: The tag matches the version
+        run: |
+          version="$(node -p "require('./packages/core/package.json').version")"
+          test "v$version" = "${GITHUB_REF_NAME}" || { echo "tag ${GITHUB_REF_NAME} does not match version $version"; exit 1; }
+      - name: Build the packages
+        run: |
+          bun run build:core
+          bun run prepare:template
+      - name: Publish consify
+        run: npm publish --provenance --access public
+        working-directory: packages/core/out
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish create-consify
+        run: npm publish --provenance --access public
+        working-directory: packages/create-consify
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

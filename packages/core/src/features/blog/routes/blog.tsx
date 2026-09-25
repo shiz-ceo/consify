@@ -22,6 +22,9 @@ interface ListData {
 }
 
 /** `/{lang}/blog`: only published posts reach this loader, so nothing else can be sent to the browser. */
+/** The section of the site this page belongs to (see `header.hideSearchOn`). */
+export const handle = { page: "blog" };
+
 export async function loader({ params }: { params: Params }): Promise<ListData> {
   const lang = requireLang(params);
   const { config } = consify;

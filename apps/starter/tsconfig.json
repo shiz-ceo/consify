@@ -13,8 +13,9 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "noEmit": true
+    "noEmit": true,
+    "rootDirs": [".", "./.react-router/types"]
   },
-  "include": ["**/*.ts", "**/*.tsx", ".consify/**/*"],
+  "include": ["**/*.ts", "**/*.tsx", ".consify/**/*", ".react-router/types/**/*"],
   "exclude": ["node_modules", "build"]
 }

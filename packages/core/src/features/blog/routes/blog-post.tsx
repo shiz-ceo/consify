@@ -7,10 +7,11 @@ import { DocsBody } from "fumadocs-ui/layouts/notebook/page";
 import { type ComponentProps, use } from "react";
 import { Link, redirect } from "react-router";
 import { languageLabel } from "../../../shared/fallback.ts";
+import { Redirecting } from "../../../shared/layout/redirecting.tsx";
 import { SiteLayout } from "../../../shared/layout/site-layout.tsx";
 import { resolveHref } from "../../../shared/links.ts";
 import { format, getMessages } from "../../../shared/messages.ts";
-import { absoluteUrl, buildMeta, consify, requireLang } from "../../../shared/router.ts";
+import { absoluteUrl, buildMeta, consify, isStatic, requireLang } from "../../../shared/router.ts";
 import { getMDXComponents } from "../../../shared/ui/mdx.tsx";
 import { SiteLink } from "../../../shared/ui/site-link.tsx";
 import { categoryLabels } from "../labels.ts";
@@ -42,7 +43,12 @@ interface PostData {
   contentLanguage: string;
 }
 
-export async function loader({ params }: { params: Params }): Promise<PostData> {
+type LoaderData = PostData | { redirectTo: string };
+
+/** The section of the site this page belongs to (see `header.hideSearchOn`). */
+export const handle = { page: "blog" };
+
+export async function loader({ params }: { params: Params }): Promise<LoaderData> {
   const lang = requireLang(params);
   const { config } = consify;
   const segments = (params["*"] ?? "").split("/").filter(Boolean);
@@ -56,7 +62,9 @@ export async function loader({ params }: { params: Params }): Promise<PostData> 
   const isFallback = found.post.lang !== lang;
   if (isFallback && mode === "hide") {
     // untranslated posts are not shown: lead the reader to the original
-    throw redirect(`/${defaultLanguage}/blog/${found.post.slug}`);
+    const original = `/${defaultLanguage}/blog/${found.post.slug}`;
+    if (!isStatic) throw redirect(original);
+    return { redirectTo: original };
   }
   await found.entry.preload();
 
@@ -83,8 +91,8 @@ export async function loader({ params }: { params: Params }): Promise<PostData> 
   };
 }
 
-export function meta({ loaderData }: { loaderData?: PostData }) {
-  if (!loaderData) return [];
+export function meta({ loaderData }: { loaderData?: LoaderData }) {
+  if (!loaderData || "redirectTo" in loaderData) return [];
   const { lang, post, alternates, fallback } = loaderData;
   const tags = buildMeta({
     lang,
@@ -103,7 +111,12 @@ export function meta({ loaderData }: { loaderData?: PostData }) {
   return tags;
 }
 
-export default function BlogPostRoute({ loaderData }: { loaderData: PostData }) {
+export default function BlogPostRoute({ loaderData: data }: { loaderData: LoaderData }) {
+  if ("redirectTo" in data) return <Redirecting to={data.redirectTo} />;
+  return <BlogPostPage loaderData={data} />;
+}
+
+function BlogPostPage({ loaderData }: { loaderData: PostData }) {
   const {
     lang,
     post,

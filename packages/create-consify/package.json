@@ -1,0 +1,43 @@
+{
+  "name": "create-consify",
+  "version": "0.1.0",
+  "description": "Create a documentation site with consify",
+  "type": "module",
+  "license": "MIT",
+  "author": "Shiz-Ceo",
+  "keywords": [
+    "consify",
+    "create",
+    "scaffold",
+    "documentation"
+  ],
+  "homepage": "https://github.com/shiz-ceo/consify#readme",
+  "bugs": {
+    "url": "https://github.com/shiz-ceo/consify/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiz-ceo/consify.git",
+    "directory": "packages/create-consify"
+  },
+  "bin": {
+    "create-consify": "./bin/create-consify.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "template",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prepare-template": "bun run scripts/prepare-template.ts",
+    "test": "bun test"
+  }
+}

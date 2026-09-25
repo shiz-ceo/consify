@@ -26,6 +26,9 @@ type LoaderData =
   | { mode: "config"; lang: string }
   | { mode: "redirect"; lang: string; to: string };
 
+/** The section of the site this page belongs to (see `header.hideSearchOn`). */
+export const handle = { page: "home" };
+
 export async function loader({ params }: { params: Params }): Promise<LoaderData> {
   const lang = requireLang(params);
   const { config, slots } = consify;

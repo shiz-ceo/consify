@@ -6,10 +6,10 @@ export const docs: Feature = {
   id: "docs",
   dir: import.meta.url,
   routes: () => [
-    { path: ":lang/docs/*", file: "routes/docs.tsx" },
-    { path: ":lang/llms.txt", file: "routes/llms.ts" },
-    { path: ":lang/llms-full.txt", file: "routes/llms-full.ts" },
-    { path: ":lang/og/*", file: "routes/og.ts", when: (config) => config.features.og },
+    { path: ":lang/docs/*", file: "routes/docs" },
+    { path: ":lang/llms.txt", file: "routes/llms" },
+    { path: ":lang/llms-full.txt", file: "routes/llms-full" },
+    { path: ":lang/og/*", file: "routes/og", when: (config) => config.features.og },
   ],
   nav: (config, lang) => ({
     text: getMessages(config, lang).documentation,

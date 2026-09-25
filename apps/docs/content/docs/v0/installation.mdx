@@ -19,6 +19,22 @@ cd my-docs
 bun run dev
 ```
 
+The generator asks for the folder, the name of the site, the languages (the first is the main one) and the package manager, then installs the dependencies. It also adds the `consify-docs` skill for Claude to `.claude/skills/`. To skip the questions, pass the answers:
+
+```bash
+bunx create-consify@latest my-docs --name "My docs" --languages en,ru --pm bun --yes
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--name <text>` | Name of the site (default: the folder name) |
+| `--languages <list>` | Languages, the first is the main one (default: `en`) |
+| `--pm <bun\|npm\|pnpm\|yarn>` | Package manager (default: the one that ran the command) |
+| `--no-install` | Do not install dependencies |
+| `--no-skill` | Do not add the `consify-docs` skill |
+| `--git` | Run `git init` |
+| `-y`, `--yes` | Use the defaults, ask nothing |
+
 Open `http://localhost:5173`. Edit `content/docs/index.mdx` and the page updates.
 
 ## Add it to an existing project

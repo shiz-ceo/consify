@@ -1,9 +1,32 @@
 ---
 title: Welcome
 description: Your documentation starts here
+icon: BookOpen
 ---
 
-This is the consify starter. Edit `content/docs/index.mdx` to change this page and add more `.mdx` files next to it.
+This is your new documentation site. Edit `content/docs/index.mdx` to change this page, and add more
+`.mdx` files next to it: every file is a page, every folder is a section of the sidebar.
 
-> [!NOTE]
-> Put React components in `custom/components/` and use them in any page without importing them.
+<Callout type="info" title="Components need no import">
+  `Callout`, `Tabs`, `Steps`, `Cards`, `TypeTable` and more are available in every page.
+</Callout>
+
+## Next steps
+
+<Cards>
+  <Card title="Write a guide" description="See how a page with steps and code looks." href="/docs/guide" />
+  <Card title="Configure the site" description="Open docs.config.ts: languages, theme, blog, footer." />
+</Cards>
+
+## Add a page
+
+<Steps>
+<Step>Create `content/docs/my-page.mdx` with a `title` in its header.</Step>
+<Step>List it in `content/docs/meta.json` (or leave `pages` out to list everything).</Step>
+<Step>Save. The page appears in the sidebar at once.</Step>
+</Steps>
+
+## Your own components
+
+Put a React component in `custom/components/`, for example `Since.tsx`, and use `<Since />` in any
+page. The file name is the tag, and there is nothing to register.

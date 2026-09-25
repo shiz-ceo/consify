@@ -64,6 +64,11 @@ export function publishedFiles(posts: readonly PostFile[], now: Date = new Date(
   return posts.filter((p) => isPublished(p.frontmatter, now));
 }
 
+/** Whether there is at least one post that would be published now. */
+export function hasPublishedPosts(cwd: string, languages: readonly string[]): boolean {
+  return publishedFiles(scanPosts(cwd, languages)).length > 0;
+}
+
 /**
  * Checks the categories and authors that posts use against `docs.config.ts`. Returns the problems
  * (empty when all is well); the build stops on them.

@@ -5,7 +5,7 @@ export type PageId = "home" | "docs" | "api-reference" | "blog";
 
 export type FeatureConfig = Readonly<DocsConfig>;
 
-/** A route of a feature. `file` is relative to the feature folder. */
+/** A route of a feature. `file` is relative to the feature folder, written without an extension. */
 export interface RouteSpec {
   /** URL pattern in React Router syntax. Omitted for the index route. */
   path?: string;

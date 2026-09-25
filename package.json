@@ -9,7 +9,7 @@
   "scripts": {
     "test": "bun test",
     "typecheck": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --filter '*' typecheck",
-    "check": "bun run lint && bun run typecheck && bun test",
+    "check": "bun run lint && bun run typecheck && bun run prepare:template && bun test",
     "lint": "biome check .",
     "format": "biome check --write .",
     "demo": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/demo dev --port 3300",
@@ -19,11 +19,19 @@
     "docs": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/docs dev --port 3500",
     "build:docs": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/docs build",
     "start:docs": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/docs start",
-    "docs:check": "bun run skills/consify-docs/scripts/check-docs.ts --root apps/docs --languages en,ru --strict"
+    "docs:check": "bun run skills/consify-docs/scripts/check-docs.ts --root apps/docs --languages en,ru --strict",
+    "build:core": "bun run --cwd packages/core build",
+    "check:package": "bun run --cwd packages/core check:package",
+    "prepare:template": "bun run --cwd packages/create-consify prepare-template",
+    "check:build": "bun run scripts/check-build.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
     "@types/bun": "^1.4.2",
     "typescript": "^7.0.2"
+  },
+  "overrides": {
+    "lodash-es": "4.18.1",
+    "@ai-sdk/provider-utils": "4.0.33"
   }
 }

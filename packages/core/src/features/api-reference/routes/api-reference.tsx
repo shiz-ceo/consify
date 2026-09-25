@@ -9,6 +9,9 @@ type Params = Record<string, string | undefined>;
 type Source = { url: string } | { content: string };
 
 /** The API reference is Scalar itself, on its own page. */
+/** The section of the site this page belongs to (see `header.hideSearchOn`). */
+export const handle = { page: "api-reference" };
+
 export async function loader({
   params,
 }: {

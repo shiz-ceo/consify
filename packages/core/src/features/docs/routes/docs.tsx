@@ -39,6 +39,9 @@ interface PageData {
 
 type LoaderData = PageData | { redirectTo: string };
 
+/** The section of the site this page belongs to (see `header.hideSearchOn`). */
+export const handle = { page: "docs" };
+
 export async function loader({ params }: { params: Params }): Promise<LoaderData> {
   const lang = requireLang(params);
   const slugs = (params["*"] ?? "").split("/").filter(Boolean);
