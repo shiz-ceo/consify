@@ -13,11 +13,11 @@ export function MediaFrame({
   className?: string;
 }) {
   return (
-    <span className={`docsivi-media relative block w-fit max-w-full rounded-xl ${className}`}>
+    <span className={`consify-media relative block w-fit max-w-full rounded-xl ${className}`}>
       {children}
       <span
         aria-hidden="true"
-        className="docsivi-media-border pointer-events-none absolute inset-0 rounded-[inherit]"
+        className="consify-media-border pointer-events-none absolute inset-0 rounded-[inherit]"
       />
     </span>
   );

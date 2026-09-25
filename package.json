@@ -1,5 +1,5 @@
 {
-  "name": "docsivi-monorepo",
+  "name": "consify-monorepo",
   "private": true,
   "workspaces": [
     "packages/*",
@@ -19,7 +19,7 @@
     "docs": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/docs dev --port 3500",
     "build:docs": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/docs build",
     "start:docs": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/docs start",
-    "docs:check": "bun run skills/docsivi-docs/scripts/check-docs.ts --root apps/docs --languages en,ru --strict"
+    "docs:check": "bun run skills/consify-docs/scripts/check-docs.ts --root apps/docs --languages en,ru --strict"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",

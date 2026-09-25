@@ -61,7 +61,7 @@ bun run build
 bun run start
 ```
 
-`docsivi start` serves `build/`. It listens on port 3000; set `PORT` to change it.
+`consify start` serves `build/`. It listens on port 3000; set `PORT` to change it.
 
 ```dockerfile title="Dockerfile"
 FROM oven/bun:1
@@ -88,6 +88,6 @@ All links, assets and the search endpoint take the prefix.
 ## Checklist
 
 - `site.url` is set (canonical links, sitemap, RSS and social images).
-- No `DOCSIVI_DRAFTS` in the environment of the production build.
+- No `CONSIFY_DRAFTS` in the environment of the production build.
 - Scheduled posts: the build runs after their date.
-- Hosts that need custom redirects (for old addresses) get them from their own settings, docsivi does not write them.
+- Hosts that need custom redirects (for old addresses) get them from their own settings, consify does not write them.

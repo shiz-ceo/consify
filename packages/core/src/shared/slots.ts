@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import type { Docsivi } from "./instance.ts";
+import type { Consify } from "./instance.ts";
 
 /** A link of the top navigation, ready to render: the language is in `url`. */
 export interface LayoutLink {
@@ -9,14 +9,14 @@ export interface LayoutLink {
 }
 
 export interface HeaderSlotProps {
-  docsivi: Docsivi;
+  consify: Consify;
   lang: string;
   /** The links the header shows by default (the sections that are on, then `nav`). */
   links: LayoutLink[];
 }
 
 export interface FooterSlotProps {
-  docsivi: Docsivi;
+  consify: Consify;
   lang: string;
   /** `full` on pages without a sidebar, `compact` in the docs and the API reference. */
   variant: "full" | "compact";
@@ -25,7 +25,7 @@ export interface FooterSlotProps {
 }
 
 export interface HomeSlotProps {
-  docsivi: Docsivi;
+  consify: Consify;
   lang: string;
 }
 

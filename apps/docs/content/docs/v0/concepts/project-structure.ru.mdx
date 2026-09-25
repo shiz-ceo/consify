@@ -6,7 +6,7 @@ description: Какой файл за что отвечает
 ```
 my-docs/
 ├─ docs.config.ts            all settings
-├─ vite.config.ts            plugins: [docsivi(config)]
+├─ vite.config.ts            plugins: [consify(config)]
 ├─ react-router.config.ts    export default defineRouterConfig(config)
 ├─ content/
 │  ├─ docs/<version>/        pages of the documentation
@@ -19,8 +19,8 @@ my-docs/
 │  ├─ footer.tsx             optional, replaces the footer
 │  └─ theme.css              optional, your styles, loaded after the core theme
 ├─ public/                   files served as they are (favicon, images)
-├─ .docsivi/                 generated, do not edit, do not commit
-└─ build/                    the result of `docsivi build`
+├─ .consify/                 generated, do not edit, do not commit
+└─ build/                    the result of `consify build`
 ```
 
 ## Файлы, которые вы пишете
@@ -28,7 +28,7 @@ my-docs/
 <TypeTable
   type={{
     "docs.config.ts": { description: "Все настройки. Проверяются при запуске.", type: "file", required: true },
-    "vite.config.ts": { description: "Одна строка: плагин docsivi.", type: "file", required: true },
+    "vite.config.ts": { description: "Одна строка: плагин consify.", type: "file", required: true },
     "react-router.config.ts": { description: "Одна строка: настройки роутера, выведенные из вашего конфига.", type: "file", required: true },
     "content/docs": { description: "Страницы документации, по одной папке на версию.", type: "folder" },
     "content/blog": { description: "Статьи: `slug.mdx`, `slug.ru.mdx` для перевода.", type: "folder" },
@@ -38,7 +38,7 @@ my-docs/
 
 ## Сгенерированные файлы
 
-`.docsivi/` записывается при запуске сервера разработки или сборки. В нём лежит:
+`.consify/` записывается при запуске сервера разработки или сборки. В нём лежит:
 
 | Файл | Назначение |
 | --- | --- |
@@ -47,7 +47,7 @@ my-docs/
 | `home.ts` | Главная страница на MDX, если она у вас есть |
 | `app/root.tsx`, `app/routes.ts` | Корень приложения на React Router и список маршрутов |
 
-Добавьте `.docsivi` в `.gitignore`.
+Добавьте `.consify` в `.gitignore`.
 
 ## Папки в `content/docs`
 

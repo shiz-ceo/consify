@@ -28,6 +28,6 @@ export interface DocsPlugin {
 export function definePlugin(plugin: DocsPlugin): DocsPlugin;
 ```
 
-Импортируйте `definePlugin` из `docsivi/plugins`. Плагины выполняются в порядке массива `plugins`, после встроенного поведения (блоки кода, Mermaid, математика, Twoslash). У двух плагинов не может быть одинакового имени.
+Импортируйте `definePlugin` из `consify/plugins`. Плагины выполняются в порядке массива `plugins`, после встроенного поведения (блоки кода, Mermaid, математика, Twoslash). У двух плагинов не может быть одинакового имени.
 
 Пример смотрите в разделе [Плагины](/docs/v0/customizing/plugins).

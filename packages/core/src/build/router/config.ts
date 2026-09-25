@@ -14,9 +14,9 @@ export function defineRouterConfig(docsConfig: Readonly<DocsConfig>): Config {
   scaffold(process.cwd(), docsConfig);
   const { mode, basePath } = docsConfig.deploy;
   // read by `routes.ts`, which is evaluated after this config
-  process.env.DOCSIVI_DEPLOY_MODE = mode;
+  process.env.CONSIFY_DEPLOY_MODE = mode;
   // and the routes that exist for this config: the ones of features that are off are left out
-  process.env.DOCSIVI_ROUTES = JSON.stringify(enabledRouteKeys(docsConfig));
+  process.env.CONSIFY_ROUTES = JSON.stringify(enabledRouteKeys(docsConfig));
   return {
     appDirectory,
     ssr: mode !== "static",

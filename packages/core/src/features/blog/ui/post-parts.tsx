@@ -33,7 +33,7 @@ export function PostCover({
 }) {
   return (
     <div
-      className={`docsivi-media relative overflow-hidden rounded-2xl bg-fd-card ${className}`}
+      className={`consify-media relative overflow-hidden rounded-2xl bg-fd-card ${className}`}
       style={post.cover ? undefined : { backgroundImage: coverGradient(post.slug) }}
     >
       {post.cover ? (
@@ -46,7 +46,7 @@ export function PostCover({
       ) : null}
       <span
         aria-hidden="true"
-        className="docsivi-media-border pointer-events-none absolute inset-0 rounded-[inherit]"
+        className="consify-media-border pointer-events-none absolute inset-0 rounded-[inherit]"
       />
     </div>
   );

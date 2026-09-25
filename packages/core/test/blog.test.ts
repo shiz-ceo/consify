@@ -224,7 +224,7 @@ describe("blog config", () => {
 describe("frontmatter, scanning and checks", () => {
   let cwd: string;
   beforeEach(() => {
-    cwd = mkdtempSync(join(tmpdir(), "docsivi-blog-"));
+    cwd = mkdtempSync(join(tmpdir(), "consify-blog-"));
   });
   afterEach(() => rmSync(cwd, { recursive: true, force: true }));
 
@@ -269,18 +269,18 @@ describe("frontmatter, scanning and checks", () => {
     expect(() => scanPosts(cwd, ["en"])).toThrow(/content\/blog\/bad\.mdx[\s\S]*description/);
   });
 
-  test("publishedFiles drops drafts and future posts, DOCSIVI_DRAFTS=1 keeps them", () => {
+  test("publishedFiles drops drafts and future posts, CONSIFY_DRAFTS=1 keeps them", () => {
     write("live.mdx", ok("2026-01-01"));
     write("draft.mdx", ok("2026-01-01", "draft: true"));
     write("later.mdx", ok("2099-01-01"));
     const posts = scanPosts(cwd, ["en"]);
     const now = new Date("2026-06-01");
     expect(publishedFiles(posts, now).map((p) => p.slug)).toEqual(["live"]);
-    process.env.DOCSIVI_DRAFTS = "1";
+    process.env.CONSIFY_DRAFTS = "1";
     try {
       expect(publishedFiles(posts, now)).toHaveLength(3);
     } finally {
-      delete process.env.DOCSIVI_DRAFTS;
+      delete process.env.CONSIFY_DRAFTS;
     }
   });
 

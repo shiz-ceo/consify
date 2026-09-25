@@ -18,7 +18,7 @@ export function parseLineRanges(meta: string | undefined): Set<number> {
  * the `// [!code highlight]` comment, so both are styled alike.
  */
 export const transformerLineRanges: ShikiTransformer = {
-  name: "docsivi:line-ranges",
+  name: "consify:line-ranges",
   line(node, line) {
     const raw = (this.options.meta as { __raw?: string } | undefined)?.__raw;
     if (!raw) return;

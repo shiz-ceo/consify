@@ -17,7 +17,7 @@ i18n: {
     defaultLanguage: { description: "Используется, если у страницы нет перевода. Должен входить в `languages`.", type: "string", default: '"en"' },
     languages: { description: "Коды языков: `en`, `ru`, `pt-BR`.", type: "string[]", default: '["en"]' },
     labels: { description: "Названия в переключателе языка.", type: "Record<string, string>", default: "{}" },
-    messages: { description: "Переопределения строк интерфейса docsivi для каждого языка.", type: "Record<string, Record<string, string>>", default: "{}" },
+    messages: { description: "Переопределения строк интерфейса consify для каждого языка.", type: "Record<string, Record<string, string>>", default: "{}" },
     fallback: { description: "Что делает страница без перевода: `notice`, `show` или `hide`.", type: '"notice" | "show" | "hide"', default: '"notice"' },
   }}
 />
@@ -46,6 +46,6 @@ i18n: {
 
 ## Строки интерфейса
 
-docsivi содержит английские и русские строки для того, что рисует сам (блог, подвал, уведомления). Для другого языка используется английский, а любую строку можно переопределить через `messages`. Доступные ключи: `documentation`, `deprecatedVersion`, `goToLatest`, `editOnGithub`, `notFound`, `backToDocs`, `blog`, `allPosts`, `searchPosts`, `filter`, `tags`, `clearFilters`, `noPosts`, `minRead`, `share`, `relatedPosts`, `backToBlog`, `inThisArticle`, `previous`, `next`, `page`, `rss`, `postedBy`, `footerSections`, `footerRights`.
+consify содержит английские и русские строки для того, что рисует сам (блог, подвал, уведомления). Для другого языка используется английский, а любую строку можно переопределить через `messages`. Доступные ключи: `documentation`, `deprecatedVersion`, `goToLatest`, `editOnGithub`, `notFound`, `backToDocs`, `blog`, `allPosts`, `searchPosts`, `filter`, `tags`, `clearFilters`, `noPosts`, `minRead`, `share`, `relatedPosts`, `backToBlog`, `inThisArticle`, `previous`, `next`, `page`, `rss`, `postedBy`, `footerSections`, `footerRights`.
 
 Тексты окна поиска, боковой панели и подобного берутся из Fumadocs и переводятся автоматически, если перевод существует.

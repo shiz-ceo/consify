@@ -15,9 +15,9 @@ import { ServerSearchDialog, StaticSearchBridge } from "../../system/search/sear
 import { createTranslations } from "../../shared/layout/layout-options.tsx";
 import { themeToCss } from "../../theme/tokens.ts";
 import { NotFound } from "../../shared/layout/not-found-view.tsx";
-import { docsivi } from "../../shared/router.ts";
+import { consify } from "../../shared/router.ts";
 
-const translations = createTranslations(docsivi);
+const translations = createTranslations(consify);
 
 /**
  * Sets the theme class on <html> before the first paint, from the same storage key that
@@ -28,7 +28,7 @@ const earlyTheme = `(function(){try{var t=localStorage.getItem("theme");var d=t=
 
 /** The configured favicon, or a rounded square with the first letter of the site name. */
 function iconHref(): string {
-  const { site, deploy } = docsivi.config;
+  const { site, deploy } = consify.config;
   if (site.favicon) {
     return site.favicon.startsWith("/") ? `${deploy.basePath ?? ""}${site.favicon}` : site.favicon;
   }
@@ -37,13 +37,13 @@ function iconHref(): string {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 const faviconHref = iconHref();
-const themeCss = themeToCss(docsivi.config.theme);
+const themeCss = themeToCss(consify.config.theme);
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { lang } = useParams();
   const matches = useMatches();
   const language =
-    lang && docsivi.config.i18n.languages.includes(lang) ? lang : docsivi.i18n.defaultLanguage;
+    lang && consify.config.i18n.languages.includes(lang) ? lang : consify.i18n.defaultLanguage;
   // a page shown without a translation is written in another language than the address says
   const contentLanguage = matches
     .map((match) => (match.loaderData as { contentLanguage?: string } | undefined)?.contentLanguage)
@@ -59,14 +59,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <link rel="icon" href={faviconHref} />
         <Meta />
         <Links />
-        {themeCss ? <style id="docsivi-theme">{themeCss}</style> : null}
+        {themeCss ? <style id="consify-theme">{themeCss}</style> : null}
       </head>
       <body className="flex min-h-screen flex-col">
         <RootProvider
           i18n={i18nProvider(translations, language)}
           search={{
             SearchDialog:
-              docsivi.config.deploy.mode === "static" ? StaticSearchBridge : ServerSearchDialog,
+              consify.config.deploy.mode === "static" ? StaticSearchBridge : ServerSearchDialog,
           }}
         >
           {children}
@@ -87,7 +87,7 @@ export function ErrorBoundary() {
   const { lang } = useParams();
   if (isRouteErrorResponse(error) && error.status === 404) {
     // `/docs` matches the `:lang` route, so the segment is only a language when it is configured
-    const known = lang && docsivi.config.i18n.languages.includes(lang);
+    const known = lang && consify.config.i18n.languages.includes(lang);
     return <NotFound {...(known ? { lang } : {})} />;
   }
 

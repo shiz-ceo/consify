@@ -1,10 +1,10 @@
-import { home as mdxHome } from "docsivi:home";
+import { home as mdxHome } from "consify:home";
 import { DocsBody } from "fumadocs-ui/layouts/notebook/page";
 import { use } from "react";
 import { redirect } from "react-router";
 import { Redirecting } from "../../../shared/layout/redirecting.tsx";
 import { SiteLayout } from "../../../shared/layout/site-layout.tsx";
-import { buildMeta, docsivi, isStatic, requireLang } from "../../../shared/router.ts";
+import { buildMeta, consify, isStatic, requireLang } from "../../../shared/router.ts";
 import { getMDXComponents } from "../../../shared/ui/mdx.tsx";
 import { SiteLink } from "../../../shared/ui/site-link.tsx";
 import { defaultDocsPath } from "../../../shared/versions.ts";
@@ -28,7 +28,7 @@ type LoaderData =
 
 export async function loader({ params }: { params: Params }): Promise<LoaderData> {
   const lang = requireLang(params);
-  const { config, slots } = docsivi;
+  const { config, slots } = consify;
 
   if (slots.Home) return { mode: "slot", lang };
 
@@ -49,7 +49,7 @@ export async function loader({ params }: { params: Params }): Promise<LoaderData
 export function meta({ loaderData }: { loaderData?: LoaderData }) {
   if (!loaderData || loaderData.mode === "redirect") return [];
   const { lang } = loaderData;
-  const { site } = docsivi.config;
+  const { site } = consify.config;
   const page = loaderData.mode === "mdx" ? mdxHome?.collection.get(loaderData.path) : undefined;
   return buildMeta({
     lang,
@@ -70,9 +70,9 @@ function MdxHomePage({ path }: { path: string }) {
       <DocsBody>
         <Body
           components={getMDXComponents(
-            docsivi.config,
+            consify.config,
             { a: SiteLink, Hero, Features },
-            docsivi.customComponents,
+            consify.customComponents,
           )}
         />
       </DocsBody>
@@ -81,7 +81,7 @@ function MdxHomePage({ path }: { path: string }) {
 }
 
 function ConfigHomePage({ lang }: { lang: string }) {
-  const { config } = docsivi;
+  const { config } = consify;
   const home = config.home?.[lang] ?? config.home?.[config.i18n.defaultLanguage];
   if (!home) return null;
   return (
@@ -99,12 +99,12 @@ function ConfigHomePage({ lang }: { lang: string }) {
 export default function HomeRoute({ loaderData }: { loaderData: LoaderData }) {
   if (loaderData.mode === "redirect") return <Redirecting to={loaderData.to} />;
   const { lang } = loaderData;
-  const Slot = docsivi.slots.Home;
+  const Slot = consify.slots.Home;
 
   return (
-    <SiteLayout docsivi={docsivi} lang={lang} page="home">
-      <HomeProvider value={{ docsivi, lang }}>
-        {loaderData.mode === "slot" && Slot ? <Slot docsivi={docsivi} lang={lang} /> : null}
+    <SiteLayout consify={consify} lang={lang} page="home">
+      <HomeProvider value={{ consify, lang }}>
+        {loaderData.mode === "slot" && Slot ? <Slot consify={consify} lang={lang} /> : null}
         {loaderData.mode === "mdx" ? <MdxHomePage path={loaderData.path} /> : null}
         {loaderData.mode === "config" ? <ConfigHomePage lang={lang} /> : null}
       </HomeProvider>

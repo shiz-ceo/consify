@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { enabledFeatures } from "../../features/index.ts";
-import type { Docsivi } from "../instance.ts";
+import type { Consify } from "../instance.ts";
 import { resolveHref } from "../links.ts";
 import { localized } from "../localized.ts";
 import { getMessages } from "../messages.ts";
@@ -12,7 +12,7 @@ interface Column {
 }
 
 /** The columns from `footer.columns`, or one column with the sections that are on. */
-function footerColumns({ config }: Docsivi, lang: string): Column[] {
+function footerColumns({ config }: Consify, lang: string): Column[] {
   const custom = typeof config.footer === "object" ? config.footer.columns : undefined;
   if (custom) {
     return custom.map((column) => ({
@@ -47,8 +47,8 @@ function footerColumns({ config }: Docsivi, lang: string): Column[] {
 }
 
 /** What both footers show: the texts, the social icons and the columns. `undefined` when it is off. */
-function footerData(docsivi: Docsivi, lang: string) {
-  const { config } = docsivi;
+function footerData(consify: Consify, lang: string) {
+  const { config } = consify;
   if (config.footer === false) return undefined;
   const footer = config.footer ?? { social: [] };
   const messages = getMessages(config, lang);
@@ -59,7 +59,7 @@ function footerData(docsivi: Docsivi, lang: string) {
     legal:
       localized(config, lang, footer.legal) ??
       `© ${new Date().getFullYear()} ${config.site.name}. ${messages.footerRights}`,
-    columns: footerColumns(docsivi, lang),
+    columns: footerColumns(consify, lang),
   };
 }
 
@@ -68,13 +68,13 @@ function footerData(docsivi: Docsivi, lang: string) {
  * columns of links on the right, the legal line at the bottom. Configured by `footer` in
  * `docs.config.ts`; `footer: false` removes it.
  */
-export function FullFooter({ docsivi, lang }: { docsivi: Docsivi; lang: string }) {
-  const data = footerData(docsivi, lang);
+export function FullFooter({ consify, lang }: { consify: Consify; lang: string }) {
+  const data = footerData(consify, lang);
   if (!data) return null;
   const { config, footer, description, legal, columns } = data;
 
   return (
-    <footer className="mt-auto border-t border-fd-border" data-docsivi-footer>
+    <footer className="mt-auto border-t border-fd-border" data-consify-footer>
       <div className="mx-auto w-full max-w-7xl px-6 py-12 md:py-16">
         <div className="flex flex-col gap-12 lg:flex-row lg:justify-between">
           <div className="max-w-sm">
@@ -153,23 +153,23 @@ export function FullFooter({ docsivi, lang }: { docsivi: Docsivi; lang: string }
  * link to edit the page, the links of the footer in a row, then the legal line with the icons.
  */
 export function CompactFooter({
-  docsivi,
+  consify,
   lang,
   editUrl,
 }: {
-  docsivi: Docsivi;
+  consify: Consify;
   lang: string;
   editUrl?: string | undefined;
 }) {
-  const data = footerData(docsivi, lang);
+  const data = footerData(consify, lang);
   if (!data && !editUrl) return null;
-  const messages = getMessages(docsivi.config, lang);
+  const messages = getMessages(consify.config, lang);
   const links = (data?.columns ?? []).flatMap((column) => column.links).slice(0, 8);
   const social = data?.footer.social ?? [];
   const linkClass = "text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground";
 
   return (
-    <div className="mt-10 flex flex-col gap-6 border-t border-fd-border pt-8" data-docsivi-footer>
+    <div className="mt-10 flex flex-col gap-6 border-t border-fd-border pt-8" data-consify-footer>
       {editUrl ? (
         <a
           href={editUrl}

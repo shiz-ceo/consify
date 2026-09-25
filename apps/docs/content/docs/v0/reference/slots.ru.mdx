@@ -5,7 +5,7 @@ description: Props главной страницы, шапки и подвала
 
 ```ts
 import type { ComponentType } from "react";
-import type { Docsivi } from "docsivi";
+import type { Consify } from "consify";
 
 interface LayoutLink {
   text: string;
@@ -14,19 +14,19 @@ interface LayoutLink {
 }
 
 interface HomeSlotProps {
-  docsivi: Docsivi; // the site: config, source, slots
+  consify: Consify; // the site: config, source, slots
   lang: string;
 }
 
 interface HeaderSlotProps {
-  docsivi: Docsivi;
+  consify: Consify;
   lang: string;
   /** The links the header shows by default. */
   links: LayoutLink[];
 }
 
 interface FooterSlotProps {
-  docsivi: Docsivi;
+  consify: Consify;
   lang: string;
   /** `full` (home, blog, 404) or `compact` (docs, API reference). */
   variant: "full" | "compact";
@@ -42,7 +42,7 @@ interface Slots {
 }
 ```
 
-Импортируйте типы из `docsivi`. `Hero` и `Features` для главной страницы и `DefaultFooter` для подвала берутся из `docsivi/components`.
+Импортируйте типы из `consify`. `Hero` и `Features` для главной страницы и `DefaultFooter` для подвала берутся из `consify/components`.
 
 ## Hero
 

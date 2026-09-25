@@ -14,8 +14,8 @@ function declarations(entries: Record<string, string>): string {
 export function themeToCss(theme: Readonly<DocsConfig["theme"]>): string {
   const shared: Record<string, string> = {};
   if (theme.radius !== undefined) shared.radius = theme.radius;
-  if (theme.fonts.sans !== undefined) shared["docsivi-font-sans"] = theme.fonts.sans;
-  if (theme.fonts.mono !== undefined) shared["docsivi-font-mono"] = theme.fonts.mono;
+  if (theme.fonts.sans !== undefined) shared["consify-font-sans"] = theme.fonts.sans;
+  if (theme.fonts.mono !== undefined) shared["consify-font-mono"] = theme.fonts.mono;
 
   const rules: string[] = [];
   const light = { ...shared, ...theme.colors.light };

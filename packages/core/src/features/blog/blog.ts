@@ -3,7 +3,7 @@ import type { MDXContent } from "mdx/types";
 import type { DocsConfig } from "../../config/index.ts";
 import { type BlogPost, parsePostPath, pickLanguage, readingTime, sortByDate } from "./posts.ts";
 
-/** A post file of the collection defined in `.docsivi/blog.ts`. */
+/** A post file of the collection defined in `.consify/blog.ts`. */
 export interface BlogEntry {
   info: { path: string };
   title: string;
@@ -27,7 +27,7 @@ export interface BlogCollection {
 
 /**
  * The blog of a site: one post per slug, in the language asked for or else in the default language.
- * Only published files are in the collection (`.docsivi/blog.ts` leaves out drafts and posts dated
+ * Only published files are in the collection (`.consify/blog.ts` leaves out drafts and posts dated
  * in the future), so nothing here can show an unpublished post.
  */
 export function createBlog(config: Readonly<DocsConfig>, collection: BlogCollection) {

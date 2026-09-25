@@ -74,4 +74,4 @@ Blog components (no imports): `Authors`, `Expand`, `PR`, `Benchmark`, `Figure`, 
 ## Drafts
 
 `draft: true` or a future date keeps a post out of the site, the search, the feed and the build.
-Preview with `DOCSIVI_DRAFTS=1` and the dev command; never build for production with it.
+Preview with `CONSIFY_DRAFTS=1` and the dev command; never build for production with it.

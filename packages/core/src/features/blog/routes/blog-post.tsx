@@ -1,4 +1,4 @@
-import { blog } from "docsivi:blog";
+import { blog } from "consify:blog";
 import { Callout } from "fumadocs-ui/components/callout";
 import { InlineTOC } from "fumadocs-ui/components/inline-toc";
 import { TOCProvider, TOCScrollArea } from "fumadocs-ui/components/toc";
@@ -10,7 +10,7 @@ import { languageLabel } from "../../../shared/fallback.ts";
 import { SiteLayout } from "../../../shared/layout/site-layout.tsx";
 import { resolveHref } from "../../../shared/links.ts";
 import { format, getMessages } from "../../../shared/messages.ts";
-import { absoluteUrl, buildMeta, docsivi, requireLang } from "../../../shared/router.ts";
+import { absoluteUrl, buildMeta, consify, requireLang } from "../../../shared/router.ts";
 import { getMDXComponents } from "../../../shared/ui/mdx.tsx";
 import { SiteLink } from "../../../shared/ui/site-link.tsx";
 import { categoryLabels } from "../labels.ts";
@@ -32,7 +32,7 @@ interface PostData {
   path: string;
   related: BlogPost[];
   categoryLabels: Record<string, string>;
-  authors: NonNullable<typeof docsivi.config.blog>["authors"];
+  authors: NonNullable<typeof consify.config.blog>["authors"];
   share: boolean;
   shareUrl: string;
   alternates: Record<string, string>;
@@ -44,7 +44,7 @@ interface PostData {
 
 export async function loader({ params }: { params: Params }): Promise<PostData> {
   const lang = requireLang(params);
-  const { config } = docsivi;
+  const { config } = consify;
   const segments = (params["*"] ?? "").split("/").filter(Boolean);
   if (!config.blog || !blog || segments.length !== 1)
     throw new Response("Not found", { status: 404 });
@@ -88,10 +88,10 @@ export function meta({ loaderData }: { loaderData?: PostData }) {
   const { lang, post, alternates, fallback } = loaderData;
   const tags = buildMeta({
     lang,
-    title: `${post.title} | ${docsivi.config.site.name}`,
+    title: `${post.title} | ${consify.config.site.name}`,
     description: post.description,
     // a post shown without a translation is a copy: the original is its canonical address
-    path: `/${fallback ? docsivi.config.i18n.defaultLanguage : lang}/blog/${post.slug}`,
+    path: `/${fallback ? consify.config.i18n.defaultLanguage : lang}/blog/${post.slug}`,
     alternates,
     image: `/${lang}/blog/${post.slug}/og.png`,
   });
@@ -115,7 +115,7 @@ export default function BlogPostRoute({ loaderData }: { loaderData: PostData }) 
     shareUrl,
     fallback,
   } = loaderData;
-  const { config } = docsivi;
+  const { config } = consify;
   const messages = getMessages(config, lang);
 
   const entry = blog?.collection.get(path);
@@ -131,7 +131,7 @@ export default function BlogPostRoute({ loaderData }: { loaderData: PostData }) 
   ) : null;
 
   return (
-    <SiteLayout docsivi={docsivi} lang={lang} page="blog">
+    <SiteLayout consify={consify} lang={lang} page="blog">
       <div className="mx-auto w-full max-w-[84rem] px-6 pb-16">
         {/* title block: a narrow centered column */}
         <header className="mx-auto max-w-3xl pt-10 md:pt-14">
@@ -210,7 +210,7 @@ export default function BlogPostRoute({ loaderData }: { loaderData: PostData }) 
                 }}
               >
                 <Body
-                  components={getMDXComponents(config, { a: SiteLink }, docsivi.customComponents)}
+                  components={getMDXComponents(config, { a: SiteLink }, consify.customComponents)}
                 />
               </BlogProvider>
             </DocsBody>

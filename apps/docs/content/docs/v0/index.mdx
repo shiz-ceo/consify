@@ -1,13 +1,13 @@
 ---
 title: Introduction
-description: What docsivi is, who it is for and how it differs from a docs template
+description: What consify is, who it is for and how it differs from a docs template
 icon: BookOpen
 ---
 
-**docsivi** is a foundation for documentation sites. You do not copy a template and then maintain it. You write a configuration file, your pages and, when you need them, a few components. The rest is a package you update with one command.
+**consify** is a foundation for documentation sites. You do not copy a template and then maintain it. You write a configuration file, your pages and, when you need them, a few components. The rest is a package you update with one command.
 
 ```ts title="docs.config.ts"
-import { defineConfig } from "docsivi";
+import { defineConfig } from "consify";
 
 export default defineConfig({
   site: { name: "My project" },
@@ -35,10 +35,10 @@ That file, a `content/` folder and two three-line config files are the whole pro
 - Projects with several languages or several versions of the docs, where the usual approach is a pile of copies.
 - People who want to change the look and the behavior later without forking.
 
-If you need a page that has nothing to do with documentation, docsivi is not the right tool. It is built for content that lives in files.
+If you need a page that has nothing to do with documentation, consify is not the right tool. It is built for content that lives in files.
 
 ## How it is built
 
-docsivi puts [Fumadocs](https://fumadocs.dev) (content, search, UI) on [React Router](https://reactrouter.com) and [Vite](https://vite.dev), validates the configuration with [Zod](https://zod.dev), and runs on [Bun](https://bun.sh). You do not need to know any of them to use it, but everything they can do is still available when you do.
+consify puts [Fumadocs](https://fumadocs.dev) (content, search, UI) on [React Router](https://reactrouter.com) and [Vite](https://vite.dev), validates the configuration with [Zod](https://zod.dev), and runs on [Bun](https://bun.sh). You do not need to know any of them to use it, but everything they can do is still available when you do.
 
 Read [How it works](/docs/v0/concepts) next, or go straight to the [Quickstart](/docs/v0/quickstart).

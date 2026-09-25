@@ -1,17 +1,17 @@
-// `docsivi:instance` is an alias (set by the docsivi Vite plugin) to `.docsivi/instance.ts` of the project.
-declare module "docsivi:instance" {
-  import type { Docsivi } from "docsivi";
-  export const docsivi: Docsivi;
+// `consify:instance` is an alias (set by the consify Vite plugin) to `.consify/instance.ts` of the project.
+declare module "consify:instance" {
+  import type { Consify } from "consify";
+  export const consify: Consify;
 }
 
-// `docsivi:blog` is an alias to `.docsivi/blog.ts`: the posts of the blog, or `null` when it is off.
-declare module "docsivi:blog" {
-  import type { Blog } from "docsivi";
+// `consify:blog` is an alias to `.consify/blog.ts`: the posts of the blog, or `null` when it is off.
+declare module "consify:blog" {
+  import type { Blog } from "consify";
   export const blog: Blog | null;
 }
 
-// `docsivi:home` is an alias to `.docsivi/home.ts`: the home page written in MDX, or `null`.
-declare module "docsivi:home" {
-  import type { MdxHome } from "docsivi";
+// `consify:home` is an alias to `.consify/home.ts`: the home page written in MDX, or `null`.
+declare module "consify:home" {
+  import type { MdxHome } from "consify";
   export const home: MdxHome | null;
 }

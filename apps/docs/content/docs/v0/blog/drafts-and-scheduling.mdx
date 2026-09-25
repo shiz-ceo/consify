@@ -21,14 +21,14 @@ The date is checked when the build runs, so publish a scheduled post by building
 
 ## Previewing drafts
 
-While you write, set `DOCSIVI_DRAFTS=1` to include everything:
+While you write, set `CONSIFY_DRAFTS=1` to include everything:
 
 ```bash
-DOCSIVI_DRAFTS=1 bun run dev
+CONSIFY_DRAFTS=1 bun run dev
 ```
 
 Restart the dev server after adding or removing a post, because the list is read at start.
 
 <Callout type="warn">
-  Never build for production with `DOCSIVI_DRAFTS=1`.
+  Never build for production with `CONSIFY_DRAFTS=1`.
 </Callout>

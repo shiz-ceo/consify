@@ -1,8 +1,8 @@
 import { createContext, useContext } from "react";
-import type { Docsivi } from "../../../shared/instance.ts";
+import type { Consify } from "../../../shared/instance.ts";
 
 interface HomeContextValue {
-  docsivi: Docsivi;
+  consify: Consify;
   lang: string;
 }
 

@@ -1,11 +1,11 @@
 ---
-title: docsivi
+title: consify
 description: Основа для сайта документации, которую настраивают, а не поддерживают.
 ---
 
 <Hero
   title="Документация, которую настраивают, а не поддерживают"
-  description="docsivi — это основа для сайтов документации. Ваш проект состоит из файла конфигурации и ваших страниц. Ядро — пакет, который обновляется одной командой."
+  description="consify — это основа для сайтов документации. Ваш проект состоит из файла конфигурации и ваших страниц. Ядро — пакет, который обновляется одной командой."
   actions={[
     { label: "Начать", href: "/docs/v0/quickstart" },
     { label: "Как это работает", href: "/docs/v0/concepts", variant: "secondary" },
@@ -26,7 +26,7 @@ description: Основа для сайта документации, котор
 ## Проект из трёх файлов
 
 ```ts title="docs.config.ts"
-import { defineConfig } from "docsivi";
+import { defineConfig } from "consify";
 
 export default defineConfig({
   site: { name: "My project", github: { repo: "me/my-project" } },
@@ -35,18 +35,18 @@ export default defineConfig({
 ```
 
 ```ts title="vite.config.ts"
-import { docsivi } from "docsivi/vite";
+import { consify } from "consify/vite";
 import { defineConfig } from "vite";
 import config from "./docs.config.ts";
 
-export default defineConfig({ plugins: [docsivi(config)] });
+export default defineConfig({ plugins: [consify(config)] });
 ```
 
 ```ts title="react-router.config.ts"
-import { defineRouterConfig } from "docsivi/react-router";
+import { defineRouterConfig } from "consify/react-router";
 import config from "./docs.config.ts";
 
 export default defineRouterConfig(config);
 ```
 
-Затем пишите страницы в `content/docs/`, запускайте `bun run dev` — и сайт готов. Прочитайте [Как это работает](/docs/v0/concepts), чтобы узнать, что происходит между этими шагами, или [как был сделан docsivi](/blog/how-docsivi-was-made), чтобы понять, почему он устроен именно так.
+Затем пишите страницы в `content/docs/`, запускайте `bun run dev` — и сайт готов. Прочитайте [Как это работает](/docs/v0/concepts), чтобы узнать, что происходит между этими шагами, или [как был сделан consify](/blog/how-consify-was-made), чтобы понять, почему он устроен именно так.

@@ -6,7 +6,7 @@ description: Расширение конвейера Markdown и блоков к
 Плагин — это один объект. Все поля необязательны:
 
 ```ts title="custom/plugins/my-plugin.ts"
-import { definePlugin } from "docsivi/plugins";
+import { definePlugin } from "consify/plugins";
 
 export const myPlugin = definePlugin({
   name: "my-plugin",
@@ -36,7 +36,7 @@ export default defineConfig({
 Небольшой remark-плагин, который превращает цитаты `> [!NOTE]` в врезки:
 
 ```ts title="custom/plugins/github-alerts.ts"
-import { definePlugin } from "docsivi/plugins";
+import { definePlugin } from "consify/plugins";
 
 // Remark plugin: GitHub-style alerts in plain Markdown become <Callout>.
 //

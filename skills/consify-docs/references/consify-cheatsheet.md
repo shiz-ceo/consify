@@ -1,15 +1,15 @@
-# docsivi cheatsheet
+# consify cheatsheet
 
-A short map of what docsivi can do. It does **not** replace the schema of the installed package
-(`node_modules/docsivi/src/config/schema.ts`). When they disagree, the installed package is right.
-Details: the docsivi documentation at `<docsivi docs URL>`.
+A short map of what consify can do. It does **not** replace the schema of the installed package
+(`node_modules/consify/src/config/schema.ts`). When they disagree, the installed package is right.
+Details: the consify documentation at `<consify docs URL>`.
 
 ## The project
 
 ```
 my-docs/
-├─ docs.config.ts            all settings (defineConfig from "docsivi")
-├─ vite.config.ts            plugins: [docsivi(config)]
+├─ docs.config.ts            all settings (defineConfig from "consify")
+├─ vite.config.ts            plugins: [consify(config)]
 ├─ react-router.config.ts    export default defineRouterConfig(config)
 ├─ content/
 │  ├─ docs/<version>/        pages of the documentation
@@ -21,7 +21,7 @@ my-docs/
 │  ├─ home.tsx, header.tsx, footer.tsx    optional slots
 │  └─ theme.css              optional styles, loaded after the core theme
 ├─ public/                   favicon, images
-├─ .docsivi/  build/  .react-router/       generated: do not edit, do not commit
+├─ .consify/  build/  .react-router/       generated: do not edit, do not commit
 ```
 
 Commands come from the project's `package.json` scripts, usually `dev`, `build`, `start`, `typecheck`.
@@ -90,7 +90,7 @@ built-in one with the same name.
 
 Posts are `content/blog/<slug>.mdx` (translations `<slug>.<language>.mdx`). Categories and authors
 come from the `blog` block. A draft or a post dated in the future is not published (it is not even
-compiled). `DOCSIVI_DRAFTS=1` includes them while writing. RSS at `/{lang}/blog/rss.xml`.
+compiled). `CONSIFY_DRAFTS=1` includes them while writing. RSS at `/{lang}/blog/rss.xml`.
 
 ## Links
 

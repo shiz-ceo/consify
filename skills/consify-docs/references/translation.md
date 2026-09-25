@@ -41,7 +41,7 @@ character, must be in double quotes. A YAML error stops the whole build.
 
 ## Languages that need their own interface strings
 
-docsivi ships some interface strings itself. For a language without built-in strings it falls back
+consify ships some interface strings itself. For a language without built-in strings it falls back
 to English; override the ones that show up with `i18n.messages`. The keys are in the schema.
 
 ## Check

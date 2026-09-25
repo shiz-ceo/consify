@@ -14,7 +14,7 @@ icon: Download
 The quickest way is the generator. It asks for a name, copies the starter and installs the dependencies:
 
 ```bash
-bunx create-docsivi@latest my-docs
+bunx create-consify@latest my-docs
 cd my-docs
 bun run dev
 ```
@@ -24,14 +24,14 @@ Open `http://localhost:5173`. Edit `content/docs/index.mdx` and the page updates
 ## Add it to an existing project
 
 ```bash
-bun add docsivi react react-dom react-router
+bun add consify react react-dom react-router
 bun add -d vite typescript @types/react @types/react-dom @types/node
 ```
 
 Then create these files.
 
 ```ts title="docs.config.ts"
-import { defineConfig } from "docsivi";
+import { defineConfig } from "consify";
 
 export default defineConfig({
   site: { name: "My docs" },
@@ -39,15 +39,15 @@ export default defineConfig({
 ```
 
 ```ts title="vite.config.ts"
-import { docsivi } from "docsivi/vite";
+import { consify } from "consify/vite";
 import { defineConfig } from "vite";
 import config from "./docs.config.ts";
 
-export default defineConfig({ plugins: [docsivi(config)] });
+export default defineConfig({ plugins: [consify(config)] });
 ```
 
 ```ts title="react-router.config.ts"
-import { defineRouterConfig } from "docsivi/react-router";
+import { defineRouterConfig } from "consify/react-router";
 import config from "./docs.config.ts";
 
 export default defineRouterConfig(config);
@@ -57,10 +57,10 @@ export default defineRouterConfig(config);
 {
   "type": "module",
   "scripts": {
-    "dev": "docsivi dev",
-    "build": "docsivi build",
-    "start": "docsivi start",
-    "typecheck": "docsivi typegen && tsc --noEmit"
+    "dev": "consify dev",
+    "build": "consify build",
+    "start": "consify start",
+    "typecheck": "consify typegen && tsc --noEmit"
   }
 }
 ```
@@ -72,14 +72,14 @@ Add a first page, and a `tsconfig.json` (copy the one from the starter):
 title: Welcome
 ---
 
-Hello from docsivi.
+Hello from consify.
 ```
 
 ```json title="content/docs/meta.json"
 { "pages": ["index"] }
 ```
 
-Add `.docsivi`, `build` and `.react-router` to `.gitignore`. They are generated.
+Add `.consify`, `build` and `.react-router` to `.gitignore`. They are generated.
 
 <Callout type="info" title="Import paths">
   Write the extension in imports of your own files (`./docs.config.ts`). Vite warns about
@@ -90,9 +90,9 @@ Add `.docsivi`, `build` and `.react-router` to `.gitignore`. They are generated.
 
 | Command | What it does |
 | --- | --- |
-| `docsivi dev` | Development server with hot reload |
-| `docsivi build` | Production build (and the pre-rendered pages) |
-| `docsivi start` | Serves a `server` build (`build/server`) |
-| `docsivi typegen` | Generates route types, used by `typecheck` |
+| `consify dev` | Development server with hot reload |
+| `consify build` | Production build (and the pre-rendered pages) |
+| `consify start` | Serves a `server` build (`build/server`) |
+| `consify typegen` | Generates route types, used by `typecheck` |
 
-Anything after the command is passed on to the underlying tool, for example `docsivi dev --port 3000`.
+Anything after the command is passed on to the underlying tool, for example `consify dev --port 3000`.

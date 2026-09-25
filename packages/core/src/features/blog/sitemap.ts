@@ -1,8 +1,8 @@
-import { blog } from "docsivi:blog";
-import { docsivi } from "../../shared/router.ts";
+import { blog } from "consify:blog";
+import { consify } from "../../shared/router.ts";
 
 export async function blogSitemap(): Promise<string[]> {
-  const { config } = docsivi;
+  const { config } = consify;
   if (!config.blog || !blog) return [];
   const paths: string[] = [];
   for (const lang of config.i18n.languages) {

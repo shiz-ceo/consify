@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// `docsivi dev | build | start | typegen`: runs the React Router CLI that ships with docsivi,
+// `consify dev | build | start | typegen`: runs the React Router CLI that ships with consify,
 // so a project does not have to depend on @react-router/dev itself.
 import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -28,7 +28,7 @@ const commands = {
 };
 
 if (!command || !(command in commands)) {
-  console.error(`Usage: docsivi <${Object.keys(commands).join("|")}>`);
+  console.error(`Usage: consify <${Object.keys(commands).join("|")}>`);
   process.exit(1);
 }
 

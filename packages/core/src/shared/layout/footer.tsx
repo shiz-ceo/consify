@@ -1,12 +1,12 @@
 import type { FooterSlotProps } from "../slots.ts";
 import { CompactFooter, FullFooter } from "./site-footer.tsx";
 
-/** The footer that ships with docsivi, for a custom footer to wrap or to fall back to. */
-export function DefaultFooter({ docsivi, lang, variant, editUrl }: FooterSlotProps) {
+/** The footer that ships with consify, for a custom footer to wrap or to fall back to. */
+export function DefaultFooter({ consify, lang, variant, editUrl }: FooterSlotProps) {
   return variant === "full" ? (
-    <FullFooter docsivi={docsivi} lang={lang} />
+    <FullFooter consify={consify} lang={lang} />
   ) : (
-    <CompactFooter docsivi={docsivi} lang={lang} editUrl={editUrl} />
+    <CompactFooter consify={consify} lang={lang} editUrl={editUrl} />
   );
 }
 
@@ -15,6 +15,6 @@ export function DefaultFooter({ docsivi, lang, variant, editUrl }: FooterSlotPro
  * one. Every page asks for it here, so the footer is the same everywhere.
  */
 export function Footer(props: FooterSlotProps) {
-  const Custom = props.docsivi.slots.Footer;
+  const Custom = props.consify.slots.Footer;
   return Custom ? <Custom {...props} /> : <DefaultFooter {...props} />;
 }

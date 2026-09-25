@@ -1,7 +1,7 @@
 import { type CSSProperties, lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Footer } from "../../../shared/layout/footer.tsx";
 import { SiteLayout } from "../../../shared/layout/site-layout.tsx";
-import { buildMeta, docsivi, requireLang } from "../../../shared/router.ts";
+import { buildMeta, consify, requireLang } from "../../../shared/router.ts";
 
 const ScalarReference = lazy(() => import("../scalar-reference.tsx"));
 
@@ -15,7 +15,7 @@ export async function loader({
   params: Params;
 }): Promise<{ lang: string; source: Source }> {
   const lang = requireLang(params);
-  const input = [docsivi.config.openapi?.input ?? []].flat()[0];
+  const input = [consify.config.openapi?.input ?? []].flat()[0];
   if (!input) throw new Response("Not found", { status: 404 });
 
   // Server only: removed from the browser bundle together with the loader.
@@ -26,11 +26,11 @@ export async function loader({
 }
 
 export function meta({ loaderData }: { loaderData?: { lang: string } }) {
-  const lang = loaderData?.lang ?? docsivi.i18n.defaultLanguage;
+  const lang = loaderData?.lang ?? consify.i18n.defaultLanguage;
   return buildMeta({
     lang,
-    title: docsivi.config.openapi?.title ?? "API",
-    description: docsivi.config.site.description,
+    title: consify.config.openapi?.title ?? "API",
+    description: consify.config.site.description,
     path: `/${lang}/api`,
   });
 }
@@ -59,15 +59,15 @@ export default function ApiScalarRoute({
 
   return (
     <SiteLayout
-      docsivi={docsivi}
+      consify={consify}
       lang={loaderData.lang}
       sidebarToggle
       footer={false}
       page="api-reference"
     >
       <div
-        className="docsivi-api flex flex-1 flex-col"
-        style={{ "--docsivi-footer-h": `${footerHeight}px` } as CSSProperties}
+        className="consify-api flex flex-1 flex-col"
+        style={{ "--consify-footer-h": `${footerHeight}px` } as CSSProperties}
       >
         <div className="min-h-[70vh] flex-1">
           {mounted ? (
@@ -77,9 +77,9 @@ export default function ApiScalarRoute({
           ) : null}
         </div>
         {mounted ? (
-          <div ref={footerRef} className="docsivi-api-footer">
-            <div className="docsivi-api-footer-inner">
-              <Footer docsivi={docsivi} lang={loaderData.lang} variant="compact" />
+          <div ref={footerRef} className="consify-api-footer">
+            <div className="consify-api-footer-inner">
+              <Footer consify={consify} lang={loaderData.lang} variant="compact" />
             </div>
           </div>
         ) : null}

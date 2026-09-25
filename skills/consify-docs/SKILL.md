@@ -1,16 +1,16 @@
 ---
-name: docsivi-docs
-description: Write and maintain documentation for a project that uses docsivi (a configurable documentation site foundation). Interviews the user first (languages, versions, audience, sections), then writes MDX pages from the project's source code and TSDoc, keeps docs.config.ts, meta.json and translations in sync, and adds custom MDX components or plugins in custom/ when needed. Use when the user asks to document a project, write or update docs pages, add a language or a version, plan the structure of a docs site, translate pages, write a blog post for the docs site, or check that the docs match the code.
+name: consify-docs
+description: Write and maintain documentation for a project that uses consify (a configurable documentation site foundation). Interviews the user first (languages, versions, audience, sections), then writes MDX pages from the project's source code and TSDoc, keeps docs.config.ts, meta.json and translations in sync, and adds custom MDX components or plugins in custom/ when needed. Use when the user asks to document a project, write or update docs pages, add a language or a version, plan the structure of a docs site, translate pages, write a blog post for the docs site, or check that the docs match the code.
 ---
 
-# docsivi documentation
+# consify documentation
 
-docsivi is a foundation for documentation sites. A project that uses it consists of `docs.config.ts`,
+consify is a foundation for documentation sites. A project that uses it consists of `docs.config.ts`,
 a `content/` folder and, optionally, `custom/`. This skill writes and maintains the documentation of
 the **user's own product** (a library, an application, an API) inside such a project, in the format
-docsivi expects.
+consify expects.
 
-The user has the `docsivi` package installed. They do not have, and must not need, access to its
+The user has the `consify` package installed. They do not have, and must not need, access to its
 source repository. Everything the skill does happens in the user's project.
 
 ## What this skill does not do
@@ -18,7 +18,7 @@ source repository. Everything the skill does happens in the user's project.
 - It does not write TSDoc or code comments. It assumes the code has them. When something the docs
   need is undocumented in the code, say **where** and ask what to do. Do not invent the missing facts.
 - It does not create documentation for AI agents (`ai-docs/`, `AGENTS.md`) and does not run TypeDoc.
-- It does not change the user's source code or anything inside `node_modules/docsivi`.
+- It does not change the user's source code or anything inside `node_modules/consify`.
 - It does not edit `README.md` or `CHANGELOG.md`.
 - It does not commit. Commit only when the user says so.
 - It does not make facts up. If a claim cannot be verified, leave it out or mark it as unverified
@@ -29,18 +29,18 @@ source repository. Everything the skill does happens in the user's project.
 | What | Source |
 | --- | --- |
 | Behavior and API of the user's product | Their source code and TSDoc, tests, README, and the user's answers |
-| docsivi options (config keys, types, defaults) | `node_modules/docsivi/src/config/schema.ts` (Zod schema with TSDoc). If only compiled files are shipped, use the `.d.ts` types and the docsivi documentation at `<docsivi docs URL>` |
-| docsivi MDX components, code block features, slots | [references/docsivi-cheatsheet.md](references/docsivi-cheatsheet.md), then the docsivi documentation |
-| The current project | `docs.config.ts`, `content/`, `custom/`, `package.json` (docsivi version, scripts) |
+| consify options (config keys, types, defaults) | `node_modules/consify/src/config/schema.ts` (Zod schema with TSDoc). If only compiled files are shipped, use the `.d.ts` types and the consify documentation at `<consify docs URL>` |
+| consify MDX components, code block features, slots | [references/consify-cheatsheet.md](references/consify-cheatsheet.md), then the consify documentation |
+| The current project | `docs.config.ts`, `content/`, `custom/`, `package.json` (consify version, scripts) |
 
-Read the installed docsivi version in `package.json`. The cheatsheet was verified against one version;
+Read the installed consify version in `package.json`. The cheatsheet was verified against one version;
 when the installed package disagrees, trust the installed package.
 
 ## Workflow
 
-0. **Look at the project.** Is `docsivi` in `package.json`, and which version? Which scripts exist
+0. **Look at the project.** Is `consify` in `package.json`, and which version? Which scripts exist
    (`dev`, `build`, `typecheck`)? Is there a `docs.config.ts`? Which languages, versions and pages
-   already exist? If docsivi is not set up, explain how to start (`bunx create-docsivi@latest`) and
+   already exist? If consify is not set up, explain how to start (`bunx create-consify@latest`) and
    stop. Do not build a site skeleton by hand unless the user asks.
 1. **Interview the user** ([references/interview.md](references/interview.md)). Mandatory, before any
    writing. Never assume languages, versions or audience.
@@ -51,7 +51,7 @@ when the installed package disagrees, trust the installed package.
    ([references/page-templates.md](references/page-templates.md),
    [references/translation.md](references/translation.md)). Update `meta.json` /
    `meta.<language>.json` and `docs.config.ts` (languages, versions, navigation, footer, and so on).
-5. **Add blocks or plugins** when a page needs something docsivi does not have
+5. **Add blocks or plugins** when a page needs something consify does not have
    ([references/extending.md](references/extending.md)). Ask first.
 6. **Verify** ([references/verification.md](references/verification.md)).
 7. **Report** what was created and changed, what was verified, and which questions remain. Do not commit.

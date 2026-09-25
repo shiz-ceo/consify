@@ -23,7 +23,7 @@ describe("themeToCss", () => {
     });
     const css = themeToCss(theme);
     expect(css).toContain(
-      ":root{--radius:0.25rem;--docsivi-font-sans:Inter, sans-serif;--primary:oklch(0.5 0.2 250);}",
+      ":root{--radius:0.25rem;--consify-font-sans:Inter, sans-serif;--primary:oklch(0.5 0.2 250);}",
     );
     expect(css).toContain(".dark{--primary:oklch(0.8 0.1 250);}");
   });

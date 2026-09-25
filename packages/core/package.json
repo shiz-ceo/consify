@@ -1,5 +1,5 @@
 {
-  "name": "docsivi",
+  "name": "consify",
   "version": "0.0.0",
   "description": "Customizable documentation site foundation built on Fumadocs",
   "type": "module",
@@ -63,6 +63,6 @@
     "vite": "^7.0.0 || ^8.0.0"
   },
   "bin": {
-    "docsivi": "./bin/docsivi"
+    "consify": "./bin/consify"
   }
 }

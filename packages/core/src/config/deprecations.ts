@@ -71,7 +71,7 @@ export function applyDeprecations(
     const value = parent[oldLeaf];
     output = withPath(output, oldKeys, undefined, true);
 
-    let message = `"${entry.path}" is deprecated since docsivi ${entry.since}`;
+    let message = `"${entry.path}" is deprecated since consify ${entry.since}`;
     if (entry.replacedBy !== undefined) {
       message += `, use "${entry.replacedBy}" instead`;
       const newKeys = entry.replacedBy.split(".");

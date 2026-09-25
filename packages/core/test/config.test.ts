@@ -135,7 +135,7 @@ describe("deprecations", () => {
     const { input, warnings } = applyDeprecations({ theme: { radius: "1rem" } }, table);
     expect(input).toEqual({ theme: { radii: { base: "1rem" } } });
     expect(warnings).toEqual([
-      '"theme.radius" is deprecated since docsivi 0.2.0, use "theme.radii.base" instead',
+      '"theme.radius" is deprecated since consify 0.2.0, use "theme.radii.base" instead',
     ]);
   });
 
@@ -152,7 +152,7 @@ describe("deprecations", () => {
       { path: "old", since: "0.3.0", hint: "Delete it." },
     ]);
     expect(warnings).toEqual([
-      '"old" is deprecated since docsivi 0.3.0 and has no replacement. Delete it.',
+      '"old" is deprecated since consify 0.3.0 and has no replacement. Delete it.',
     ]);
   });
 

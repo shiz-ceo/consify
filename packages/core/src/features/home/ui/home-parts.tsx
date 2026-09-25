@@ -16,7 +16,7 @@ export interface HeroProps {
 
 /** The big heading of a home page with its buttons. Links get the language of the page. */
 export function Hero({ title, description, actions = [] }: HeroProps) {
-  const { docsivi, lang } = useHome();
+  const { consify, lang } = useHome();
   return (
     <section className="not-prose flex flex-col items-center gap-6 py-6 text-center">
       <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-balance md:text-6xl">
@@ -29,7 +29,7 @@ export function Hero({ title, description, actions = [] }: HeroProps) {
         {actions.map((action) => (
           <Anchor
             key={action.href + action.label}
-            to={resolveHref(docsivi.config, lang, action.href)}
+            to={resolveHref(consify.config, lang, action.href)}
             className={
               (action.variant ?? "primary") === "primary"
                 ? "rounded-full bg-fd-primary px-5 py-2.5 text-sm font-medium text-fd-primary-foreground transition-opacity hover:opacity-90"
@@ -56,7 +56,7 @@ export interface FeaturesProps {
 
 /** A grid of cards. */
 export function Features({ items }: FeaturesProps) {
-  const { docsivi, lang } = useHome();
+  const { consify, lang } = useHome();
   if (items.length === 0) return null;
   return (
     <section className="not-prose grid gap-4 py-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -74,7 +74,7 @@ export function Features({ items }: FeaturesProps) {
         return feature.href ? (
           <Anchor
             key={feature.title}
-            to={resolveHref(docsivi.config, lang, feature.href)}
+            to={resolveHref(consify.config, lang, feature.href)}
             className={`${className} transition-colors hover:bg-fd-accent`}
           >
             {body}

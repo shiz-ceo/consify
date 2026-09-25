@@ -3,7 +3,7 @@ import type { ShikiTransformer } from "shiki";
 import type { Pluggable } from "unified";
 
 /**
- * A docsivi plugin. Every field is optional, a plugin usually touches one area. Plugins are listed
+ * A consify plugin. Every field is optional, a plugin usually touches one area. Plugins are listed
  * in `docs.config.ts` (`plugins: [...]`) and applied in order, after the built-in behavior.
  */
 export interface DocsPlugin {

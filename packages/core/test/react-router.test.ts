@@ -9,7 +9,7 @@ import { componentsFromGlob } from "../src/shared/instance.ts";
 
 let cwd: string;
 beforeEach(() => {
-  cwd = mkdtempSync(join(tmpdir(), "docsivi-rr-"));
+  cwd = mkdtempSync(join(tmpdir(), "consify-rr-"));
 });
 afterEach(() => {
   rmSync(cwd, { recursive: true, force: true });
@@ -157,9 +157,9 @@ describe("scaffold", () => {
     const root = () => readFileSync(join(cwd, appDirectory, "root.tsx"), "utf8");
     expect(existsSync(join(cwd, generatedDir, "instance.ts"))).toBe(true);
     expect(readFileSync(join(cwd, appDirectory, "routes.ts"), "utf8")).toContain(
-      "docsivi/react-router/routes",
+      "consify/react-router/routes",
     );
-    expect(root()).toContain('import "docsivi/theme.css"');
+    expect(root()).toContain('import "consify/theme.css"');
     expect(root()).not.toContain("custom/theme.css");
 
     mkdirSync(join(cwd, "custom"), { recursive: true });

@@ -6,7 +6,7 @@
 @import "fumadocs-twoslash/twoslash.css";
 @import "katex/dist/katex.css";
 
-/* Let Tailwind see the classes used by docsivi components. */
+/* Let Tailwind see the classes used by consify components. */
 @source "../";
 
 /*
@@ -80,7 +80,7 @@
   }
 
   body {
-    font-family: var(--docsivi-font-sans, "Geist Variable", ui-sans-serif, system-ui, sans-serif);
+    font-family: var(--consify-font-sans, "Geist Variable", ui-sans-serif, system-ui, sans-serif);
   }
 
   code,
@@ -88,7 +88,7 @@
   pre,
   samp {
     font-family: var(
-      --docsivi-font-mono,
+      --consify-font-mono,
       "Geist Mono Variable",
       ui-monospace,
       SFMono-Regular,
@@ -135,28 +135,28 @@ html > body[data-scroll-locked] {
 
 /* Highlighted code lines (`{2,4-6}` or `// [!code highlight]`): a violet band with an accent edge. */
 :root {
-  --docsivi-highlight: 139 92 246;
+  --consify-highlight: 139 92 246;
 }
 
 pre .line.highlighted {
-  --fd-counter-color: rgb(var(--docsivi-highlight));
-  background-color: rgb(var(--docsivi-highlight) / 0.14);
+  --fd-counter-color: rgb(var(--consify-highlight));
+  background-color: rgb(var(--consify-highlight) / 0.14);
 }
 
 pre .line.highlighted::after {
-  border-left: 2px solid rgb(var(--docsivi-highlight));
+  border-left: 2px solid rgb(var(--consify-highlight));
 }
 
 .dark pre .line.highlighted {
-  background-color: rgb(var(--docsivi-highlight) / 0.18);
+  background-color: rgb(var(--consify-highlight) / 0.18);
 }
 
 /* Border over images, GIFs and videos (see components/media.tsx): translucent, so it takes the tint of the media. */
-.docsivi-media-border {
+.consify-media-border {
   border: 1px solid rgb(0 0 0 / 0.12);
 }
 
-.dark .docsivi-media-border {
+.dark .consify-media-border {
   border-color: rgb(255 255 255 / 0.14);
 }
 
@@ -170,66 +170,66 @@ pre .line.highlighted::after {
  * component hands to Mermaid; this removes what those cannot: shadows, thick outlines, gray label
  * plates, and lines that run through the titles of groups.
  */
-.docsivi-mermaid svg {
+.consify-mermaid svg {
   max-width: 100%;
   height: auto;
 }
 
 /* Mermaid styles its shapes by the id of the diagram, so these need `!important` to win. */
-.docsivi-mermaid
+.consify-mermaid
   svg
   :is(.node, .actor, .statediagram-state, .note, .cluster)
   :is(rect, polygon, circle, ellipse, path),
-.docsivi-mermaid svg rect.actor,
-.docsivi-mermaid svg rect.note {
+.consify-mermaid svg rect.actor,
+.consify-mermaid svg rect.note {
   filter: none !important;
   stroke-width: 1px !important;
 }
 
-.docsivi-mermaid svg :is(.node rect, rect.actor, rect.note, .statediagram-state rect) {
+.consify-mermaid svg :is(.node rect, rect.actor, rect.note, .statediagram-state rect) {
   rx: 10px !important;
   ry: 10px !important;
 }
 
-.docsivi-mermaid svg .cluster rect {
+.consify-mermaid svg .cluster rect {
   rx: 14px !important;
   ry: 14px !important;
   stroke-dasharray: 5 4 !important;
   fill: transparent !important;
 }
 
-.docsivi-mermaid svg :is(.edgePath path, .flowchart-link, .messageLine0, .messageLine1) {
+.consify-mermaid svg :is(.edgePath path, .flowchart-link, .messageLine0, .messageLine1) {
   stroke-width: 1.25px !important;
 }
 
-.docsivi-mermaid svg marker path {
+.consify-mermaid svg marker path {
   fill: var(--color-fd-muted-foreground) !important;
   stroke: none !important;
 }
 
 /* titles of groups and labels of arrows are cut out of the lines behind them */
-.docsivi-mermaid svg :is(.cluster-label, .edgeLabel) :is(span, p, div, text, tspan) {
+.consify-mermaid svg :is(.cluster-label, .edgeLabel) :is(span, p, div, text, tspan) {
   paint-order: stroke;
   stroke: var(--color-fd-card);
   stroke-width: 6px;
   stroke-linejoin: round;
 }
 
-.docsivi-mermaid svg :is(.edgeLabel, .labelBkg) {
+.consify-mermaid svg :is(.edgeLabel, .labelBkg) {
   background-color: transparent !important;
   opacity: 1 !important;
 }
 
-.docsivi-mermaid svg .edgeLabel rect {
+.consify-mermaid svg .edgeLabel rect {
   fill: var(--color-fd-card) !important;
   opacity: 1 !important;
 }
 
-.docsivi-mermaid svg .edgeLabel text {
+.consify-mermaid svg .edgeLabel text {
   fill: var(--color-fd-muted-foreground) !important;
 }
 
-.docsivi-mermaid svg .edgeLabel :is(span, p) {
+.consify-mermaid svg .edgeLabel :is(span, p) {
   background: var(--color-fd-background) !important;
   padding: 1px 6px;
   border-radius: 6px;
@@ -237,7 +237,7 @@ pre .line.highlighted::after {
   font-size: 0.85em;
 }
 
-.docsivi-mermaid svg .cluster-label :is(span, p, div) {
+.consify-mermaid svg .cluster-label :is(span, p, div) {
   color: var(--color-fd-muted-foreground);
   font-size: 0.85em;
   font-weight: 500;

@@ -1,20 +1,20 @@
 ---
 title: How it works
-description: The idea behind docsivi and what happens between your files and the site
+description: The idea behind consify and what happens between your files and the site
 ---
 
 ## A project is only configuration
 
-A docsivi project has your content and a small amount of configuration. Everything else lives in the `docsivi` package: the routes, the page layout, the search, the theme, the build wiring.
+A consify project has your content and a small amount of configuration. Everything else lives in the `consify` package: the routes, the page layout, the search, the theme, the build wiring.
 
-That is what makes updates cheap. When a new version of the package comes out, you run `bun update docsivi`, and your project gets the fixes and the new features. There is no template to diff and no layout you forked two years ago.
+That is what makes updates cheap. When a new version of the package comes out, you run `bun update consify`, and your project gets the fixes and the new features. There is no template to diff and no layout you forked two years ago.
 
 ```mermaid
 flowchart LR
-  A[docs.config.ts] --> P[docsivi package]
+  A[docs.config.ts] --> P[consify package]
   B[content/*.mdx] --> P
   C[custom/*] --> P
-  P --> G[.docsivi/ generated files]
+  P --> G[.consify/ generated files]
   G --> R[React Router + Vite]
   R --> O[Node server or static files]
 ```
@@ -22,7 +22,7 @@ flowchart LR
 ## What happens when you run it
 
 1. `docs.config.ts` is validated with Zod. A mistake stops the start with a message that names the option (`site.name`, `i18n.languages`, ...).
-2. docsivi writes a few thin files into `.docsivi/`: the content instance, the root of the app, the list of routes, and the collections for the blog and the MDX home page.
+2. consify writes a few thin files into `.consify/`: the content instance, the root of the app, the list of routes, and the collections for the blog and the MDX home page.
 3. Vite compiles the MDX (through Fumadocs), the styles (Tailwind) and the React Router app. The route modules come from the package, so they are never copied into your project.
 4. In development the result is served with hot reload. In a build it is a Node server or a folder of files.
 

@@ -11,11 +11,11 @@ import { Footer } from "../../../shared/layout/footer.tsx";
 import { docsLayoutOptions } from "../../../shared/layout/layout-options.tsx";
 import { Redirecting } from "../../../shared/layout/redirecting.tsx";
 import { format, getMessages } from "../../../shared/messages.ts";
-import { buildMeta, docsivi, isStatic, requireLang } from "../../../shared/router.ts";
+import { buildMeta, consify, isStatic, requireLang } from "../../../shared/router.ts";
 import { getMDXComponents } from "../../../shared/ui/mdx.tsx";
 import { defaultDocsPath, deprecationOf } from "../../../shared/versions.ts";
 
-const { source, docs, config } = docsivi;
+const { source, docs, config } = consify;
 
 type Params = Record<string, string | undefined>;
 
@@ -131,7 +131,7 @@ function Content({ data }: { data: PageData }) {
   }
 
   const compactFooter = (
-    <Footer docsivi={docsivi} lang={data.lang} variant="compact" editUrl={editUrl} />
+    <Footer consify={consify} lang={data.lang} variant="compact" editUrl={editUrl} />
   );
 
   return (
@@ -180,7 +180,7 @@ function Content({ data }: { data: PageData }) {
       <DocsDescription>{data.description}</DocsDescription>
       <DocsBody>
         <Body
-          components={getMDXComponents(config, { a: RelativeLink }, docsivi.customComponents)}
+          components={getMDXComponents(config, { a: RelativeLink }, consify.customComponents)}
         />
       </DocsBody>
       {config.features.pagination ? null : compactFooter}
@@ -191,7 +191,7 @@ function Content({ data }: { data: PageData }) {
 function View({ loaderData }: { loaderData: PageData }) {
   const { pageTree } = useFumadocsLoader(loaderData as never) as { pageTree: never };
   return (
-    <DocsLayout {...docsLayoutOptions(docsivi, loaderData.lang, "docs")} tree={pageTree}>
+    <DocsLayout {...docsLayoutOptions(consify, loaderData.lang, "docs")} tree={pageTree}>
       <Content data={loaderData} />
     </DocsLayout>
   );

@@ -6,7 +6,7 @@ description: Which file does what
 ```
 my-docs/
 ├─ docs.config.ts            all settings
-├─ vite.config.ts            plugins: [docsivi(config)]
+├─ vite.config.ts            plugins: [consify(config)]
 ├─ react-router.config.ts    export default defineRouterConfig(config)
 ├─ content/
 │  ├─ docs/<version>/        pages of the documentation
@@ -19,8 +19,8 @@ my-docs/
 │  ├─ footer.tsx             optional, replaces the footer
 │  └─ theme.css              optional, your styles, loaded after the core theme
 ├─ public/                   files served as they are (favicon, images)
-├─ .docsivi/                 generated, do not edit, do not commit
-└─ build/                    the result of `docsivi build`
+├─ .consify/                 generated, do not edit, do not commit
+└─ build/                    the result of `consify build`
 ```
 
 ## Files you write
@@ -28,7 +28,7 @@ my-docs/
 <TypeTable
   type={{
     "docs.config.ts": { description: "Every setting. Validated at start.", type: "file", required: true },
-    "vite.config.ts": { description: "One line: the docsivi plugin.", type: "file", required: true },
+    "vite.config.ts": { description: "One line: the consify plugin.", type: "file", required: true },
     "react-router.config.ts": { description: "One line: the router settings derived from your config.", type: "file", required: true },
     "content/docs": { description: "Pages of the documentation, one folder per version.", type: "folder" },
     "content/blog": { description: "Articles: `slug.mdx`, `slug.ru.mdx` for a translation.", type: "folder" },
@@ -38,7 +38,7 @@ my-docs/
 
 ## Generated files
 
-`.docsivi/` is written when the dev server or a build starts. It contains:
+`.consify/` is written when the dev server or a build starts. It contains:
 
 | File | Purpose |
 | --- | --- |
@@ -47,7 +47,7 @@ my-docs/
 | `home.ts` | The MDX home page, if you have one |
 | `app/root.tsx`, `app/routes.ts` | The root of the React Router app and the list of routes |
 
-Add `.docsivi` to `.gitignore`.
+Add `.consify` to `.gitignore`.
 
 ## Folders in `content/docs`
 

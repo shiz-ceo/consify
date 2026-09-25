@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-// Checks the content of a docsivi project: translations, meta.json files, front matter, blog posts.
+// Checks the content of a consify project: translations, meta.json files, front matter, blog posts.
 //
 //   bun run check-docs.ts [--root <project>] [--languages en,ru] [--strict]
 //

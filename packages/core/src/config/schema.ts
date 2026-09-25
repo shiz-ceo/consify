@@ -43,7 +43,7 @@ const i18nSchema = z
     fallback: z.enum(["notice", "show", "hide"]).default("notice"),
     /** Display names for the language switcher, e.g. `{ ru: "Русский" }`. */
     labels: z.record(languageCode, z.string()).prefault({}),
-    /** Overrides for docsivi UI strings per language, e.g. `{ ru: { documentation: "Доки" } }`. */
+    /** Overrides for consify UI strings per language, e.g. `{ ru: { documentation: "Доки" } }`. */
     messages: z.record(languageCode, z.partialRecord(z.enum(messageKeys), z.string())).prefault({}),
   })
   .superRefine((value, ctx) => {
@@ -302,7 +302,7 @@ const blogSchema = z
 
 const deploySchema = z.strictObject({
   /**
-   * `server`: a Node server (`docsivi start`, Docker). `static`: plain files for any static host.
+   * `server`: a Node server (`consify start`, Docker). `static`: plain files for any static host.
    * Static mode has no server: `/` and `/docs` are pages that redirect, and search runs in the
    * browser.
    */

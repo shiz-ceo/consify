@@ -15,11 +15,11 @@ export {
 } from "./features/home/mdx-home.ts";
 export { type DocsPlugin, definePlugin } from "./plugins/index.ts";
 export {
+  type Consify,
   componentsFromGlob,
-  createDocsivi,
+  createConsify,
   type DocsCollection,
   type DocsEntry,
-  type Docsivi,
   type DocsPageData,
 } from "./shared/instance.ts";
 export { resolveHref } from "./shared/links.ts";

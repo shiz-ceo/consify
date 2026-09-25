@@ -23,7 +23,7 @@ If the project has the script. It covers the config and the components in `custo
 ## 3. The check script
 
 ```bash
-bun run .claude/skills/docsivi-docs/scripts/check-docs.ts
+bun run .claude/skills/consify-docs/scripts/check-docs.ts
 # options: --root <project>  --languages en,ru  --strict
 ```
 

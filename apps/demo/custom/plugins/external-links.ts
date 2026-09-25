@@ -1,4 +1,4 @@
-import { definePlugin } from "docsivi/plugins";
+import { definePlugin } from "consify/plugins";
 
 type HastNode = {
   type: string;

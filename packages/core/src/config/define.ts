@@ -30,7 +30,7 @@ export interface ParseOptions {
 
 /** Validates raw config and returns the normalized, frozen result. Throws `DocsConfigError`. */
 export function parseDocsConfig(input: unknown, options: ParseOptions = {}): Readonly<DocsConfig> {
-  const onWarning = options.onWarning ?? ((m: string) => console.warn(`[docsivi] ${m}`));
+  const onWarning = options.onWarning ?? ((m: string) => console.warn(`[consify] ${m}`));
   let raw = input;
   if (typeof input === "object" && input !== null && !Array.isArray(input)) {
     const result = applyDeprecations(input as Record<string, unknown>);

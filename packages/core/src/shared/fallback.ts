@@ -106,7 +106,7 @@ export function completeMetaPages<S extends { files: readonly unknown[] }>(
           if (reported.has(key)) continue;
           reported.add(key);
           warn(
-            `docsivi: ${file.path} does not list "${name}", so it was added at the end. List it in the file to choose its place.`,
+            `consify: ${file.path} does not list "${name}", so it was added at the end. List it in the file to choose its place.`,
           );
         }
         if (missing.length > 0) changes.pages = [...pages, ...missing];
@@ -125,7 +125,7 @@ export function completeMetaPages<S extends { files: readonly unknown[] }>(
  */
 export function fallbackBadgePlugin(defaultLanguage: string): LoaderPlugin {
   return {
-    name: "docsivi:fallback-badge",
+    name: "consify:fallback-badge",
     transformPageTree: {
       file(node, filePath) {
         const context = this as unknown as {

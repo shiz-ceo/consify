@@ -1,12 +1,12 @@
 import { isFallbackPage } from "../../shared/fallback.ts";
-import { docsivi } from "../../shared/router.ts";
+import { consify } from "../../shared/router.ts";
 
 /**
  * Every docs page. A page shown without a translation is a copy of the original, so its address
  * is left out (unless `i18n.fallback` is `show`).
  */
 export function docsSitemap(): string[] {
-  const { config, source } = docsivi;
+  const { config, source } = consify;
   const { defaultLanguage } = config.i18n;
   return source
     .getPages()

@@ -43,7 +43,7 @@ export function stripScalarCredit(
 /** A plugin for Vite and for the Rolldown dependency pre-bundling of Vite (same hook shape). */
 export function scalarCreditPlugin() {
   return {
-    name: "docsivi:no-scalar-credit",
+    name: "consify:no-scalar-credit",
     transform(this: { warn(message: string): void }, code: string, id: string) {
       const path = (id.split("?")[0] ?? id).split("\\").join("/");
       const removal = removals.find((r) => r.module.test(path));
@@ -51,7 +51,7 @@ export function scalarCreditPlugin() {
       const result = stripScalarCredit(code, removal);
       if (!result.changed) {
         this.warn(
-          `docsivi: could not remove 'Powered by Scalar' from ${path.split("/").pop()}, the code of Scalar has changed. It stays hidden by CSS.`,
+          `consify: could not remove 'Powered by Scalar' from ${path.split("/").pop()}, the code of Scalar has changed. It stays hidden by CSS.`,
         );
         return null;
       }

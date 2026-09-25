@@ -1,4 +1,4 @@
-import type { HeaderSlotProps } from "docsivi";
+import type { HeaderSlotProps } from "consify";
 import { Link } from "react-router";
 
 /**
@@ -23,8 +23,8 @@ export default function Header({ links }: HeaderSlotProps) {
 }
 
 /** Extra item on the right side, before the controls. */
-export function End({ docsivi }: HeaderSlotProps) {
-  const repo = docsivi.config.site.github?.repo;
+export function End({ consify }: HeaderSlotProps) {
+  const repo = consify.config.site.github?.repo;
   if (!repo) return null;
   return (
     <a

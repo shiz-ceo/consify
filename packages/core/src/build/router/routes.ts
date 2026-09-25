@@ -5,12 +5,12 @@ import { routeKey } from "../../shared/feature.ts";
 import { system } from "../../system/index.ts";
 
 /** The routes that exist for the config, set by `defineRouterConfig` (see `route-list.ts`). */
-const enabled = process.env.DOCSIVI_ROUTES
-  ? new Set<string>(JSON.parse(process.env.DOCSIVI_ROUTES))
+const enabled = process.env.CONSIFY_ROUTES
+  ? new Set<string>(JSON.parse(process.env.CONSIFY_ROUTES))
   : undefined;
 
 /** `defineRouterConfig` sets this before the routes are read. */
-const isStatic = process.env.DOCSIVI_DEPLOY_MODE === "static";
+const isStatic = process.env.CONSIFY_DEPLOY_MODE === "static";
 
 /**
  * The routes of the system parts and of every feature that is on. Route modules live in this

@@ -1,20 +1,20 @@
 ---
-title: How docsivi was made, and why
+title: How consify was made, and why
 description: "The story of a documentation foundation that you configure instead of maintain, and the decisions behind it: Fumadocs, React Router, Bun, Zod and a strict rule about what belongs to the project."
 date: 2026-09-25
 categories: [announcements, engineering]
-tags: [docsivi, architecture, fumadocs, react-router, story]
+tags: [consify, architecture, fumadocs, react-router, story]
 authors: [shiz-ceo]
-cover: /blog/how-docsivi-was-made.svg
+cover: /blog/how-consify-was-made.svg
 coverAlt: A window with lines of code over a purple grid
 ---
 
 <Authors ids={["shiz-ceo"]} />
 
-This is the first version of docsivi, so it is a good moment to write down where it came from. It is a long post. It covers the problem, the rule that shaped everything else, the decisions that changed along the way, and what is still missing.
+This is the first version of consify, so it is a good moment to write down where it came from. It is a long post. It covers the problem, the rule that shaped everything else, the decisions that changed along the way, and what is still missing.
 
 <Callout type="info" title="Status">
-  docsivi is a pre-release. The ideas are settled, the details will still move, and this post will
+  consify is a pre-release. The ideas are settled, the details will still move, and this post will
   be corrected before the first stable version.
 </Callout>
 
@@ -32,10 +32,10 @@ That became one rule, and I still check every decision against it:
 
 > A project contains configuration, content and small pieces of its own. Everything else is a package.
 
-In practice a docsivi project is a config file, a `content/` folder, an optional `custom/` folder and two files with one line each. There is no `app/` directory, no routes, no layout that you have to keep in sync.
+In practice a consify project is a config file, a `content/` folder, an optional `custom/` folder and two files with one line each. There is no `app/` directory, no routes, no layout that you have to keep in sync.
 
 ```ts title="docs.config.ts" {4-6}
-import { defineConfig } from "docsivi";
+import { defineConfig } from "consify";
 
 export default defineConfig({
   site: { name: "Lattice", github: { repo: "example/lattice" } },
@@ -65,7 +65,7 @@ Before writing code I made a list of requirements, and it did not change much:
 
 I did not want to write a documentation UI from scratch. [Fumadocs](https://fumadocs.dev) already does the hard parts well: turning MDX into pages, a page tree with translations, search, a sidebar, a table of contents, and a good set of components.
 
-The catch is that Fumadocs is a library and not a foundation. It expects you to own an app. docsivi's job is to be that app once, in a package, and to expose only the decisions that belong to a project.
+The catch is that Fumadocs is a library and not a foundation. It expects you to own an app. consify's job is to be that app once, in a package, and to expose only the decisions that belong to a project.
 
 ```mermaid
 flowchart TB
@@ -74,7 +74,7 @@ flowchart TB
     B[content/]
     C[custom/]
   end
-  subgraph docsivi
+  subgraph consify
     D[Config schema - Zod]
     E[Features: docs, blog, API]
     F[System: redirect, 404, search, SEO]
@@ -107,7 +107,7 @@ The first version was built on Next.js, because Fumadocs started there. It worke
 
 <Expand title="What the migration looked like">
 
-I moved everything to a branch and deleted Next.js completely, so there was no halfway version to maintain. The route modules moved into the package, and `defineRouterConfig(config)` hands the settings to the router. The generated pieces (the content instance, the routes, the root) went into a `.docsivi/` folder that is ignored by git.
+I moved everything to a branch and deleted Next.js completely, so there was no halfway version to maintain. The route modules moved into the package, and `defineRouterConfig(config)` hands the settings to the router. The generated pieces (the content instance, the routes, the root) went into a `.consify/` folder that is ignored by git.
 
 The surprises were small and instructive:
 
@@ -135,8 +135,8 @@ The first customization tools were the obvious ones: design tokens for the look,
 The frame around the content took longer. A documentation site has a home page, a header and a footer, and they are usually the parts that a team wants to change first. The solution is a small set of **slots**:
 
 ```tsx title="custom/footer.tsx" {5-8}
-import type { FooterSlotProps } from "docsivi";
-import { DefaultFooter } from "docsivi/components";
+import type { FooterSlotProps } from "consify";
+import { DefaultFooter } from "consify/components";
 
 export default function Footer(props: FooterSlotProps) {
   return (
@@ -162,7 +162,7 @@ The design question was about drafts. Hiding an unpublished post in the browser 
 flowchart LR
   A[content/blog/*.mdx] --> B{published?}
   B -- draft or future date --> C[left out]
-  B -- yes --> D[.docsivi/blog.ts]
+  B -- yes --> D[.consify/blog.ts]
   D --> E[list, pages, search, RSS]
 ```
 
@@ -209,11 +209,11 @@ A feature describes itself in one file (its routes, its link in the header, whet
 
 This is the first version, and there is a list:
 
-- Publishing the package, and a `create-docsivi` generator.
+- Publishing the package, and a `create-consify` generator.
 - A smaller build. The demo site is around 25 MB because of generated images and diagrams.
 - Hooks that let a plugin change the site itself and not only the Markdown.
 - Feedback buttons on the pages of the docs.
 
 If any of these matter to you, tell me. The order of the list is not fixed.
 
-<CTA title="Try docsivi" description="Your first site takes five minutes." href="/docs/v0/quickstart" label="Read the quickstart" />
+<CTA title="Try consify" description="Your first site takes five minutes." href="/docs/v0/quickstart" label="Read the quickstart" />

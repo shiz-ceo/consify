@@ -6,7 +6,7 @@ description: Extend the Markdown pipeline and the code blocks
 A plugin is one object. Every field is optional:
 
 ```ts title="custom/plugins/my-plugin.ts"
-import { definePlugin } from "docsivi/plugins";
+import { definePlugin } from "consify/plugins";
 
 export const myPlugin = definePlugin({
   name: "my-plugin",
@@ -36,7 +36,7 @@ Plugins run in the order they are listed, after the built-in behavior. Names mus
 A small remark plugin that turns `> [!NOTE]` quotes into callouts:
 
 ```ts title="custom/plugins/github-alerts.ts"
-import { definePlugin } from "docsivi/plugins";
+import { definePlugin } from "consify/plugins";
 
 // Remark plugin: GitHub-style alerts in plain Markdown become <Callout>.
 //

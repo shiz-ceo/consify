@@ -1,4 +1,4 @@
-import { definePlugin } from "docsivi/plugins";
+import { definePlugin } from "consify/plugins";
 
 // Remark plugin: GitHub-style alerts in plain Markdown become <Callout>.
 //

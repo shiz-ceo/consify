@@ -1,6 +1,6 @@
 import type { DocsConfig } from "../config/index.ts";
 
-/** UI strings owned by docsivi (Fumadocs translates its own widgets separately). */
+/** UI strings owned by consify (Fumadocs translates its own widgets separately). */
 export const messageKeys = [
   "documentation",
   "deprecatedVersion",

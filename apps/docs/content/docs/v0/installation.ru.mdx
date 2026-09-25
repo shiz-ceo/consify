@@ -14,7 +14,7 @@ icon: Download
 Быстрее всего воспользоваться генератором. Он спросит название, скопирует стартовый шаблон и установит зависимости:
 
 ```bash
-bunx create-docsivi@latest my-docs
+bunx create-consify@latest my-docs
 cd my-docs
 bun run dev
 ```
@@ -24,14 +24,14 @@ bun run dev
 ## Добавление в существующий проект
 
 ```bash
-bun add docsivi react react-dom react-router
+bun add consify react react-dom react-router
 bun add -d vite typescript @types/react @types/react-dom @types/node
 ```
 
 Затем создайте следующие файлы.
 
 ```ts title="docs.config.ts"
-import { defineConfig } from "docsivi";
+import { defineConfig } from "consify";
 
 export default defineConfig({
   site: { name: "My docs" },
@@ -39,15 +39,15 @@ export default defineConfig({
 ```
 
 ```ts title="vite.config.ts"
-import { docsivi } from "docsivi/vite";
+import { consify } from "consify/vite";
 import { defineConfig } from "vite";
 import config from "./docs.config.ts";
 
-export default defineConfig({ plugins: [docsivi(config)] });
+export default defineConfig({ plugins: [consify(config)] });
 ```
 
 ```ts title="react-router.config.ts"
-import { defineRouterConfig } from "docsivi/react-router";
+import { defineRouterConfig } from "consify/react-router";
 import config from "./docs.config.ts";
 
 export default defineRouterConfig(config);
@@ -57,10 +57,10 @@ export default defineRouterConfig(config);
 {
   "type": "module",
   "scripts": {
-    "dev": "docsivi dev",
-    "build": "docsivi build",
-    "start": "docsivi start",
-    "typecheck": "docsivi typegen && tsc --noEmit"
+    "dev": "consify dev",
+    "build": "consify build",
+    "start": "consify start",
+    "typecheck": "consify typegen && tsc --noEmit"
   }
 }
 ```
@@ -72,14 +72,14 @@ export default defineRouterConfig(config);
 title: Welcome
 ---
 
-Hello from docsivi.
+Hello from consify.
 ```
 
 ```json title="content/docs/meta.json"
 { "pages": ["index"] }
 ```
 
-Добавьте `.docsivi`, `build` и `.react-router` в `.gitignore`. Эти папки генерируются автоматически.
+Добавьте `.consify`, `build` и `.react-router` в `.gitignore`. Эти папки генерируются автоматически.
 
 <Callout type="info" title="Пути импорта">
   Указывайте расширение в импортах своих файлов (`./docs.config.ts`). Vite предупреждает об импортах
@@ -90,9 +90,9 @@ Hello from docsivi.
 
 | Команда | Что делает |
 | --- | --- |
-| `docsivi dev` | Сервер разработки с горячей перезагрузкой |
-| `docsivi build` | Продакшен-сборка (вместе с предварительно отрендеренными страницами) |
-| `docsivi start` | Запускает сборку `server` (`build/server`) |
-| `docsivi typegen` | Генерирует типы маршрутов, которые использует `typecheck` |
+| `consify dev` | Сервер разработки с горячей перезагрузкой |
+| `consify build` | Продакшен-сборка (вместе с предварительно отрендеренными страницами) |
+| `consify start` | Запускает сборку `server` (`build/server`) |
+| `consify typegen` | Генерирует типы маршрутов, которые использует `typecheck` |
 
-Всё, что идёт после команды, передаётся нижележащему инструменту, например `docsivi dev --port 3000`.
+Всё, что идёт после команды, передаётся нижележащему инструменту, например `consify dev --port 3000`.

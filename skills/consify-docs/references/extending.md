@@ -1,11 +1,11 @@
 # Extending the site: components, plugins, slots
 
-Use this when a page needs something docsivi does not have. Everything lives in the user's project:
-`custom/` and `docs.config.ts`. Never edit `node_modules/docsivi`.
+Use this when a page needs something consify does not have. Everything lives in the user's project:
+`custom/` and `docs.config.ts`. Never edit `node_modules/consify`.
 
 ## Decide, in this order
 
-1. Do the built-in components do the job ([docsivi-cheatsheet.md](docsivi-cheatsheet.md))? Use them.
+1. Do the built-in components do the job ([consify-cheatsheet.md](consify-cheatsheet.md))? Use them.
 2. A new block for MDX pages: a component in `custom/components/<Name>.tsx`. The file name (capital
    letter) is the tag, the default export is the component. No import and no registration.
 3. Changing how Markdown or code blocks are processed, or adding syntax: a plugin.
@@ -37,7 +37,7 @@ Recurring jobs <Since version="0.3" />
 ## A plugin
 
 ```ts title="custom/plugins/my-plugin.ts"
-import { definePlugin } from "docsivi/plugins";
+import { definePlugin } from "consify/plugins";
 
 export const myPlugin = definePlugin({
   name: "my-plugin",
@@ -61,7 +61,7 @@ export default defineConfig({ /* ... */ plugins: [myPlugin] });
 
 `custom/header.tsx` exports a default component (the middle of the header) and an optional `End`
 (the right side). `custom/footer.tsx` receives `variant` (`full` or `compact`) and may reuse
-`DefaultFooter` from `docsivi/components`. `custom/home.tsx` fills the content of the home page.
+`DefaultFooter` from `consify/components`. `custom/home.tsx` fills the content of the home page.
 The header and the footer are shared by every page, so a slot changes them everywhere.
 
 ## Keep the config in step

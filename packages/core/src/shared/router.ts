@@ -1,15 +1,15 @@
 /// <reference path="../build/router/instance.d.ts" />
-import { docsivi } from "docsivi:instance";
+import { consify } from "consify:instance";
 import type { MetaDescriptor } from "react-router";
 
-export { docsivi };
+export { consify };
 
-export const isStatic = docsivi.config.deploy.mode === "static";
+export const isStatic = consify.config.deploy.mode === "static";
 
 /** The language from the URL, or a 404 for anything that is not a configured language. */
 export function requireLang(params: Record<string, string | undefined>): string {
   const lang = params.lang;
-  if (!lang || !docsivi.config.i18n.languages.includes(lang)) {
+  if (!lang || !consify.config.i18n.languages.includes(lang)) {
     throw new Response("Not found", { status: 404 });
   }
   return lang;
@@ -17,8 +17,8 @@ export function requireLang(params: Record<string, string | undefined>): string 
 
 /** Absolute URL when `site.url` is set, otherwise the path itself. */
 export function absoluteUrl(path: string): string {
-  const { url } = docsivi.config.site;
-  const base = docsivi.config.deploy.basePath ?? "";
+  const { url } = consify.config.site;
+  const base = consify.config.deploy.basePath ?? "";
   return url ? new URL(`${base}${path}`, url).toString() : path;
 }
 
@@ -39,7 +39,7 @@ export function buildMeta(page: PageMeta): MetaDescriptor[] {
   const meta: MetaDescriptor[] = [
     { title: page.title },
     { property: "og:title", content: page.title },
-    { property: "og:site_name", content: docsivi.config.site.name },
+    { property: "og:site_name", content: consify.config.site.name },
     { tagName: "link", rel: "canonical", href: absoluteUrl(page.path) },
   ];
   if (page.description) {

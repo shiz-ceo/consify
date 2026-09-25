@@ -1,8 +1,8 @@
-import { blog } from "docsivi:blog";
+import { blog } from "consify:blog";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "takumi-js/response";
-import { docsivi, requireLang } from "../../../shared/router.ts";
+import { consify, requireLang } from "../../../shared/router.ts";
 import { formatDate } from "../ui/post-parts.tsx";
 
 const mimeTypes: Record<string, string> = {
@@ -39,7 +39,7 @@ function hue(text: string): number {
  */
 export async function loader({ params }: { params: Record<string, string | undefined> }) {
   const lang = requireLang(params);
-  const { config } = docsivi;
+  const { config } = consify;
   const found = config.blog && blog && params.slug ? await blog.post(params.slug, lang) : undefined;
   if (!found) throw new Response("Not found", { status: 404 });
   const { post } = found;

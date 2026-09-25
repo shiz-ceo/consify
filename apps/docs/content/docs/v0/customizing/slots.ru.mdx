@@ -23,8 +23,8 @@ description: Замените главную страницу, шапку и п�
 ## Главная
 
 ```tsx title="custom/home.tsx"
-import type { HomeSlotProps } from "docsivi";
-import { Features, Hero } from "docsivi/components";
+import type { HomeSlotProps } from "consify";
+import { Features, Hero } from "consify/components";
 
 export default function Home({ lang }: HomeSlotProps) {
   return (
@@ -59,7 +59,7 @@ title: My project
 Название сайта слева и элементы управления справа (поиск, язык, тема и кнопка боковой панели страницы API) есть всегда. Слоты заполняют пространство между ними и правую часть:
 
 ```tsx title="custom/header.tsx"
-import type { HeaderSlotProps } from "docsivi";
+import type { HeaderSlotProps } from "consify";
 import { Link } from "react-router";
 
 // The middle of the header. `links` are the ones it shows by default.
@@ -89,8 +89,8 @@ export function End() {
 Компонент получает `variant`: `full` на страницах без боковой панели (главная, блог) и `compact` в документации и справочнике API. Подвал по умолчанию можно переиспользовать:
 
 ```tsx title="custom/footer.tsx"
-import type { FooterSlotProps } from "docsivi";
-import { DefaultFooter } from "docsivi/components";
+import type { FooterSlotProps } from "consify";
+import { DefaultFooter } from "consify/components";
 
 export default function Footer(props: FooterSlotProps) {
   return (

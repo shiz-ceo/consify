@@ -1,7 +1,7 @@
-import { blog } from "docsivi:blog";
+import { blog } from "consify:blog";
 import { SiteLayout } from "../../../shared/layout/site-layout.tsx";
 import { getMessages } from "../../../shared/messages.ts";
-import { absoluteUrl, buildMeta, docsivi, requireLang } from "../../../shared/router.ts";
+import { absoluteUrl, buildMeta, consify, requireLang } from "../../../shared/router.ts";
 import { categoryLabels, localized } from "../labels.ts";
 import type { BlogPost } from "../posts.ts";
 import { BlogList } from "../ui/blog-list.tsx";
@@ -14,7 +14,7 @@ interface ListData {
   description?: string | undefined;
   posts: BlogPost[];
   categories: { id: string; label: string }[];
-  authors: NonNullable<typeof docsivi.config.blog>["authors"];
+  authors: NonNullable<typeof consify.config.blog>["authors"];
   perPage: number;
   rss: boolean;
   /** Code of the default language, put on the cards of posts that are not translated (or none). */
@@ -24,7 +24,7 @@ interface ListData {
 /** `/{lang}/blog`: only published posts reach this loader, so nothing else can be sent to the browser. */
 export async function loader({ params }: { params: Params }): Promise<ListData> {
   const lang = requireLang(params);
-  const { config } = docsivi;
+  const { config } = consify;
   if (!config.blog || !blog) throw new Response("Not found", { status: 404 });
   const labels = categoryLabels(config, lang);
   return {
@@ -47,10 +47,10 @@ export function meta({ loaderData }: { loaderData?: ListData }) {
   const { lang, title, description, rss } = loaderData;
   const tags = buildMeta({
     lang,
-    title: `${title} | ${docsivi.config.site.name}`,
+    title: `${title} | ${consify.config.site.name}`,
     description,
     path: `/${lang}/blog`,
-    alternates: Object.fromEntries(docsivi.config.i18n.languages.map((l) => [l, `/${l}/blog`])),
+    alternates: Object.fromEntries(consify.config.i18n.languages.map((l) => [l, `/${l}/blog`])),
   });
   if (rss) {
     tags.push({
@@ -67,9 +67,9 @@ export function meta({ loaderData }: { loaderData?: ListData }) {
 export default function BlogRoute({ loaderData }: { loaderData: ListData }) {
   const { lang, title, description, posts, categories, authors, perPage, rss, fallbackBadge } =
     loaderData;
-  const messages = getMessages(docsivi.config, lang);
+  const messages = getMessages(consify.config, lang);
   return (
-    <SiteLayout docsivi={docsivi} lang={lang} page="blog">
+    <SiteLayout consify={consify} lang={lang} page="blog">
       <main className="mx-auto w-full max-w-7xl px-6 py-12 md:py-16">
         <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
           <div>

@@ -1,11 +1,11 @@
-import { defineConfig } from "docsivi";
+import { defineConfig } from "consify";
 import { externalLinks } from "./custom/plugins/external-links.ts";
 import { githubAlerts } from "./custom/plugins/github-alerts.ts";
 
 export default defineConfig({
   site: {
     name: "Lattice",
-    description: "A typed job queue for TypeScript. Documentation demo built with docsivi.",
+    description: "A typed job queue for TypeScript. Documentation demo built with consify.",
     url: "https://lattice.example.dev",
     favicon: "/favicon.svg",
     github: { repo: "example/lattice" },
@@ -43,8 +43,8 @@ export default defineConfig({
 
   footer: {
     description: {
-      en: "A typed job queue for TypeScript. Documentation demo built with docsivi.",
-      ru: "Типизированная очередь задач для TypeScript. Демо документации на docsivi.",
+      en: "A typed job queue for TypeScript. Documentation demo built with consify.",
+      ru: "Типизированная очередь задач для TypeScript. Демо документации на consify.",
     },
     columns: [
       {

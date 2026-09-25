@@ -1,10 +1,10 @@
 ---
 title: CLI
-description: Команда docsivi
+description: Команда consify
 ---
 
 ```bash
-docsivi <command> [options]
+consify <command> [options]
 ```
 
 | Команда | Что делает |
@@ -14,19 +14,19 @@ docsivi <command> [options]
 | `start` | Запускает `build/server/index.js` (нужен `deploy.mode: "server"`) |
 | `typegen` | Генерирует типы маршрутов. Используется перед `tsc` |
 
-Опции после команды передаются инструменту, который её выполняет: `docsivi dev --port 3000 --host`, а `docsivi start` читает `PORT`.
+Опции после команды передаются инструменту, который её выполняет: `consify dev --port 3000 --host`, а `consify start` читает `PORT`.
 
-Команда запускает CLI React Router, который идёт в комплекте с docsivi, поэтому ваш проект не зависит от `@react-router/dev`.
+Команда запускает CLI React Router, который идёт в комплекте с consify, поэтому ваш проект не зависит от `@react-router/dev`.
 
 ## Скрипты
 
 ```json title="package.json"
 {
   "scripts": {
-    "dev": "docsivi dev",
-    "build": "docsivi build",
-    "start": "docsivi start",
-    "typecheck": "docsivi typegen && tsc --noEmit"
+    "dev": "consify dev",
+    "build": "consify build",
+    "start": "consify start",
+    "typecheck": "consify typegen && tsc --noEmit"
   }
 }
 ```

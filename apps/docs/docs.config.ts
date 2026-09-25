@@ -1,11 +1,11 @@
-import { defineConfig } from "docsivi";
+import { defineConfig } from "consify";
 
 export default defineConfig({
   site: {
-    name: "docsivi",
+    name: "consify",
     description: "A documentation site foundation you configure instead of maintain.",
     favicon: "/favicon.svg",
-    github: { repo: "shiz-ceo/docsivi", branch: "main", contentDir: "apps/docs/content/docs" },
+    github: { repo: "shiz-ceo/consify", branch: "main", contentDir: "apps/docs/content/docs" },
   },
 
   i18n: {
@@ -22,8 +22,8 @@ export default defineConfig({
 
   blog: {
     description: {
-      en: "How docsivi is built, what changes, and how to get the most of it.",
-      ru: "Как устроен docsivi, что меняется и как выжать из него максимум.",
+      en: "How consify is built, what changes, and how to get the most of it.",
+      ru: "Как устроен consify, что меняется и как выжать из него максимум.",
     },
     categories: [
       { id: "announcements", label: { en: "Announcements", ru: "Анонсы" } },
@@ -37,8 +37,8 @@ export default defineConfig({
 
   footer: {
     description: {
-      en: "docsivi is a documentation site foundation built on Fumadocs, React Router and Vite.",
-      ru: "docsivi это основа для сайта документации на Fumadocs, React Router и Vite.",
+      en: "consify is a documentation site foundation built on Fumadocs, React Router and Vite.",
+      ru: "consify это основа для сайта документации на Fumadocs, React Router и Vite.",
     },
     columns: [
       {

@@ -155,7 +155,7 @@ export function Mermaid({ chart }: { chart: string }) {
   return (
     <div
       ref={container}
-      className="docsivi-mermaid not-prose my-6 flex justify-center overflow-x-auto rounded-xl border border-fd-border bg-fd-card/40 p-5"
+      className="consify-mermaid not-prose my-6 flex justify-center overflow-x-auto rounded-xl border border-fd-border bg-fd-card/40 p-5"
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );

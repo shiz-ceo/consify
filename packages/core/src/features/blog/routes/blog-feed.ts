@@ -1,13 +1,13 @@
-import { blog } from "docsivi:blog";
+import { blog } from "consify:blog";
 import { getMessages } from "../../../shared/messages.ts";
-import { absoluteUrl, docsivi, requireLang } from "../../../shared/router.ts";
+import { absoluteUrl, consify, requireLang } from "../../../shared/router.ts";
 import { buildRss } from "../feed.ts";
 import { categoryLabels, localized } from "../labels.ts";
 
 /** `/{lang}/blog/rss.xml`. */
 export async function loader({ params }: { params: Record<string, string | undefined> }) {
   const lang = requireLang(params);
-  const { config } = docsivi;
+  const { config } = consify;
   if (!config.blog?.rss || !blog) throw new Response("Not found", { status: 404 });
 
   const title = `${config.site.name}: ${localized(config, lang, config.blog.title) ?? getMessages(config, lang).blog}`;

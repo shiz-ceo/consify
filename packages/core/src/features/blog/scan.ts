@@ -57,10 +57,10 @@ export function scanPosts(cwd: string, languages: readonly string[]): PostFile[]
 /**
  * The files that are compiled into the site: no drafts and no posts dated in the future. What is
  * not compiled cannot leak into the browser bundle or the build output.
- * `DOCSIVI_DRAFTS=1` includes everything, to preview drafts while writing.
+ * `CONSIFY_DRAFTS=1` includes everything, to preview drafts while writing.
  */
 export function publishedFiles(posts: readonly PostFile[], now: Date = new Date()): PostFile[] {
-  if (process.env.DOCSIVI_DRAFTS === "1") return [...posts];
+  if (process.env.CONSIFY_DRAFTS === "1") return [...posts];
   return posts.filter((p) => isPublished(p.frontmatter, now));
 }
 

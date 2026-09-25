@@ -9,7 +9,7 @@ export const homeFrontmatterSchema = z.object({
   description: z.string().optional(),
 });
 
-/** A file of the collection defined in `.docsivi/home.ts`. */
+/** A file of the collection defined in `.consify/home.ts`. */
 export interface HomeEntry {
   info: { path: string };
   title?: string | undefined;

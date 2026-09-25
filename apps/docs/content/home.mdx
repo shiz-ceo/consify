@@ -1,11 +1,11 @@
 ---
-title: docsivi
+title: consify
 description: A documentation site foundation you configure instead of maintain.
 ---
 
 <Hero
   title="Documentation you configure, not maintain"
-  description="docsivi is a foundation for documentation sites. Your project is a config file and your pages. The core is a package that you update with one command."
+  description="consify is a foundation for documentation sites. Your project is a config file and your pages. The core is a package that you update with one command."
   actions={[
     { label: "Get started", href: "/docs/v0/quickstart" },
     { label: "How it works", href: "/docs/v0/concepts", variant: "secondary" },
@@ -26,7 +26,7 @@ description: A documentation site foundation you configure instead of maintain.
 ## A project in three files
 
 ```ts title="docs.config.ts"
-import { defineConfig } from "docsivi";
+import { defineConfig } from "consify";
 
 export default defineConfig({
   site: { name: "My project", github: { repo: "me/my-project" } },
@@ -35,18 +35,18 @@ export default defineConfig({
 ```
 
 ```ts title="vite.config.ts"
-import { docsivi } from "docsivi/vite";
+import { consify } from "consify/vite";
 import { defineConfig } from "vite";
 import config from "./docs.config.ts";
 
-export default defineConfig({ plugins: [docsivi(config)] });
+export default defineConfig({ plugins: [consify(config)] });
 ```
 
 ```ts title="react-router.config.ts"
-import { defineRouterConfig } from "docsivi/react-router";
+import { defineRouterConfig } from "consify/react-router";
 import config from "./docs.config.ts";
 
 export default defineRouterConfig(config);
 ```
 
-Then write pages in `content/docs/`, run `bun run dev`, and you have a site. Read [How it works](/docs/v0/concepts) to see what happens in between, or [how docsivi was made](/blog/how-docsivi-was-made) to see why it looks like this.
+Then write pages in `content/docs/`, run `bun run dev`, and you have a site. Read [How it works](/docs/v0/concepts) to see what happens in between, or [how consify was made](/blog/how-consify-was-made) to see why it looks like this.

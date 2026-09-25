@@ -23,8 +23,8 @@ Slots are found automatically in `custom/`. The config also accepts them, and wi
 ## Home
 
 ```tsx title="custom/home.tsx"
-import type { HomeSlotProps } from "docsivi";
-import { Features, Hero } from "docsivi/components";
+import type { HomeSlotProps } from "consify";
+import { Features, Hero } from "consify/components";
 
 export default function Home({ lang }: HomeSlotProps) {
   return (
@@ -59,7 +59,7 @@ title: My project
 The name of the site on the left and the controls on the right (search, language, theme, and the sidebar button of the API page) are always there. The slots fill the space between them and the right side:
 
 ```tsx title="custom/header.tsx"
-import type { HeaderSlotProps } from "docsivi";
+import type { HeaderSlotProps } from "consify";
 import { Link } from "react-router";
 
 // The middle of the header. `links` are the ones it shows by default.
@@ -89,8 +89,8 @@ On a phone the menu keeps the default links, so navigation never disappears.
 The component receives `variant`: `full` on pages without a sidebar (home, blog), `compact` in the docs and the API reference. The default footer is available to reuse:
 
 ```tsx title="custom/footer.tsx"
-import type { FooterSlotProps } from "docsivi";
-import { DefaultFooter } from "docsivi/components";
+import type { FooterSlotProps } from "consify";
+import { DefaultFooter } from "consify/components";
 
 export default function Footer(props: FooterSlotProps) {
   return (

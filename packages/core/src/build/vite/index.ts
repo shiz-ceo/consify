@@ -12,9 +12,9 @@ import { generatedDir, scaffold } from "../router/scaffold.ts";
 import { scalarCreditPlugin } from "../../features/api-reference/scalar-credit.ts";
 
 /**
- * Client dependencies of docsivi that Vite would otherwise discover one by one while the page
+ * Client dependencies of consify that Vite would otherwise discover one by one while the page
  * loads, re-optimizing and reloading in the middle of the first visit (which breaks hydration).
- * `docsivi > x` resolves `x` from the docsivi package, so a project does not have to depend on them.
+ * `consify > x` resolves `x` from the consify package, so a project does not have to depend on them.
  */
 const prebundle = [
   "fumadocs-core/i18n",
@@ -46,11 +46,11 @@ const prebundle = [
   "zod",
 ];
 
-/** Directory of the docsivi package when it is linked from outside the project (`bun link`). */
+/** Directory of the consify package when it is linked from outside the project (`bun link`). */
 function linkedPackageDir(cwd: string): string | undefined {
   try {
     const dir = dirname(
-      realpathSync(createRequire(`${cwd}${sep}`).resolve("docsivi/package.json")),
+      realpathSync(createRequire(`${cwd}${sep}`).resolve("consify/package.json")),
     );
     return dir === cwd || dir.startsWith(`${cwd}${sep}`) ? undefined : dir;
   } catch {
@@ -63,25 +63,25 @@ function linkedPackageDir(cwd: string): string | undefined {
  * connects them to `docs.config.ts`.
  *
  * @example
- * import { docsivi } from "docsivi/vite";
+ * import { consify } from "consify/vite";
  * import { defineConfig } from "vite";
  * import config from "./docs.config";
  *
- * export default defineConfig({ plugins: [docsivi(config)] });
+ * export default defineConfig({ plugins: [consify(config)] });
  */
-export function docsivi(config: Readonly<DocsConfig>): PluginOption[] {
+export function consify(config: Readonly<DocsConfig>): PluginOption[] {
   const cwd = process.cwd();
   scaffold(cwd, config);
   const linked = linkedPackageDir(cwd);
   const basePath = config.deploy.basePath;
 
-  // A file inside the docsivi package: imports of Fumadocs made by generated code are resolved from here.
+  // A file inside the consify package: imports of Fumadocs made by generated code are resolved from here.
   const fromCore = fileURLToPath(import.meta.url);
 
   const wiring: Plugin = {
-    name: "docsivi:wiring",
+    name: "consify:wiring",
     // The content macro injects `import ... from "fumadocs-mdx/runtime/macro"` into
-    // `.docsivi/instance.ts`. The project does not depend on fumadocs-mdx, docsivi does.
+    // `.consify/instance.ts`. The project does not depend on fumadocs-mdx, consify does.
     resolveId: {
       order: "pre",
       async handler(source, importer, options) {
@@ -94,17 +94,17 @@ export function docsivi(config: Readonly<DocsConfig>): PluginOption[] {
       ...(basePath ? { base: `${basePath}/` } : {}),
       resolve: {
         alias: {
-          "docsivi:instance": join(cwd, generatedDir, "instance.ts"),
-          "docsivi:blog": join(cwd, generatedDir, "blog.ts"),
-          "docsivi:home": join(cwd, generatedDir, "home.ts"),
+          "consify:instance": join(cwd, generatedDir, "instance.ts"),
+          "consify:blog": join(cwd, generatedDir, "blog.ts"),
+          "consify:home": join(cwd, generatedDir, "home.ts"),
         },
-        // route modules and the theme come from the docsivi package, keep one copy of React
+        // route modules and the theme come from the consify package, keep one copy of React
         dedupe: ["react", "react-dom", "react-router"],
       },
       // The package ships TypeScript sources, so Vite has to compile it instead of externalizing it.
-      ssr: { noExternal: ["docsivi"] },
+      ssr: { noExternal: ["consify"] },
       optimizeDeps: {
-        include: prebundle.map((dep) => `docsivi > ${dep}`),
+        include: prebundle.map((dep) => `consify > ${dep}`),
         // the pre-bundling of dependencies (dev) is a separate build, it needs the plugin too
         rolldownOptions: { plugins: [scalarCreditPlugin()] },
       },

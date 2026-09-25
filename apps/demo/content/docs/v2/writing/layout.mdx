@@ -16,7 +16,7 @@ Each part has three levels. Use the lowest one that does the job.
 Components can also be given in the config, as `slots`. The config wins over the files in `custom/`:
 
 ```ts title="docs.config.ts"
-import { defineConfig } from "docsivi";
+import { defineConfig } from "consify";
 import { Footer } from "./custom/my-footer";
 
 export default defineConfig({
@@ -61,8 +61,8 @@ description: A typed job queue for TypeScript
 ### In React
 
 ```tsx title="custom/home.tsx"
-import type { HomeSlotProps } from "docsivi";
-import { Features, Hero } from "docsivi/components";
+import type { HomeSlotProps } from "consify";
+import { Features, Hero } from "consify/components";
 
 export default function Home({ lang }: HomeSlotProps) {
   return (
@@ -81,7 +81,7 @@ Links such as `/docs` get the language of the page and the default version.
 The header always has the name of the site on the left, and the search, the language switcher, the theme toggle (and the sidebar button of the API page) on the right. You decide what goes between them:
 
 ```tsx title="custom/header.tsx"
-import type { HeaderSlotProps } from "docsivi";
+import type { HeaderSlotProps } from "consify";
 import { Link } from "react-router";
 
 // The middle of the header. `links` are the ones it shows by default.
@@ -132,8 +132,8 @@ Social icons: `github`, `x`, `bluesky`, `linkedin`, `discord`, `youtube`, `rss`.
 To replace it, write one component. It receives `variant` (`full` or `compact`) and the default footer is there to reuse:
 
 ```tsx title="custom/footer.tsx"
-import type { FooterSlotProps } from "docsivi";
-import { DefaultFooter } from "docsivi/components";
+import type { FooterSlotProps } from "consify";
+import { DefaultFooter } from "consify/components";
 
 export default function Footer(props: FooterSlotProps) {
   return (
