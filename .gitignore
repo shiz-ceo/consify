@@ -9,7 +9,9 @@ dist
 !.env.example
 .DS_Store
 .consify
-build
+# build output of the apps (not the `build/` source folder of the core)
+/build
+apps/*/build
 .react-router
 .idea
 packages/create-consify/template
