@@ -126,7 +126,7 @@ export default function BlogPostRoute({ loaderData }: { loaderData: PostData }) 
   ) : null;
 
   return (
-    <SiteLayout docsivi={docsivi} lang={lang}>
+    <SiteLayout docsivi={docsivi} lang={lang} page="blog">
       <div className="mx-auto w-full max-w-[84rem] px-6 pb-16">
         {/* title block: a narrow centered column */}
         <header className="mx-auto max-w-3xl pt-10 md:pt-14">

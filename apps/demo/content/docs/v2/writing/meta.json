@@ -9,6 +9,7 @@
     "custom-components",
     "plugins",
     "theming",
+    "layout",
     "i18n-and-versions"
   ]
 }

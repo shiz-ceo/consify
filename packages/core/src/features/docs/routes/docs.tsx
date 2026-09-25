@@ -6,9 +6,9 @@ import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { ComponentProps } from "react";
 import { use } from "react";
 import { redirect } from "react-router";
+import { Footer } from "../../../shared/layout/footer.tsx";
 import { docsLayoutOptions } from "../../../shared/layout/layout-options.tsx";
 import { Redirecting } from "../../../shared/layout/redirecting.tsx";
-import { CompactFooter } from "../../../shared/layout/site-footer.tsx";
 import { format, getMessages } from "../../../shared/messages.ts";
 import { buildMeta, docsivi, isStatic, requireLang } from "../../../shared/router.ts";
 import { getMDXComponents } from "../../../shared/ui/mdx.tsx";
@@ -104,7 +104,9 @@ function Content({ data }: { data: PageData }) {
     return <Anchor href={href ? source.resolveHref(href, page as never) : href} {...props} />;
   }
 
-  const compactFooter = <CompactFooter docsivi={docsivi} lang={data.lang} editUrl={editUrl} />;
+  const compactFooter = (
+    <Footer docsivi={docsivi} lang={data.lang} variant="compact" editUrl={editUrl} />
+  );
 
   return (
     <DocsPage
@@ -146,7 +148,7 @@ function Content({ data }: { data: PageData }) {
 function View({ loaderData }: { loaderData: PageData }) {
   const { pageTree } = useFumadocsLoader(loaderData as never) as { pageTree: never };
   return (
-    <DocsLayout {...docsLayoutOptions(docsivi, loaderData.lang)} tree={pageTree}>
+    <DocsLayout {...docsLayoutOptions(docsivi, loaderData.lang, "docs")} tree={pageTree}>
       <Content data={loaderData} />
     </DocsLayout>
   );

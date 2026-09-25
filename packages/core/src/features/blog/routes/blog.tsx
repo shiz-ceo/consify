@@ -63,7 +63,7 @@ export default function BlogRoute({ loaderData }: { loaderData: ListData }) {
   const { lang, title, description, posts, categories, authors, perPage, rss } = loaderData;
   const messages = getMessages(docsivi.config, lang);
   return (
-    <SiteLayout docsivi={docsivi} lang={lang}>
+    <SiteLayout docsivi={docsivi} lang={lang} page="blog">
       <main className="mx-auto w-full max-w-7xl px-6 py-12 md:py-16">
         <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
           <div>

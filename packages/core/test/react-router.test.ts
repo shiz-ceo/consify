@@ -49,7 +49,7 @@ describe("prerenderPaths", () => {
   test("every page in every language, even when only one language has the file", () => {
     content("index.mdx", "about.mdx", "about.ru.mdx");
     const paths = prerenderPaths(defineConfig(base), cwd);
-    for (const p of ["/en/docs", "/ru/docs/about", "/en/docs/about", "/ru/docs", "/en", "/ru"]) {
+    for (const p of ["/en/docs", "/ru/docs/about", "/en/docs/about", "/ru/docs"]) {
       expect(paths).toContain(p);
     }
     expect(paths).toContain("/en/og/about/image.png");
@@ -86,7 +86,54 @@ describe("prerenderPaths", () => {
   });
 
   test("a missing content folder gives only the fixed pages", () => {
+    const paths = prerenderPaths(defineConfig(base), cwd);
+    expect(paths).toContain("/sitemap.xml");
+    expect(paths).not.toContain("/en/docs/about");
+  });
+});
+
+describe("the home page in the pre-render list", () => {
+  const base = { site: { name: "D" }, i18n: { languages: ["en", "ru"] } };
+  const hero = { hero: { title: "T" } };
+
+  test("without a home it redirects to the docs: left out on a server, built when static", () => {
+    expect(prerenderPaths(defineConfig(base), cwd)).not.toContain("/en");
+    const staticPaths = prerenderPaths(defineConfig({ ...base, deploy: { mode: "static" } }), cwd);
+    expect(staticPaths).toContain("/en");
+    expect(staticPaths).toContain("/ru");
+  });
+
+  test("the home block of the config, a custom component or content/home.mdx make it a page", () => {
+    expect(prerenderPaths(defineConfig({ ...base, home: { en: hero } }), cwd)).toContain("/ru");
+
+    mkdirSync(join(cwd, "custom"), { recursive: true });
+    writeFileSync(join(cwd, "custom/home.tsx"), "export default () => null;");
     expect(prerenderPaths(defineConfig(base), cwd)).toContain("/en");
+    rmSync(join(cwd, "custom"), { recursive: true });
+
+    mkdirSync(join(cwd, "content"), { recursive: true });
+    writeFileSync(join(cwd, "content/home.mdx"), "# Hi");
+    expect(prerenderPaths(defineConfig(base), cwd)).toContain("/en");
+  });
+});
+
+describe("home.ts", () => {
+  test("lists home.mdx and home.{lang}.mdx of the configured languages", () => {
+    mkdirSync(join(cwd, "content"), { recursive: true });
+    for (const file of ["home.mdx", "home.ru.mdx", "home.fr.mdx", "homework.mdx", "about.mdx"]) {
+      writeFileSync(join(cwd, "content", file), "# x");
+    }
+    const config = defineConfig({ site: { name: "D" }, i18n: { languages: ["en", "ru"] } });
+    scaffold(cwd, config);
+    const generated = readFileSync(join(cwd, generatedDir, "home.ts"), "utf8");
+    expect(generated).toContain('["home.mdx","home.ru.mdx"]');
+  });
+
+  test("is a null stub when there is no home file", () => {
+    scaffold(cwd, defineConfig({ site: { name: "D" } }));
+    expect(readFileSync(join(cwd, generatedDir, "home.ts"), "utf8")).toContain(
+      "export const home = null;",
+    );
   });
 });
 

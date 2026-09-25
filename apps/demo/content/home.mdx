@@ -1,0 +1,37 @@
+---
+title: Lattice
+description: A typed job queue for TypeScript. Documentation demo built with docsivi.
+---
+
+<Hero
+  title="Background jobs without the guesswork"
+  description="Lattice is a typed job queue for TypeScript. Define your job data once and get compile-time checks from the producer to the worker."
+  actions={[
+    { label: "Get started", href: "/docs" },
+    { label: "Why Lattice?", href: "/docs/v2/concepts", variant: "secondary" },
+  ]}
+/>
+
+<Features
+  items={[
+    { icon: "ShieldCheck", title: "End-to-end types", description: "One type describes a job. Producers, workers and handlers all share it.", href: "/docs/v2/concepts/jobs" },
+    { icon: "RefreshCw", title: "Retries that make sense", description: "Backoff, dead-letter queues and idempotency keys are built in.", href: "/docs/v2/guides/retries" },
+    { icon: "Clock", title: "Scheduling", description: "Delayed jobs, cron expressions and rate limits without extra services.", href: "/docs/v2/guides/scheduling" },
+    { icon: "Plug", title: "Pluggable backends", description: "Start in memory, run on Redis or Postgres, or write your own backend.", href: "/docs/v2/guides/advanced/custom-backends" },
+    { icon: "Activity", title: "Observability", description: "Metrics and traces out of the box, ready for OpenTelemetry.", href: "/docs/v2/guides/advanced/observability" },
+    { icon: "BookOpen", title: "Writing docs like this", description: "See how this site is built: components, code blocks, plugins and themes.", href: "/docs/v2/writing" },
+  ]}
+/>
+
+## One type, from the producer to the worker
+
+This page is written in MDX (`content/home.mdx`), so it has everything a docs page has: code blocks, callouts and your own components.
+
+```ts title="jobs/send-email.ts"
+import { defineJob } from "lattice";
+
+export const sendEmail = defineJob<{ to: string; subject: string }>("send-email");
+```
+
+> [!TIP]
+> Read [how the home page, the header and the footer are customized](/docs/v2/writing/layout).

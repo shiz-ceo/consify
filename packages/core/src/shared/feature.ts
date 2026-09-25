@@ -1,5 +1,8 @@
 import type { DocsConfig } from "../config/index.ts";
 
+/** The sections of the site, as `header.hideSearchOn` names them. */
+export type PageId = "home" | "docs" | "api-reference" | "blog";
+
 export type FeatureConfig = Readonly<DocsConfig>;
 
 /** A route of a feature. `file` is relative to the feature folder. */
@@ -8,6 +11,17 @@ export interface RouteSpec {
   path?: string;
   index?: boolean;
   file: string;
+  /**
+   * Whether the route exists for this config (default: when its feature is on). A static site
+   * cannot have a route with a loader that no URL is pre-rendered for, so a route that has nothing
+   * to pre-render (the RSS feed of a blog with `rss: false`) must be left out.
+   */
+  when?: (config: FeatureConfig) => boolean;
+}
+
+/** Identifies a route of a feature in the list handed from the config to `routes.ts`. */
+export function routeKey(feature: { id: string }, spec: RouteSpec): string {
+  return `${feature.id}:${spec.file}`;
 }
 
 export interface NavLink {

@@ -9,3 +9,9 @@ declare module "docsivi:blog" {
   import type { Blog } from "docsivi";
   export const blog: Blog | null;
 }
+
+// `docsivi:home` is an alias to `.docsivi/home.ts`: the home page written in MDX, or `null`.
+declare module "docsivi:home" {
+  import type { MdxHome } from "docsivi";
+  export const home: MdxHome | null;
+}

@@ -188,6 +188,25 @@ const openapiSchema = z.strictObject({
 
 const localizedText = z.union([z.string().min(1), z.record(languageCode, z.string().min(1))]);
 
+const component = z.custom<ComponentType<any>>(
+  (value) => typeof value === "function" || (typeof value === "object" && value !== null),
+  "must be a React component",
+);
+
+export const pageIds = ["home", "docs", "api-reference", "blog"] as const;
+
+const headerSchema = z.strictObject({
+  /** Pages that have no search in the header, by the id of their section. */
+  hideSearchOn: z.array(z.enum(pageIds)).default([]),
+});
+
+const slotsSchema = z.strictObject({
+  home: component.optional(),
+  header: component.optional(),
+  headerEnd: component.optional(),
+  footer: component.optional(),
+});
+
 export const socialTypes = [
   "github",
   "x",
@@ -331,6 +350,14 @@ export const docsConfigSchema = z
     openapi: openapiSchema.optional(),
     /** A blog: articles in `content/blog`, a list with filters and search, an RSS feed. */
     blog: blogSchema.optional(),
+    /**
+     * Replacements for parts of the site: `{ home, header, headerEnd, footer }`, React components.
+     * The files `custom/home.tsx`, `custom/header.tsx` and `custom/footer.tsx` do the same; this
+     * wins when both exist.
+     */
+    slots: slotsSchema.optional(),
+    /** Options of the header (the same on every page). */
+    header: headerSchema.optional(),
     /** The footer of every page. On by default (a column of the sections), `false` removes it. */
     footer: z.union([z.literal(false), footerSchema]).optional(),
     deploy: deploySchema.prefault({}),

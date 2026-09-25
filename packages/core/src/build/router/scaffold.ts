@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { blogDir, checkPosts, publishedFiles, scanPosts } from "../../features/blog/scan.ts";
+import { homeFiles } from "../../features/home/scan.ts";
 import type { DocsConfig } from "../../config/index.ts";
 
 /** Generated files live here (gitignored). React Router's `appDirectory` points at `.docsivi/app`. */
@@ -14,7 +15,7 @@ export function renderInstance(): string {
   return `${header}
 // @ts-nocheck: the project does not depend on fumadocs-mdx, so its macro has no types here. The
 // type of \`docsivi\` seen by route modules is declared by "docsivi:instance" instead.
-import { componentsFromGlob, createDocsivi } from "docsivi";
+import { componentsFromGlob, createDocsivi, slotsFromGlob } from "docsivi";
 import { defineDocs } from "fumadocs-mdx/macro";
 import config from "../docs.config.ts";
 
@@ -30,8 +31,10 @@ const docs = defineDocs({
 
 // custom/components/Foo.tsx becomes <Foo /> in every .mdx file.
 const custom = import.meta.glob("/custom/components/*.{tsx,jsx}", { eager: true });
+// custom/home.tsx, custom/header.tsx and custom/footer.tsx replace parts of the site.
+const slots = import.meta.glob("/custom/{home,header,footer}.{tsx,jsx}", { eager: true });
 
-export const docsivi = createDocsivi(config, docs, componentsFromGlob(custom));
+export const docsivi = createDocsivi(config, docs, componentsFromGlob(custom), slotsFromGlob(slots));
 `;
 }
 
@@ -74,6 +77,27 @@ export const blog = createBlog(config, posts);
 `;
 }
 
+/** Source of `.docsivi/home.ts`: the home page written in MDX, or `null` when there is none. */
+export function renderHome(files: readonly string[]): string {
+  if (files.length === 0) return `${header}\nexport const home = null;\n`;
+  return `${header}
+// @ts-nocheck: the project does not depend on fumadocs-mdx, so its macro has no types here.
+import { createHome, homeFrontmatterSchema } from "docsivi";
+import { defineCollections } from "fumadocs-mdx/macro";
+import config from "../docs.config.ts";
+
+const pages = defineCollections({
+  type: "doc",
+  dir: "content",
+  files: ${JSON.stringify(files)},
+  async: true,
+  schema: homeFrontmatterSchema,
+});
+
+export const home = createHome(config, pages);
+`;
+}
+
 export function renderRoutes(): string {
   return `${header}
 export { default } from "docsivi/react-router/routes";
@@ -109,4 +133,8 @@ export function scaffold(cwd: string = process.cwd(), config?: Readonly<DocsConf
   writeIfChanged(join(cwd, appDirectory, "root.tsx"), renderRoot(hasCustomCss));
   writeIfChanged(join(cwd, appDirectory, "routes.ts"), renderRoutes());
   writeIfChanged(join(cwd, generatedDir, "blog.ts"), renderBlog(blogFiles(cwd, config)));
+  writeIfChanged(
+    join(cwd, generatedDir, "home.ts"),
+    renderHome(config ? homeFiles(cwd, config.i18n.languages) : []),
+  );
 }

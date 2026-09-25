@@ -1,5 +1,5 @@
 import { type CSSProperties, lazy, Suspense, useEffect, useRef, useState } from "react";
-import { CompactFooter } from "../../../shared/layout/site-footer.tsx";
+import { Footer } from "../../../shared/layout/footer.tsx";
 import { SiteLayout } from "../../../shared/layout/site-layout.tsx";
 import { buildMeta, docsivi, requireLang } from "../../../shared/router.ts";
 
@@ -58,7 +58,13 @@ export default function ApiScalarRoute({
   }, [mounted]);
 
   return (
-    <SiteLayout docsivi={docsivi} lang={loaderData.lang} sidebarToggle footer={false}>
+    <SiteLayout
+      docsivi={docsivi}
+      lang={loaderData.lang}
+      sidebarToggle
+      footer={false}
+      page="api-reference"
+    >
       <div
         className="docsivi-api flex flex-1 flex-col"
         style={{ "--docsivi-footer-h": `${footerHeight}px` } as CSSProperties}
@@ -73,7 +79,7 @@ export default function ApiScalarRoute({
         {mounted ? (
           <div ref={footerRef} className="docsivi-api-footer">
             <div className="docsivi-api-footer-inner">
-              <CompactFooter docsivi={docsivi} lang={loaderData.lang} />
+              <Footer docsivi={docsivi} lang={loaderData.lang} variant="compact" />
             </div>
           </div>
         ) : null}

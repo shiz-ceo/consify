@@ -1,0 +1,37 @@
+---
+title: Lattice
+description: Типизированная очередь задач для TypeScript. Демо документации на docsivi.
+---
+
+<Hero
+  title="Фоновые задачи без догадок"
+  description="Lattice — типизированная очередь задач для TypeScript. Опишите данные задачи один раз и получайте проверки типов от отправителя до обработчика."
+  actions={[
+    { label: "Начать", href: "/docs" },
+    { label: "Зачем нужен Lattice?", href: "/docs/v2/concepts", variant: "secondary" },
+  ]}
+/>
+
+<Features
+  items={[
+    { icon: "ShieldCheck", title: "Типы от начала до конца", description: "Один тип описывает задачу. Отправитель, воркер и обработчик используют его.", href: "/docs/v2/concepts/jobs" },
+    { icon: "RefreshCw", title: "Разумные повторы", description: "Backoff, очереди недоставленных задач и ключи идемпотентности уже есть.", href: "/docs/v2/guides/retries" },
+    { icon: "Clock", title: "Планирование", description: "Отложенные задачи, cron и ограничение частоты без дополнительных сервисов.", href: "/docs/v2/guides/scheduling" },
+    { icon: "Plug", title: "Сменные бэкенды", description: "Начните в памяти, перейдите на Redis или Postgres или напишите свой бэкенд." },
+    { icon: "Activity", title: "Наблюдаемость", description: "Метрики и трейсы из коробки, совместимо с OpenTelemetry." },
+    { icon: "BookOpen", title: "Пишите документацию так же", description: "Как устроен этот сайт: компоненты, блоки кода, плагины и темы.", href: "/docs/v2/writing" },
+  ]}
+/>
+
+## Один тип, от отправителя до воркера
+
+Эта страница написана на MDX (`content/home.ru.mdx`), поэтому на ней доступно всё, что есть на странице документации: блоки кода, врезки и ваши компоненты.
+
+```ts title="jobs/send-email.ts"
+import { defineJob } from "lattice";
+
+export const sendEmail = defineJob<{ to: string; subject: string }>("send-email");
+```
+
+> [!TIP]
+> Прочитайте, [как настраиваются главная, шапка и футер](/docs/v2/writing/layout).

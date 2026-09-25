@@ -8,7 +8,11 @@ export const blog: Feature = {
   enabled: (config) => config.blog !== undefined,
   routes: () => [
     { path: ":lang/blog", file: "routes/blog.tsx" },
-    { path: ":lang/blog/rss.xml", file: "routes/blog-feed.ts" },
+    {
+      path: ":lang/blog/rss.xml",
+      file: "routes/blog-feed.ts",
+      when: (config) => config.blog?.rss === true,
+    },
     { path: ":lang/blog/:slug/og.png", file: "routes/blog-og.tsx" },
     { path: ":lang/blog/*", file: "routes/blog-post.tsx" },
   ],

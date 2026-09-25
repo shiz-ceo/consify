@@ -68,7 +68,7 @@ function footerData(docsivi: Docsivi, lang: string) {
  * columns of links on the right, the legal line at the bottom. Configured by `footer` in
  * `docs.config.ts`; `footer: false` removes it.
  */
-export function SiteFooter({ docsivi, lang }: { docsivi: Docsivi; lang: string }) {
+export function FullFooter({ docsivi, lang }: { docsivi: Docsivi; lang: string }) {
   const data = footerData(docsivi, lang);
   if (!data) return null;
   const { config, footer, description, legal, columns } = data;

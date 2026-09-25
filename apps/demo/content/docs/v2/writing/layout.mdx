@@ -1,0 +1,146 @@
+---
+title: Home, header and footer
+description: Configure or replace the home page, the header and the footer, once for the whole site
+---
+
+The home page, the header and the footer are described **once** and every page uses them: the docs, the blog, the API reference and the home page itself. A custom home page is drawn inside the same header and footer as everything else, so the site never has two different headers.
+
+Each part has three levels. Use the lowest one that does the job.
+
+| Level | Home | Header | Footer |
+| --- | --- | --- | --- |
+| Config | `home` block | `nav` | `footer` block |
+| Switch off | leave it out (redirects to the docs) | (always there) | `footer: false` |
+| Replace | `content/home.mdx` or `custom/home.tsx` | `custom/header.tsx` | `custom/footer.tsx` |
+
+Components can also be given in the config, as `slots`. The config wins over the files in `custom/`:
+
+```ts title="docs.config.ts"
+import { defineConfig } from "docsivi";
+import { Footer } from "./custom/my-footer";
+
+export default defineConfig({
+  site: { name: "Lattice" },
+  slots: { footer: Footer }, // also: home, header, headerEnd
+});
+```
+
+## The home page
+
+The page at `/{lang}` shows the first of these that exists:
+
+1. `custom/home.tsx` (or `slots.home`), a React component.
+2. `content/home.mdx`, with `content/home.ru.mdx` for another language. A language without its own file gets the default one.
+3. The `home` block of the config: a heading, buttons and cards.
+4. Nothing: readers are sent to the documentation.
+
+### In MDX
+
+`Hero` and `Features` are available in `home.mdx` next to every built-in component:
+
+```mdx title="content/home.mdx"
+---
+title: Lattice
+description: A typed job queue for TypeScript
+---
+
+<Hero
+  title="Background jobs without the guesswork"
+  description="Define your job data once."
+  actions={[{ label: "Get started", href: "/docs" }]}
+/>
+
+<Features
+  items={[
+    { title: "End-to-end types", description: "One type for the whole flow.", icon: "ShieldCheck" },
+    { title: "Retries", description: "Backoff and dead-letter queues.", href: "/docs/v2/concepts" },
+  ]}
+/>
+```
+
+### In React
+
+```tsx title="custom/home.tsx"
+import type { HomeSlotProps } from "docsivi";
+import { Features, Hero } from "docsivi/components";
+
+export default function Home({ lang }: HomeSlotProps) {
+  return (
+    <main className="mx-auto max-w-4xl px-6 py-20">
+      <Hero title={`Hello, ${lang}`} actions={[{ label: "Docs", href: "/docs" }]} />
+      <Features items={[{ title: "Card", description: "Anything you like" }]} />
+    </main>
+  );
+}
+```
+
+Links such as `/docs` get the language of the page and the default version.
+
+## The header
+
+The header always has the name of the site on the left, and the search, the language switcher, the theme toggle (and the sidebar button of the API page) on the right. You decide what goes between them:
+
+```tsx title="custom/header.tsx"
+import type { HeaderSlotProps } from "docsivi";
+import { Link } from "react-router";
+
+// The middle of the header. `links` are the ones it shows by default.
+export default function Header({ links }: HeaderSlotProps) {
+  return (
+    <>
+      {links.map((link) => (
+        <Link key={link.url} to={link.url} className="text-sm">
+          {link.text}
+        </Link>
+      ))}
+      <a href="https://status.example.dev">Status</a>
+    </>
+  );
+}
+
+// Optional: extra items on the right, before the controls.
+export function End() {
+  return <a href="https://example.dev/signup">Sign up</a>;
+}
+```
+
+On a phone the menu keeps the default links, so navigation never disappears.
+
+To remove the search from the header of some sections, list them in the config. The ids are `home`, `docs`, `api-reference` and `blog`:
+
+```ts title="docs.config.ts"
+header: { hideSearchOn: ["blog"] },
+```
+
+## The footer
+
+Without any settings the footer lists the sections that are on. Configure it, or turn it off:
+
+```ts title="docs.config.ts"
+footer: {
+  description: { en: "A typed job queue.", ru: "Типизированная очередь задач." },
+  columns: [
+    { title: "Product", links: [{ title: "Docs", url: "/docs" }, { title: "Blog", url: "/blog" }] },
+  ],
+  social: [{ type: "github", url: "https://github.com/example/lattice" }],
+  legal: "© 2026 Lattice",
+},
+```
+
+Social icons: `github`, `x`, `bluesky`, `linkedin`, `discord`, `youtube`, `rss`. Pages without a sidebar (home, blog) show the full footer. The docs and the API reference show a compact one, lined up with the content.
+
+To replace it, write one component. It receives `variant` (`full` or `compact`) and the default footer is there to reuse:
+
+```tsx title="custom/footer.tsx"
+import type { FooterSlotProps } from "docsivi";
+import { DefaultFooter } from "docsivi/components";
+
+export default function Footer(props: FooterSlotProps) {
+  return (
+    <>
+      <DefaultFooter {...props} />
+      {props.variant === "full" ? <p>Made in Berlin</p> : null}
+    </>
+  );
+}
+```

@@ -5,6 +5,7 @@ import { lucideIconsPlugin } from "fumadocs-core/source/plugins/lucide-icons";
 import type { TableOfContents } from "fumadocs-core/toc";
 import type { MDXContent } from "mdx/types";
 import type { DocsConfig } from "../config/index.ts";
+import type { Slots } from "./slots.ts";
 
 /** Frontmatter and metadata available for every page without loading its content. */
 export interface DocsPageData {
@@ -42,6 +43,8 @@ export function createDocsivi(
   docs: DocsCollection,
   /** Components discovered in `custom/components`. */
   customComponents: Record<string, unknown> = {},
+  /** Slots discovered in `custom/` (`home.tsx`, `header.tsx`, `footer.tsx`). */
+  customSlots: Slots = {},
 ) {
   const i18n = defineI18n({
     defaultLanguage: config.i18n.defaultLanguage,
@@ -61,7 +64,17 @@ export function createDocsivi(
       `# ${page.data.title} (${page.url})\n\n${(await page.data.getText?.("processed")) ?? ""}`,
   });
 
-  return { config, i18n, source, docs, customComponents, docsLlms };
+  // slots from `docs.config.ts` win over the files in `custom/`
+  const fromConfig = config.slots ?? {};
+  const slots: Slots = {
+    ...customSlots,
+    ...(fromConfig.home ? { Home: fromConfig.home } : {}),
+    ...(fromConfig.header ? { Header: fromConfig.header } : {}),
+    ...(fromConfig.headerEnd ? { HeaderEnd: fromConfig.headerEnd } : {}),
+    ...(fromConfig.footer ? { Footer: fromConfig.footer } : {}),
+  };
+
+  return { config, i18n, source, docs, customComponents, slots, docsLlms };
 }
 
 export type Docsivi = ReturnType<typeof createDocsivi>;

@@ -9,7 +9,7 @@ export const docs: Feature = {
     { path: ":lang/docs/*", file: "routes/docs.tsx" },
     { path: ":lang/llms.txt", file: "routes/llms.ts" },
     { path: ":lang/llms-full.txt", file: "routes/llms-full.ts" },
-    { path: ":lang/og/*", file: "routes/og.ts" },
+    { path: ":lang/og/*", file: "routes/og.ts", when: (config) => config.features.og },
   ],
   nav: (config, lang) => ({
     text: getMessages(config, lang).documentation,
