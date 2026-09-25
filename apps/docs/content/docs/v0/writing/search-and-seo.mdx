@@ -1,0 +1,24 @@
+---
+title: Search and SEO
+description: Search, sitemap, llms.txt and social images
+---
+
+## Search
+
+Search is on by default and covers the documentation. Open it with the button in the header or with Cmd/Ctrl+K. In `server` mode it asks an endpoint (`/api/search`); in `static` mode it downloads an index file and searches in the browser. Switch it off with `features.search`.
+
+## Sitemap and robots
+
+`/sitemap.xml` lists every docs page, and the blog posts that are published. It needs `site.url`. `/robots.txt` allows everything and points at the sitemap.
+
+## Meta tags
+
+Every page has a title, description, canonical link, links to the translations (`hreflang`) and Open Graph and Twitter tags. Blog posts also have `article:*` tags and an RSS link in the head of the blog.
+
+## llms.txt
+
+`/{lang}/llms.txt` lists the pages of the documentation, and `/{lang}/llms-full.txt` contains all of it as one plain text. Language models and tools that read docs can use them. Turn them off with `features.llmsTxt`.
+
+## Social images
+
+`/{lang}/og/<page>/image.png` is a generated image with the title of the page. Blog posts get `/{lang}/blog/<slug>/og.png`, which uses the cover of the post as its background. Turn the docs images off with `features.og`.

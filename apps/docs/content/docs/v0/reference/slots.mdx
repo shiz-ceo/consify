@@ -1,0 +1,65 @@
+---
+title: Slots API
+description: Props of the home page, the header and the footer
+---
+
+```ts
+import type { ComponentType } from "react";
+import type { Docsivi } from "docsivi";
+
+interface LayoutLink {
+  text: string;
+  url: string; // with the language
+  external: boolean;
+}
+
+interface HomeSlotProps {
+  docsivi: Docsivi; // the site: config, source, slots
+  lang: string;
+}
+
+interface HeaderSlotProps {
+  docsivi: Docsivi;
+  lang: string;
+  /** The links the header shows by default. */
+  links: LayoutLink[];
+}
+
+interface FooterSlotProps {
+  docsivi: Docsivi;
+  lang: string;
+  /** `full` (home, blog, 404) or `compact` (docs, API reference). */
+  variant: "full" | "compact";
+  /** Link to edit the page on GitHub (docs pages). */
+  editUrl?: string;
+}
+
+interface Slots {
+  Home?: ComponentType<HomeSlotProps>;
+  Header?: ComponentType<HeaderSlotProps>;
+  HeaderEnd?: ComponentType<HeaderSlotProps>;
+  Footer?: ComponentType<FooterSlotProps>;
+}
+```
+
+Import the types from `docsivi`. `Hero` and `Features` for a home page, and `DefaultFooter` for a footer, come from `docsivi/components`.
+
+## Hero
+
+<TypeTable
+  type={{
+    title: { description: "The heading.", type: "string", required: true },
+    description: { description: "Text under it.", type: "string" },
+    actions: { description: "Buttons. `variant` is `primary` or `secondary`. Links get the language.", type: "{ label, href, variant? }[]" },
+  }}
+/>
+
+## Features
+
+<TypeTable
+  type={{
+    items: { description: "Cards. `icon` is a Lucide icon name; `href` makes the card a link.", type: "{ title, description, icon?, href? }[]", required: true },
+  }}
+/>
+
+`Hero` and `Features` work on the home page only, inside `custom/home.tsx` or `content/home.mdx`.

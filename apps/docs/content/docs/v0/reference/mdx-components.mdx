@@ -1,0 +1,24 @@
+---
+title: MDX components
+description: The names available in every .mdx file
+---
+
+| Component | Purpose |
+| --- | --- |
+| `Callout` | A highlighted note (`info`, `warn`, `error`, `success`, `idea`) |
+| `Tabs`, `Tab` | Tabbed content |
+| `Steps`, `Step` | Numbered steps |
+| `Cards`, `Card` | Cards, optionally links |
+| `Accordions`, `Accordion` | Collapsible sections |
+| `Files`, `Folder`, `File` | A file tree |
+| `TypeTable` | A table of properties and types |
+| `Banner` | A banner across the page |
+| `Badge` | A small label (`new`, `beta`, `deprecated`, `danger`) |
+| `Video` | A video with controls |
+| `Mermaid` | A diagram (usually a `mermaid` code block instead) |
+| `Authors`, `Expand`, `PR`, `Benchmark`, `Figure`, `Embed`, `CTA` | [Blog components](/docs/v0/blog/components) |
+| `Hero`, `Features` | Only on the home page (`content/home.mdx`) |
+
+Your own components from `custom/components` and from the config are added to this list, and replace a built-in one with the same name. Plugins can add components too.
+
+Standard Markdown elements (`a`, `img`, `video`, code, tables, headings) are styled by the theme. `img` and `video` get a translucent border; `<img plain />` leaves one without.

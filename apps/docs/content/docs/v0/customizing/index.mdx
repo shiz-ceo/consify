@@ -1,0 +1,17 @@
+---
+title: Customizing
+description: Ways to make the site yours, from the least to the most work
+---
+
+docsivi is meant to be changed without forking. Pick the smallest tool:
+
+| You want | Use |
+| --- | --- |
+| Other colors, radius or fonts | [`theme`](/docs/v0/configuration/theme) in the config |
+| A few CSS rules | `custom/theme.css` |
+| A new tag in MDX | [Custom components](/docs/v0/customizing/custom-components) |
+| Different Markdown or code block behavior | [Plugins](/docs/v0/customizing/plugins) |
+| A different home page, header or footer | [Slots](/docs/v0/customizing/slots) |
+| Another link in the header or footer | `nav` and `footer` in the [config](/docs/v0/configuration/layout) |
+
+Everything here lives in your project (`docs.config.ts` and `custom/`), so the core keeps updating.

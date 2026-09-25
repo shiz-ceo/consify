@@ -1,0 +1,93 @@
+---
+title: Deployment
+description: Build the site and put it online
+icon: Cloud
+---
+
+Choose the mode in the config (see [Server and static modes](/docs/v0/concepts/rendering-modes)):
+
+```ts title="docs.config.ts"
+deploy: { mode: "static" },          // or "server" (default)
+```
+
+## Static site
+
+```bash
+bun run build
+```
+
+Upload the `build/client` folder to any static host. Every page is a file. Set `site.url` first.
+
+<Tabs items={["GitHub Pages", "Cloudflare Pages", "Nginx", "S3"]}>
+  <Tab value="GitHub Pages">
+```yaml title=".github/workflows/docs.yml"
+name: docs
+on: { push: { branches: [main] } }
+permissions: { pages: write, id-token: write, contents: read }
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: build/client }
+      - uses: actions/deploy-pages@v4
+```
+  </Tab>
+  <Tab value="Cloudflare Pages">
+Build command `bun run build`, output directory `build/client`.
+  </Tab>
+  <Tab value="Nginx">
+```nginx
+root /var/www/docs;
+location / { try_files $uri $uri/index.html /__spa-fallback.html; }
+```
+  </Tab>
+  <Tab value="S3">
+Upload `build/client` and serve `index.html` for directories (CloudFront, or the website endpoint of the bucket).
+  </Tab>
+</Tabs>
+
+A static build also writes `__spa-fallback.html`. Serve it for unknown addresses if your host allows a custom fallback.
+
+## Node server
+
+```bash
+bun run build
+bun run start
+```
+
+`docsivi start` serves `build/`. It listens on port 3000; set `PORT` to change it.
+
+```dockerfile title="Dockerfile"
+FROM oven/bun:1
+WORKDIR /app
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
+COPY . .
+RUN bun run build
+ENV NODE_ENV=production
+EXPOSE 3000
+CMD ["bun", "run", "start"]
+```
+
+## A sub path
+
+When the site is served from a folder such as `https://example.com/docs`, set `basePath`. It must start with `/` and must not end with `/`:
+
+```ts title="docs.config.ts"
+deploy: { mode: "static", basePath: "/docs" },
+```
+
+All links, assets and the search endpoint take the prefix.
+
+## Checklist
+
+- `site.url` is set (canonical links, sitemap, RSS and social images).
+- No `DOCSIVI_DRAFTS` in the environment of the production build.
+- Scheduled posts: the build runs after their date.
+- Hosts that need custom redirects (for old addresses) get them from their own settings, docsivi does not write them.

@@ -1,0 +1,76 @@
+---
+title: Компоненты блога
+description: Компоненты, созданные для статей
+---
+
+Они доступны в любом `.mdx`-файле, но особенно полезны в постах.
+
+## Authors
+
+Блок с аватарами, именами и ролями людей (идентификаторы из `blog.authors`):
+
+```mdx
+<Authors ids={["ada", "leo"]} />
+```
+
+## Expand
+
+Раздел, который раскрывается по клику, — для отступлений и длинных списков:
+
+```mdx
+<Expand title="Breaking changes">
+
+- `queue.add()` is now `queue.enqueue()`.
+
+</Expand>
+```
+
+## PR
+
+Ссылка на pull request или issue из `site.github.repo`:
+
+```mdx
+See <PR n={412} /> and <PR n={98} kind="issues" />.
+```
+
+## Benchmark
+
+Горизонтальные столбцы для сравнения чисел. `highlight` выделяет строку, `lowerIsBetter` лишь добавляет подсказку для читателя:
+
+```mdx
+<Benchmark
+  title="Idle CPU"
+  unit="%"
+  lowerIsBetter
+  rows={[{ label: "1.9", value: 4.2 }, { label: "2.0", value: 0.3, highlight: true }]}
+  note="Measured on a 2 vCPU instance."
+/>
+```
+
+<Benchmark title="Загрузка CPU в простое" unit="%" lowerIsBetter rows={[{ label: "1.9", value: 4.2 }, { label: "2.0", value: 0.3, highlight: true }]} note="Замер на инстансе с 2 vCPU." />
+
+## Figure
+
+Изображение с подписью:
+
+```mdx
+<Figure src="/blog/diagram.png" alt="How it works" caption="The flow of a request." />
+```
+
+## Embed
+
+Iframe для видео или демо:
+
+```mdx
+<Embed url="https://example.com/demo" title="Demo" />
+```
+
+## CTA
+
+Блок с призывом к действию. Ссылка получает язык текущей страницы:
+
+```mdx
+<CTA title="Try it" description="Five minutes." href="/docs" label="Get started" />
+```
+
+<CTA title="Попробуйте" description="Пять минут." href="/docs" label="Начать" />

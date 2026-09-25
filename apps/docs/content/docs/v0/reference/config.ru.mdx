@@ -1,0 +1,85 @@
+---
+title: Опции конфигурации
+description: Все опции docs.config.ts с типами и значениями по умолчанию
+---
+
+`defineConfig` принимает объект, описанный ниже. Неизвестные ключи приводят к ошибке.
+
+## site
+
+<TypeTable
+  type={{
+    name: { description: "Название сайта.", type: "string", required: true },
+    description: { description: "Описание сайта.", type: "string" },
+    url: { description: "Публичный origin.", type: "string (URL)" },
+    logo: { description: "Путь или URL логотипа.", type: "string" },
+    favicon: { description: "Путь или URL favicon.", type: "string" },
+    github: { description: "`{ repo: 'owner/name', branch?: 'main', contentDir?: 'content/docs' }`", type: "object" },
+  }}
+/>
+
+## i18n
+
+<TypeTable
+  type={{
+    defaultLanguage: { description: "Язык по умолчанию.", type: "string", default: '"en"' },
+    languages: { description: "Коды языков.", type: "string[]", default: '["en"]' },
+    labels: { description: "Названия в переключателе.", type: "Record<string, string>", default: "{}" },
+    messages: { description: "Переопределения строк интерфейса.", type: "Record<string, Record<string, string>>", default: "{}" },
+  }}
+/>
+
+## versions
+
+<TypeTable
+  type={{
+    list: { description: "`{ id, label?, status?: 'latest' | 'stable' | 'deprecated' }[]`", type: "object[]", default: "[]" },
+    default: { description: "Версия, которую открывает `/docs`.", type: "string", default: "latest, else first" },
+  }}
+/>
+
+## features
+
+`search`, `toc`, `breadcrumbs`, `pagination`, `llmsTxt`, `og`, `editOnGithub`, `math`, `twoslash`: булевы значения, все по умолчанию `true`. См. [Возможности](/docs/v0/configuration/features).
+
+## theme
+
+<TypeTable
+  type={{
+    radius: { description: "Базовый радиус скругления, `--radius`.", type: "string" },
+    "colors.light": { description: "Цветовые токены светлой схемы.", type: "Record<string, string>", default: "{}" },
+    "colors.dark": { description: "Цветовые токены тёмной схемы.", type: "Record<string, string>", default: "{}" },
+    "fonts.sans": { description: "`font-family` для текста.", type: "string", default: "Geist" },
+    "fonts.mono": { description: "`font-family` для кода.", type: "string", default: "Geist Mono" },
+  }}
+/>
+
+## twoslash
+
+<TypeTable
+  type={{
+    compilerOptions: { description: "Опции `compilerOptions` из tsconfig для каждого блока `twoslash`.", type: "object" },
+    cache: { description: "Сохранять результаты между сборками.", type: "boolean", default: "true" },
+  }}
+/>
+
+## Разделы
+
+<TypeTable
+  type={{
+    home: { description: "`Record<language, { hero, features }>`. Главная страница из конфига.", type: "object" },
+    nav: { description: "`{ title, url, external? }[]`. Дополнительные ссылки в шапке.", type: "object[]", default: "[]" },
+    header: { description: "`{ hideSearchOn: ('home' | 'docs' | 'api-reference' | 'blog')[] }`", type: "object" },
+    footer: { description: "`{ description?, columns?, social?, legal? }` или `false`.", type: "object | false" },
+    slots: { description: "`{ home?, header?, headerEnd?, footer? }`: React-компоненты.", type: "object" },
+    blog: { description: "`{ title?, description?, perPage?, categories?, authors?, share?, rss? }`", type: "object" },
+    openapi: { description: "`{ input, title? }`. Включает справочник API.", type: "object" },
+    deploy: { description: "`{ mode?: 'server' | 'static', basePath? }`", type: "object" },
+    components: { description: "MDX-компоненты по имени тега (с заглавной буквы).", type: "Record<string, Component>", default: "{}" },
+    plugins: { description: "[Плагины](/docs/v0/reference/plugins), применяются по порядку.", type: "DocsPlugin[]", default: "[]" },
+  }}
+/>
+
+## Устаревшие опции
+
+Переименованная опция ещё некоторое время продолжает работать и выводит предупреждение с названием замены. См. [Обновление](/docs/v0/upgrading).

@@ -1,0 +1,42 @@
+---
+title: Версии
+description: Несколько версий документации
+---
+
+```ts title="docs.config.ts"
+versions: {
+  list: [
+    { id: "v2", label: "v2 (latest)", status: "latest" },
+    { id: "v1", label: "v1", status: "deprecated" },
+  ],
+  default: "v2",
+},
+```
+
+<TypeTable
+  type={{
+    "list[].id": { description: "Имя папки в `content/docs`, также используется в URL.", type: "string", required: true },
+    "list[].label": { description: "Название в переключателе версий.", type: "string", default: "id" },
+    "list[].status": { description: "`latest`, `stable` или `deprecated`. У устаревшей версии показывается баннер со ссылкой на последнюю.", type: '"latest" | "stable" | "deprecated"', default: '"stable"' },
+    default: { description: "Версия, которую открывает `/docs`.", type: "string", default: "the latest, else the first" },
+  }}
+/>
+
+Без `versions` документация лежит прямо в `content/docs`, а переключателя нет.
+
+## Как выглядят папки
+
+Каждая версия — это папка с `"root": "version"` в её `meta.json`:
+
+```
+content/docs/
+├─ meta.json            { "pages": ["v2", "v1"] }
+├─ v2/
+│  ├─ meta.json         { "title": "v2 (latest)", "root": "version", ... }
+│  └─ index.mdx
+└─ v1/
+   ├─ meta.json
+   └─ index.mdx
+```
+
+`/en/docs` перенаправляет на версию по умолчанию. Переключатель оставляет читателя на той же странице, если она есть в другой версии.

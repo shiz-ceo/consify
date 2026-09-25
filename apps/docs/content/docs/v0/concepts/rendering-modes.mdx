@@ -1,0 +1,35 @@
+---
+title: Server and static modes
+description: The two ways to run the site
+---
+
+`deploy.mode` chooses how the site runs in production.
+
+```ts title="docs.config.ts"
+deploy: { mode: "server" }, // or "static"
+```
+
+| | `server` (default) | `static` |
+| --- | --- | --- |
+| Output | A Node server (`build/server`) and files (`build/client`) | Plain files (`build/client`) |
+| Hosting | Anything that runs Node: a VPS, Docker, a platform | Any static host: S3, GitHub Pages, a CDN |
+| Pages | Rendered on demand, and also pre-rendered at build | Pre-rendered at build, then a single-page app |
+| Search | A server endpoint, `/api/search` | An index file, searched in the browser |
+| Redirects | Real HTTP redirects (`/` to the language, `/docs` to the version) | Small pages that redirect at once |
+
+## What both modes have in common
+
+- Every page in every language is rendered at build time, so the HTML is complete for search engines and social previews.
+- `sitemap.xml`, `robots.txt`, `llms.txt` and `llms-full.txt` are built.
+- The result of a build does not contain drafts or posts dated in the future.
+
+## Choosing
+
+Use `static` when you can. It is cheaper, faster and has nothing to keep running. Use `server` when you need real redirects, or want to keep everything on your own machine with `docsivi start`.
+
+<Callout type="warn">
+  A static site has no server, so `/` cannot answer with an HTTP redirect. It opens a page that
+  sends the reader to the right language at once.
+</Callout>
+
+See [Deployment](/docs/v0/deployment) for the commands, hosting notes and `basePath`.

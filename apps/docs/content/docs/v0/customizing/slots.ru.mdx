@@ -1,0 +1,105 @@
+---
+title: Слоты
+description: Замените главную страницу, шапку и подвал своими компонентами
+---
+
+Слот — это часть сайта, которую проект может заменить. Всего их четыре:
+
+| Слот | Файл | Конфигурация | Что это |
+| --- | --- | --- | --- |
+| Главная | `custom/home.tsx` | `slots.home` | Содержимое главной страницы |
+| Шапка | `custom/header.tsx` (экспорт по умолчанию) | `slots.header` | Середина шапки |
+| Правая часть шапки | `custom/header.tsx` (экспорт `End`) | `slots.headerEnd` | Правая сторона шапки, перед элементами управления |
+| Подвал | `custom/footer.tsx` | `slots.footer` | Подвал, оба варианта |
+
+Слоты автоматически находятся в `custom/`. Конфигурация их тоже принимает и имеет приоритет, если есть оба варианта.
+
+<Callout type="info">
+  Шапка и подвал описываются один раз, и их используют все страницы, поэтому в документации, блоге
+  и на главной они одинаковые. Своя главная страница рисуется внутри той же шапки и того же
+  подвала.
+</Callout>
+
+## Главная
+
+```tsx title="custom/home.tsx"
+import type { HomeSlotProps } from "docsivi";
+import { Features, Hero } from "docsivi/components";
+
+export default function Home({ lang }: HomeSlotProps) {
+  return (
+    <main className="mx-auto max-w-4xl px-6 py-20">
+      <Hero title={`Hello, ${lang}`} actions={[{ label: "Docs", href: "/docs" }]} />
+      <Features items={[{ title: "Card", description: "Anything you like" }]} />
+    </main>
+  );
+}
+```
+
+`Hero` и `Features` — готовые части. Ссылки вроде `/docs` получают язык страницы и версию по умолчанию.
+
+Если вы предпочитаете писать главную на MDX, используйте `content/home.mdx` (`home.ru.mdx` для другого языка). `Hero`, `Features` и все остальные компоненты там работают:
+
+```mdx title="content/home.mdx"
+---
+title: My project
+---
+
+<Hero title="Hello" actions={[{ label: "Docs", href: "/docs" }]} />
+
+<Features items={[{ title: "One", description: "First card", icon: "Rocket" }]} />
+
+## A section with a code block
+
+...
+```
+
+## Шапка
+
+Название сайта слева и элементы управления справа (поиск, язык, тема и кнопка боковой панели страницы API) есть всегда. Слоты заполняют пространство между ними и правую часть:
+
+```tsx title="custom/header.tsx"
+import type { HeaderSlotProps } from "docsivi";
+import { Link } from "react-router";
+
+// The middle of the header. `links` are the ones it shows by default.
+export default function Header({ links }: HeaderSlotProps) {
+  return (
+    <>
+      {links.map((link) => (
+        <Link key={link.url} to={link.url} className="text-sm">
+          {link.text}
+        </Link>
+      ))}
+      <a href="https://status.example.dev">Status</a>
+    </>
+  );
+}
+
+// Optional: items on the right, before the controls.
+export function End() {
+  return <a href="https://example.dev/signup">Sign up</a>;
+}
+```
+
+На телефоне меню сохраняет ссылки по умолчанию, так что навигация никогда не пропадает.
+
+## Подвал
+
+Компонент получает `variant`: `full` на страницах без боковой панели (главная, блог) и `compact` в документации и справочнике API. Подвал по умолчанию можно переиспользовать:
+
+```tsx title="custom/footer.tsx"
+import type { FooterSlotProps } from "docsivi";
+import { DefaultFooter } from "docsivi/components";
+
+export default function Footer(props: FooterSlotProps) {
+  return (
+    <>
+      <DefaultFooter {...props} />
+      {props.variant === "full" ? <p>Made in Berlin</p> : null}
+    </>
+  );
+}
+```
+
+Типы пропсов описаны в [справочнике по слотам](/docs/v0/reference/slots).

@@ -1,0 +1,25 @@
+---
+title: Upgrading
+description: Versions and how to move between them
+icon: ArrowUpCircle
+---
+
+```bash
+bun update docsivi
+```
+
+docsivi follows [semantic versioning](https://semver.org). Until 1.0 the minor version may contain breaking changes, and each one is listed here.
+
+## Deprecations
+
+When an option is renamed, the old name keeps working and prints a warning:
+
+```text
+docsivi: `theme.radius` is deprecated since 0.4.0, use `theme.borderRadius`
+```
+
+Fix the warning at your own pace. The old name is removed in the next major version.
+
+## 0.x
+
+This is the first version line. There is nothing to migrate yet. Changes are recorded in the [changelog](https://github.com/shiz-ceo/docsivi/blob/main/CHANGELOG.md).

@@ -1,0 +1,22 @@
+---
+title: Справочник
+description: "Точные сведения: команды, опции, типы"
+---
+
+- [CLI](/docs/v0/reference/cli): команды `docsivi`.
+- [Конфигурация](/docs/v0/reference/config): все опции `docs.config.ts`.
+- [Плагины](/docs/v0/reference/plugins): тип плагина.
+- [Слоты](/docs/v0/reference/slots): props главной страницы, шапки и подвала.
+- [MDX-компоненты](/docs/v0/reference/mdx-components): что доступно в `.mdx`.
+- [Окружение](/docs/v0/reference/environment): переменные, меняющие поведение.
+
+Экспорты пакета:
+
+| Импорт | Что внутри |
+| --- | --- |
+| `docsivi` | `defineConfig`, типы (`Slots`, `HeaderSlotProps`, ...), `resolveHref`, `getMessages` |
+| `docsivi/vite` | `docsivi(config)`, плагин Vite |
+| `docsivi/react-router` | `defineRouterConfig(config)` |
+| `docsivi/plugins` | `definePlugin` и тип плагина |
+| `docsivi/components` | `Hero`, `Features`, `DefaultFooter`, `Footer`, `Badge`, `Video`, `Mermaid`, `getMDXComponents` |
+| `docsivi/theme.css` | Таблица стилей темы (подключается автоматически) |

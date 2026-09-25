@@ -1,0 +1,41 @@
+---
+title: Тема
+description: Цвета, скругления и шрифты
+---
+
+Внешний вид сайта задаётся набором CSS-переменных (дизайн-токенов). По умолчанию это нейтральная чёрно-белая палитра со шрифтом Geist.
+
+```ts title="docs.config.ts"
+theme: {
+  radius: "0.75rem",
+  colors: {
+    light: { primary: "oklch(0.55 0.2 260)", "primary-foreground": "white" },
+    dark: { primary: "oklch(0.75 0.15 260)" },
+  },
+  fonts: { sans: "Inter, sans-serif", mono: "'JetBrains Mono', monospace" },
+},
+```
+
+Названия токенов пишутся без начального `--`. Значения — это CSS, поэтому подойдёт любой синтаксис цвета (`oklch`, `hsl`, hex, `var(...)`). Значения, которые могут закрыть правило или тег (`{`, `}`, `<`, `>`, `;`), отклоняются.
+
+## Токены
+
+| Токен | Для чего используется |
+| --- | --- |
+| `background`, `foreground` | Фон и текст страницы |
+| `card`, `card-foreground` | Карточки и панели |
+| `popover`, `popover-foreground` | Меню и диалоги |
+| `primary`, `primary-foreground` | Кнопки и акценты |
+| `secondary`, `muted`, `accent` | Спокойные поверхности и состояния при наведении |
+| `muted-foreground` | Второстепенный текст |
+| `border`, `input`, `ring` | Линии и рамки фокуса |
+
+## Свой CSS
+
+Для всего, что токенами не сделать, добавьте `custom/theme.css`. Он загружается после темы docsivi, поэтому его правила имеют приоритет:
+
+```css title="custom/theme.css"
+.prose h2 {
+  letter-spacing: -0.02em;
+}
+```

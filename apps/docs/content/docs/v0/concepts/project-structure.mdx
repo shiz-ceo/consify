@@ -1,0 +1,75 @@
+---
+title: Project structure
+description: Which file does what
+---
+
+```
+my-docs/
+├─ docs.config.ts            all settings
+├─ vite.config.ts            plugins: [docsivi(config)]
+├─ react-router.config.ts    export default defineRouterConfig(config)
+├─ content/
+│  ├─ docs/<version>/        pages of the documentation
+│  ├─ blog/                  articles
+│  └─ home.mdx               optional, the home page in MDX (home.ru.mdx, ...)
+├─ custom/
+│  ├─ components/            Foo.tsx becomes <Foo /> in every .mdx file
+│  ├─ home.tsx               optional, replaces the home page
+│  ├─ header.tsx             optional, the middle and the right of the header
+│  ├─ footer.tsx             optional, replaces the footer
+│  └─ theme.css              optional, your styles, loaded after the core theme
+├─ public/                   files served as they are (favicon, images)
+├─ .docsivi/                 generated, do not edit, do not commit
+└─ build/                    the result of `docsivi build`
+```
+
+## Files you write
+
+<TypeTable
+  type={{
+    "docs.config.ts": { description: "Every setting. Validated at start.", type: "file", required: true },
+    "vite.config.ts": { description: "One line: the docsivi plugin.", type: "file", required: true },
+    "react-router.config.ts": { description: "One line: the router settings derived from your config.", type: "file", required: true },
+    "content/docs": { description: "Pages of the documentation, one folder per version.", type: "folder" },
+    "content/blog": { description: "Articles: `slug.mdx`, `slug.ru.mdx` for a translation.", type: "folder" },
+    "custom/components": { description: "React components for MDX, found automatically.", type: "folder" },
+  }}
+/>
+
+## Generated files
+
+`.docsivi/` is written when the dev server or a build starts. It contains:
+
+| File | Purpose |
+| --- | --- |
+| `instance.ts` | Calls the content macro of Fumadocs and creates the site object from your config |
+| `blog.ts` | The published posts of the blog (drafts and future posts are left out) |
+| `home.ts` | The MDX home page, if you have one |
+| `app/root.tsx`, `app/routes.ts` | The root of the React Router app and the list of routes |
+
+Add `.docsivi` to `.gitignore`.
+
+## Folders in `content/docs`
+
+Each folder is a section of the sidebar. A `meta.json` in a folder sets its title, icon and the order of its pages:
+
+```json title="content/docs/v0/guides/meta.json"
+{
+  "title": "Guides",
+  "icon": "Compass",
+  "pages": ["intro", "---Advanced---", "caching", "..."]
+}
+```
+
+- `"---Text---"` draws a separator with a label.
+- `"..."` stands for all the pages you did not list.
+- `"root": "version"` marks the top folder of a documentation version (see [Languages and versions](/docs/v0/writing/translations-and-versions)).
+
+Page front matter:
+
+| Field | Meaning |
+| --- | --- |
+| `title` | Page title (required) |
+| `description` | Shown under the title, used in search and meta tags |
+| `icon` | Name of a [Lucide](https://lucide.dev/icons) icon for the sidebar |
+| `full` | `true` makes the page use the full width |

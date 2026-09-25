@@ -1,0 +1,82 @@
+---
+title: Quickstart
+description: Your first site in five minutes
+icon: Rocket
+---
+
+<Steps>
+<Step>
+
+### Start the dev server
+
+```bash
+bun run dev
+```
+
+</Step>
+<Step>
+
+### Add a page
+
+Every `.mdx` file in `content/docs/<version>/` is a page. The sidebar follows the folders.
+
+```mdx title="content/docs/v0/hello.mdx"
+---
+title: Hello
+description: My first page
+icon: Smile
+---
+
+Some **Markdown**, and a component:
+
+<Callout type="info">Components are available without imports.</Callout>
+```
+
+List it in the `meta.json` next to it (or leave `pages` out to show everything alphabetically):
+
+```json title="content/docs/v0/meta.json"
+{ "title": "v0 (latest)", "root": "version", "pages": ["index", "hello"] }
+```
+
+</Step>
+<Step>
+
+### Change the look
+
+```ts title="docs.config.ts"
+theme: {
+  radius: "0.75rem",
+  colors: { light: { primary: "oklch(0.55 0.2 260)" } },
+},
+```
+
+</Step>
+<Step>
+
+### Turn on a second language
+
+```ts title="docs.config.ts"
+i18n: { languages: ["en", "ru"], labels: { en: "English", ru: "Русский" } },
+```
+
+Translate a page by adding a sibling file, `hello.ru.mdx`. Pages without a translation are shown in the default language.
+
+</Step>
+<Step>
+
+### Build
+
+```bash
+bun run build
+```
+
+By default that produces a Node server (`bun run start`). For plain files, set `deploy: { mode: "static" }` and upload `build/client`. See [Deployment](/docs/v0/deployment).
+
+</Step>
+</Steps>
+
+## Where to go next
+
+- [How it works](/docs/v0/concepts) explains what lives where.
+- [Configuration](/docs/v0/configuration) covers every option.
+- [Writing content](/docs/v0/writing) covers components, code blocks and translations.

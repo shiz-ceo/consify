@@ -1,0 +1,36 @@
+---
+title: Languages
+description: Translate pages and the interface
+---
+
+```ts title="docs.config.ts"
+i18n: {
+  defaultLanguage: "en",
+  languages: ["en", "ru"],
+  labels: { en: "English", ru: "Русский" },
+  messages: { ru: { documentation: "Доки" } },
+},
+```
+
+<TypeTable
+  type={{
+    defaultLanguage: { description: "Used when a page has no translation. Must be in `languages`.", type: "string", default: '"en"' },
+    languages: { description: "Language codes: `en`, `ru`, `pt-BR`.", type: "string[]", default: '["en"]' },
+    labels: { description: "Names in the language switcher.", type: "Record<string, string>", default: "{}" },
+    messages: { description: "Overrides for the interface strings of docsivi, per language.", type: "Record<string, Record<string, string>>", default: "{}" },
+  }}
+/>
+
+## URLs
+
+Every page has the language in its address: `/en/docs/v0/quickstart`, `/ru/docs/v0/quickstart`. `/` redirects to the default language.
+
+## Translating pages
+
+Add a sibling file with the language code: `guide.mdx` and `guide.ru.mdx`. A page without a translation is shown in the default language, so you can translate gradually. `meta.json` works the same way (`meta.ru.json`). See [Languages and versions](/docs/v0/writing/translations-and-versions).
+
+## Interface strings
+
+docsivi ships English and Russian strings for what it draws itself (the blog, the footer, notices). For another language it falls back to English, and you can override any string with `messages`. The keys are: `documentation`, `deprecatedVersion`, `goToLatest`, `editOnGithub`, `notFound`, `backToDocs`, `blog`, `allPosts`, `searchPosts`, `filter`, `tags`, `clearFilters`, `noPosts`, `minRead`, `share`, `relatedPosts`, `backToBlog`, `inThisArticle`, `previous`, `next`, `page`, `rss`, `postedBy`, `footerSections`, `footerRights`.
+
+The texts of the search box, the sidebar and the like come from Fumadocs and are translated for you when they exist.

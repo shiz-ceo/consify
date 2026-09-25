@@ -1,0 +1,37 @@
+---
+title: Blog
+description: Settings of the blog
+---
+
+A blog is on when the config has a `blog` block. Writing posts is covered in [Blog](/docs/v0/blog).
+
+```ts title="docs.config.ts"
+blog: {
+  title: { en: "Blog", ru: "Блог" },
+  description: "News and how-tos.",
+  perPage: 12,
+  categories: [
+    { id: "releases", label: { en: "Releases", ru: "Релизы" } },
+    { id: "guides", label: "Guides" },
+  ],
+  authors: {
+    ada: { name: "Ada Novak", role: "Core maintainer", avatar: "/authors/ada.jpg", url: "https://github.com/ada" },
+  },
+  share: true,
+  rss: true,
+},
+```
+
+<TypeTable
+  type={{
+    title: { description: "Heading of the blog page and its link in the header.", type: "string | Record<language, string>", default: 'the translated word "Blog"' },
+    description: { description: "Text under the heading.", type: "string | Record<language, string>" },
+    perPage: { description: "Posts on a page of the list.", type: "number", default: "12" },
+    categories: { description: "The filter of the list. A post lists the `id`s it belongs to. Ids are lowercase letters, digits and `-`.", type: "{ id, label }[]", default: "[]" },
+    authors: { description: "People by id. A post lists the ids of its authors.", type: "Record<id, { name, role?, avatar?, url? }>", default: "{}" },
+    share: { description: "Share buttons on a post (X, LinkedIn, Bluesky, copy link).", type: "boolean", default: "true" },
+    rss: { description: "The feed at `/{lang}/blog/rss.xml`.", type: "boolean", default: "true" },
+  }}
+/>
+
+An unknown category or author in a post stops the build with a message that names the file.

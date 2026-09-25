@@ -1,0 +1,37 @@
+---
+title: Блог
+description: Настройки блога
+---
+
+Блог включён, если в конфигурации есть блок `blog`. О том, как писать посты, рассказано в разделе [Блог](/docs/v0/blog).
+
+```ts title="docs.config.ts"
+blog: {
+  title: { en: "Blog", ru: "Блог" },
+  description: "News and how-tos.",
+  perPage: 12,
+  categories: [
+    { id: "releases", label: { en: "Releases", ru: "Релизы" } },
+    { id: "guides", label: "Guides" },
+  ],
+  authors: {
+    ada: { name: "Ada Novak", role: "Core maintainer", avatar: "/authors/ada.jpg", url: "https://github.com/ada" },
+  },
+  share: true,
+  rss: true,
+},
+```
+
+<TypeTable
+  type={{
+    title: { description: "Заголовок страницы блога и его ссылка в шапке.", type: "string | Record<language, string>", default: 'the translated word "Blog"' },
+    description: { description: "Текст под заголовком.", type: "string | Record<language, string>" },
+    perPage: { description: "Количество постов на странице списка.", type: "number", default: "12" },
+    categories: { description: "Фильтр списка. Пост перечисляет `id` категорий, к которым относится. Id состоят из строчных букв, цифр и `-`.", type: "{ id, label }[]", default: "[]" },
+    authors: { description: "Люди по id. Пост перечисляет id своих авторов.", type: "Record<id, { name, role?, avatar?, url? }>", default: "{}" },
+    share: { description: "Кнопки «Поделиться» у поста (X, LinkedIn, Bluesky, копирование ссылки).", type: "boolean", default: "true" },
+    rss: { description: "Лента по адресу `/{lang}/blog/rss.xml`.", type: "boolean", default: "true" },
+  }}
+/>
+
+Неизвестная категория или автор в посте останавливают сборку с сообщением, в котором указан файл.

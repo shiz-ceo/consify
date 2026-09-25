@@ -1,0 +1,100 @@
+---
+title: Home, header and footer
+description: The frame around every page
+---
+
+The home page, the header and the footer are described **once**, and every page uses them: the docs, the blog, the API reference and the home page itself. That keeps the site consistent. A custom home page is drawn inside the same header and footer as everything else.
+
+Each part has three levels. Use the lowest one that does the job.
+
+| Level | Home | Header | Footer |
+| --- | --- | --- | --- |
+| Configure | `home` block | `nav`, `header` | `footer` block |
+| Switch off | leave it out (redirects to the docs) | (always there) | `footer: false` |
+| Replace | `content/home.mdx` or `custom/home.tsx` | `custom/header.tsx` | `custom/footer.tsx` |
+
+Replacing is covered in [Slots](/docs/v0/customizing/slots). This page is about configuring.
+
+## Home page
+
+The page at `/{lang}` shows the first of these that exists:
+
+1. `custom/home.tsx` or `slots.home`, a React component.
+2. `content/home.mdx` (and `home.ru.mdx` for another language).
+3. The `home` block of the config.
+4. Nothing. Readers are sent to the documentation.
+
+The `home` block is a heading with buttons and a grid of cards, per language:
+
+```ts title="docs.config.ts"
+home: {
+  en: {
+    hero: {
+      title: "Background jobs without the guesswork",
+      description: "A typed job queue for TypeScript.",
+      actions: [
+        { label: "Get started", href: "/docs" },
+        { label: "Why?", href: "/docs/v0/concepts", variant: "secondary" },
+      ],
+    },
+    features: [
+      { icon: "ShieldCheck", title: "Typed", description: "One type for the whole flow.", href: "/docs/v0" },
+    ],
+  },
+},
+```
+
+A language without an entry uses the default language. Links that start with `/` get the language; `/docs` opens the default version. `icon` is the name of a [Lucide](https://lucide.dev/icons) icon.
+
+## Navigation
+
+The header lists the sections that are on (Documentation, API, Blog). Add more links with `nav`:
+
+```ts title="docs.config.ts"
+nav: [
+  { title: "Changelog", url: "/docs/v0/changelog" },
+  { title: "Status", url: "https://status.example.dev", external: true },
+],
+```
+
+## Header
+
+The header always has the name of the site on the left, and search, language, theme and (on the API page) the sidebar button on the right. To remove the search from some sections:
+
+```ts title="docs.config.ts"
+header: { hideSearchOn: ["blog"] }, // home | docs | api-reference | blog
+```
+
+The Cmd/Ctrl+K shortcut stays available.
+
+## Footer
+
+Without settings the footer lists the sections that are on, with the site description and a copyright line. Configure it:
+
+```ts title="docs.config.ts"
+footer: {
+  description: { en: "A typed job queue.", ru: "Типизированная очередь задач." },
+  columns: [
+    {
+      title: "Product",
+      links: [
+        { title: { en: "Docs", ru: "Документация" }, url: "/docs" },
+        { title: "GitHub", url: "https://github.com/example/lattice" },
+      ],
+    },
+  ],
+  social: [{ type: "github", url: "https://github.com/example/lattice" }],
+  legal: "© 2026 Lattice",
+},
+```
+
+<TypeTable
+  type={{
+    description: { description: "Text under the name of the site.", type: "string | Record<language, string>", default: "site.description" },
+    columns: { description: "Columns of links. Titles and link texts can be strings or one string per language.", type: "{ title, links[] }[]", default: "the sections that are on" },
+    social: { description: "Icons: `github`, `x`, `bluesky`, `linkedin`, `discord`, `youtube`, `rss`.", type: "{ type, url }[]", default: "[]" },
+    legal: { description: "The bottom line.", type: "string | Record<language, string>", default: "© {year} {name}. All rights reserved." },
+  }}
+/>
+
+Pages without a sidebar (home, blog) show the full footer. The docs and the API reference show a compact one, lined up with the content. `footer: false` removes both.

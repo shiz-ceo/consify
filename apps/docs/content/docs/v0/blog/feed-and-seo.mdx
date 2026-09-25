@@ -1,0 +1,22 @@
+---
+title: RSS and social images
+description: What the blog publishes besides the pages
+---
+
+## RSS
+
+Every language has a feed at `/{lang}/blog/rss.xml`. It is plain RSS 2.0 (`application/xml`) with the title, description, date, categories and tags of each published post. The pages of the blog link to it in their head, so feed readers find it. Switch it off with `blog.rss: false`.
+
+Absolute links in the feed need `site.url`.
+
+## Social images
+
+`/{lang}/blog/<slug>/og.png` is 1200 by 630 with the title and the date over the cover of the post. If the cover is a file in `public/`, it is used as the background; without one, a gradient made from the slug is drawn. The post page sets it as its Open Graph image.
+
+## Sitemap
+
+Published posts and the list page are in `sitemap.xml`, for every language.
+
+## Sharing
+
+Buttons for X, LinkedIn and Bluesky and a copy link button are on every post. Turn them off with `blog.share: false`.

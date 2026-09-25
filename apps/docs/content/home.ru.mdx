@@ -1,0 +1,52 @@
+---
+title: docsivi
+description: Основа для сайта документации, которую настраивают, а не поддерживают.
+---
+
+<Hero
+  title="Документация, которую настраивают, а не поддерживают"
+  description="docsivi — это основа для сайтов документации. Ваш проект состоит из файла конфигурации и ваших страниц. Ядро — пакет, который обновляется одной командой."
+  actions={[
+    { label: "Начать", href: "/docs/v0/quickstart" },
+    { label: "Как это работает", href: "/docs/v0/concepts", variant: "secondary" },
+  ]}
+/>
+
+<Features
+  items={[
+    { icon: "FileCog", title: "Только конфигурация", description: "docs.config.ts, ваш контент и пара строк связующего кода. Никакого форкнутого шаблона, который нужно синхронизировать.", href: "/docs/v0/concepts" },
+    { icon: "Languages", title: "Языки и версии", description: "Переводите постранично с запасным языком и держите несколько версий рядом.", href: "/docs/v0/writing/translations-and-versions" },
+    { icon: "Newspaper", title: "Встроенный блог", description: "Категории, поиск, RSS, картинки для соцсетей и черновики, которые никогда не попадают в браузер.", href: "/docs/v0/blog" },
+    { icon: "Palette", title: "Меняйте под себя", description: "Токены для внешнего вида, плагины для конвейера, слоты для главной страницы, шапки и подвала.", href: "/docs/v0/customizing" },
+    { icon: "Server", title: "Сервер или статика", description: "Запускайте на Node или экспортируйте обычные файлы для любого статического хостинга.", href: "/docs/v0/deployment" },
+    { icon: "Sparkles", title: "Типы там, где нужно", description: "Блоки кода с проверкой типов и подсказками при наведении, а также валидируемая конфигурация с понятными ошибками.", href: "/docs/v0/writing/code-blocks" },
+  ]}
+/>
+
+## Проект из трёх файлов
+
+```ts title="docs.config.ts"
+import { defineConfig } from "docsivi";
+
+export default defineConfig({
+  site: { name: "My project", github: { repo: "me/my-project" } },
+  i18n: { languages: ["en", "ru"] },
+});
+```
+
+```ts title="vite.config.ts"
+import { docsivi } from "docsivi/vite";
+import { defineConfig } from "vite";
+import config from "./docs.config.ts";
+
+export default defineConfig({ plugins: [docsivi(config)] });
+```
+
+```ts title="react-router.config.ts"
+import { defineRouterConfig } from "docsivi/react-router";
+import config from "./docs.config.ts";
+
+export default defineRouterConfig(config);
+```
+
+Затем пишите страницы в `content/docs/`, запускайте `bun run dev` — и сайт готов. Прочитайте [Как это работает](/docs/v0/concepts), чтобы узнать, что происходит между этими шагами, или [как был сделан docsivi](/blog/how-docsivi-was-made), чтобы понять, почему он устроен именно так.

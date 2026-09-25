@@ -1,0 +1,27 @@
+---
+title: Updating the core
+description: How a project stays current
+---
+
+```bash
+bun update docsivi
+```
+
+That is the whole procedure. Your `docs.config.ts`, `content/` and `custom/` are yours; the package never writes into them. The files in `.docsivi/` are regenerated at every start.
+
+## What can break
+
+- **A renamed option.** The first release that renames an option keeps the old name working and prints a warning that names the new one. Nothing breaks until the old name is removed in a later major version.
+- **A new required setting.** New settings have defaults, so an update does not make an existing config invalid.
+- **Your own components.** They use React and the tokens of the theme, both of which change slowly.
+
+See [Upgrading](/docs/v0/upgrading) for the version notes.
+
+## Checking that it works
+
+```bash
+bun run typecheck
+bun run build
+```
+
+The typecheck covers your config and your components. The build fails on an invalid config, an unknown category in a blog post or a broken header of a post.

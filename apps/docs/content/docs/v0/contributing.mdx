@@ -1,0 +1,50 @@
+---
+title: Contributing
+description: How the core is organized
+icon: GitBranch
+---
+
+The repository is a Bun workspace:
+
+| Folder | What |
+| --- | --- |
+| `packages/core` | The `docsivi` package |
+| `apps/starter` | The minimal template |
+| `apps/demo` | A full example site (a fictional job queue) |
+| `apps/docs` | This documentation |
+
+```bash
+bun install
+bun run docs     # this site, http://localhost:3500
+bun run demo     # the demo, http://localhost:3300
+bun run check    # lint, typecheck, tests
+```
+
+## The layout of the core
+
+```
+packages/core/src/
+├─ config/     the schema of docs.config.ts and its deprecations
+├─ features/   sections that can be on or off: home, docs, api-reference, blog
+├─ system/     what every site has: site (redirect, 404), search, seo
+├─ shared/     layout, UI, links, messages, versions, slots
+├─ build/      the Vite plugin and the React Router adapter (scaffold, routes, pre-render)
+├─ mdx/        the Markdown pipeline
+├─ plugins/    the plugin type
+└─ theme/      the stylesheet and the design tokens
+```
+
+A feature is a folder with a `feature.ts` that describes it (its routes, its link in the header, whether it is on) and the code of its pages. The routes, the header, the pre-render list and the sitemap are built from the lists in `features/index.ts` and `system/index.ts`, so adding a section means adding a folder and a line.
+
+## Adding a feature
+
+<Steps>
+<Step>Create `features/<name>/feature.ts` with `id`, `dir: import.meta.url`, `routes` and optionally `nav` and `enabled`.</Step>
+<Step>Put the route modules in `features/<name>/routes/`.</Step>
+<Step>List the feature in `features/index.ts`. If it has pages to pre-render, add `prerender.ts` and list it in `features/prerender.ts`.</Step>
+<Step>If it belongs in the sitemap, add `sitemap.ts` and list it in `features/sitemap.ts`.</Step>
+</Steps>
+
+## Tests
+
+Tests are in `packages/core/test` and run with `bun test`. Config validation, the pre-render list, the scaffold and the blog (publishing, filters, RSS) have tests. Run `bun run check` before you send a change.

@@ -1,0 +1,57 @@
+---
+title: Blog
+description: Add a blog to your site
+---
+
+The blog is a section of the site with its own list, article pages, RSS feed and social images. It is off until the config has a `blog` block.
+
+<Steps>
+<Step>
+
+Add the block. Categories and authors are defined here, so a typo in a post is caught:
+
+```ts title="docs.config.ts"
+blog: {
+  categories: [{ id: "releases", label: "Releases" }],
+  authors: { ada: { name: "Ada Novak", role: "Maintainer" } },
+},
+```
+
+</Step>
+<Step>
+
+Write a post:
+
+```mdx title="content/blog/hello.mdx"
+---
+title: Hello
+description: The first post
+date: 2026-09-01
+categories: [releases]
+authors: [ada]
+---
+
+The text of the post.
+```
+
+</Step>
+<Step>
+
+Open `/en/blog`. A link to it appears in the header.
+
+</Step>
+</Steps>
+
+## What the reader gets
+
+- **A list** with category pills, a search box that looks at titles, tags and authors, tags to pick from, a large first row and numbered pages.
+- **A post page** with the cover, the authors, the date, reading time, a table of contents that follows the reader, share buttons and related posts.
+- **An RSS feed** at `/{lang}/blog/rss.xml`, and a social image for every post.
+- **Translations** of a post with a fallback to the default language.
+
+<Callout type="info" title="No leaks">
+  A draft or a post dated in the future is not compiled at all. It is not in the list, the search
+  or the build output, not merely hidden. See [Drafts and scheduled posts](/docs/v0/blog/drafts-and-scheduling).
+</Callout>
+
+Settings of the blog are on the [configuration page](/docs/v0/configuration/blog).

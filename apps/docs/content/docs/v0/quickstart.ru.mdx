@@ -1,0 +1,82 @@
+---
+title: Быстрый старт
+description: Ваш первый сайт за пять минут
+icon: Rocket
+---
+
+<Steps>
+<Step>
+
+### Запустите сервер разработки
+
+```bash
+bun run dev
+```
+
+</Step>
+<Step>
+
+### Добавьте страницу
+
+Каждый файл `.mdx` в `content/docs/<version>/` — это страница. Боковое меню повторяет структуру папок.
+
+```mdx title="content/docs/v0/hello.mdx"
+---
+title: Hello
+description: My first page
+icon: Smile
+---
+
+Some **Markdown**, and a component:
+
+<Callout type="info">Components are available without imports.</Callout>
+```
+
+Добавьте её в `meta.json` рядом (или не указывайте `pages`, чтобы показывались все страницы по алфавиту):
+
+```json title="content/docs/v0/meta.json"
+{ "title": "v0 (latest)", "root": "version", "pages": ["index", "hello"] }
+```
+
+</Step>
+<Step>
+
+### Измените внешний вид
+
+```ts title="docs.config.ts"
+theme: {
+  radius: "0.75rem",
+  colors: { light: { primary: "oklch(0.55 0.2 260)" } },
+},
+```
+
+</Step>
+<Step>
+
+### Включите второй язык
+
+```ts title="docs.config.ts"
+i18n: { languages: ["en", "ru"], labels: { en: "English", ru: "Русский" } },
+```
+
+Чтобы перевести страницу, добавьте рядом файл `hello.ru.mdx`. Страницы без перевода показываются на языке по умолчанию.
+
+</Step>
+<Step>
+
+### Соберите проект
+
+```bash
+bun run build
+```
+
+По умолчанию получится сервер на Node (`bun run start`). Если нужны обычные файлы, укажите `deploy: { mode: "static" }` и загрузите `build/client`. См. [Развёртывание](/docs/v0/deployment).
+
+</Step>
+</Steps>
+
+## Что дальше
+
+- [Как это работает](/docs/v0/concepts) объясняет, что где находится.
+- [Конфигурация](/docs/v0/configuration) описывает все параметры.
+- [Написание контента](/docs/v0/writing) рассказывает о компонентах, блоках кода и переводах.

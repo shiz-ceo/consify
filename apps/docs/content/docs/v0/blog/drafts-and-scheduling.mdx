@@ -1,0 +1,34 @@
+---
+title: Drafts and scheduled posts
+description: Unpublished posts never reach the browser
+---
+
+A post is published when it is not a draft and its date is today or earlier.
+
+```mdx
+---
+title: Coming soon
+date: 2030-01-01   # in the future: not published yet
+draft: true        # or explicitly a draft
+---
+```
+
+## How they are kept out
+
+Unpublished files are not filtered at run time, they are **never compiled**. The list of posts is made when the site starts, and only published files go into it. So a draft is not in the browser bundle, not in the pre-rendered pages, not in the search and not in the RSS feed. There is nothing to leak.
+
+The date is checked when the build runs, so publish a scheduled post by building after its date. With a static site, schedule a build (for example a daily one in your CI).
+
+## Previewing drafts
+
+While you write, set `DOCSIVI_DRAFTS=1` to include everything:
+
+```bash
+DOCSIVI_DRAFTS=1 bun run dev
+```
+
+Restart the dev server after adding or removing a post, because the list is read at start.
+
+<Callout type="warn">
+  Never build for production with `DOCSIVI_DRAFTS=1`.
+</Callout>

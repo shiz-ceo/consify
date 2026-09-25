@@ -1,0 +1,95 @@
+---
+title: Встроенные компоненты
+description: Всё, что доступно в .mdx без импорта
+---
+
+## Callout
+
+<Callout type="info" title="Информация">Нейтральная информация.</Callout>
+<Callout type="warn" title="Предупреждение">То, с чем нужно быть осторожным.</Callout>
+<Callout type="error" title="Ошибка">То, что сломается.</Callout>
+
+```mdx
+<Callout type="warn" title="Warning">Something to be careful about.</Callout>
+```
+
+Типы: `info`, `warn`, `error`, `success`, `idea`.
+
+## Tabs
+
+<Tabs items={["bun", "npm"]}>
+  <Tab value="bun">
+```bash
+bun add docsivi
+```
+  </Tab>
+  <Tab value="npm">
+```bash
+npm install docsivi
+```
+  </Tab>
+</Tabs>
+
+```mdx
+<Tabs items={["bun", "npm"]}>
+  <Tab value="bun">...</Tab>
+  <Tab value="npm">...</Tab>
+</Tabs>
+```
+
+## Steps
+
+<Steps>
+<Step>Установите пакет.</Step>
+<Step>Создайте `docs.config.ts`.</Step>
+<Step>Напишите первую страницу.</Step>
+</Steps>
+
+## Cards
+
+<Cards>
+  <Card title="Быстрый старт" description="Ваш первый сайт." href="/docs/v0/quickstart" />
+  <Card title="Конфигурация" description="Все опции." href="/docs/v0/configuration" />
+</Cards>
+
+## Accordion
+
+<Accordions>
+  <Accordion title="Можно ли вкладывать компоненты?">Да: аккордеон может содержать вкладки, код и другие аккордеоны.</Accordion>
+</Accordions>
+
+## Дерево файлов
+
+<Files>
+  <Folder name="content" defaultOpen>
+    <Folder name="docs" defaultOpen>
+      <File name="index.mdx" />
+    </Folder>
+  </Folder>
+  <File name="docs.config.ts" />
+</Files>
+
+## Таблица типов
+
+<TypeTable
+  type={{
+    title: { description: "Текст в боковой панели и в заголовке страницы.", type: "string", required: true },
+    full: { description: "Использовать всю ширину страницы.", type: "boolean", default: "false" },
+  }}
+/>
+
+## Badge
+
+<Badge>по умолчанию</Badge> <Badge variant="new">новое</Badge> <Badge variant="beta">бета</Badge> <Badge variant="deprecated">устарело</Badge> <Badge variant="danger">ломающее изменение</Badge>
+
+## Видео и изображения
+
+`<Video src="..." title="..." />` встраивает видео с элементами управления. У каждого изображения, GIF и видео есть тонкая рамка, которая берёт оттенок из медиа под ней. Чтобы оставить без рамки, используйте `<img plain />`.
+
+## Компоненты блога
+
+Блог добавляет `Authors`, `Expand`, `PR`, `Benchmark`, `Figure`, `Embed` и `CTA`. См. [Компоненты блога](/docs/v0/blog/components).
+
+## Ваши собственные
+
+Положите файл в `custom/components/`. См. [Собственные компоненты](/docs/v0/customizing/custom-components).

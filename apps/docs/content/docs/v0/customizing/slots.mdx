@@ -1,0 +1,105 @@
+---
+title: Slots
+description: Replace the home page, the header and the footer with your own components
+---
+
+A slot is a part of the site that a project can replace. There are four:
+
+| Slot | File | Config | What it is |
+| --- | --- | --- | --- |
+| Home | `custom/home.tsx` | `slots.home` | The content of the home page |
+| Header | `custom/header.tsx` (default export) | `slots.header` | The middle of the header |
+| Header end | `custom/header.tsx` (export `End`) | `slots.headerEnd` | The right side of the header, before the controls |
+| Footer | `custom/footer.tsx` | `slots.footer` | The footer, both variants |
+
+Slots are found automatically in `custom/`. The config also accepts them, and wins when both exist.
+
+<Callout type="info">
+  The header and the footer are described once and every page uses them, so they are the same on
+  the docs, the blog and the home page. A custom home page is drawn inside the same header and
+  footer.
+</Callout>
+
+## Home
+
+```tsx title="custom/home.tsx"
+import type { HomeSlotProps } from "docsivi";
+import { Features, Hero } from "docsivi/components";
+
+export default function Home({ lang }: HomeSlotProps) {
+  return (
+    <main className="mx-auto max-w-4xl px-6 py-20">
+      <Hero title={`Hello, ${lang}`} actions={[{ label: "Docs", href: "/docs" }]} />
+      <Features items={[{ title: "Card", description: "Anything you like" }]} />
+    </main>
+  );
+}
+```
+
+`Hero` and `Features` are ready-made parts. Links such as `/docs` get the language of the page and the default version.
+
+If you prefer to write the home page in MDX, use `content/home.mdx` (`home.ru.mdx` for another language). `Hero`, `Features` and every other component work there:
+
+```mdx title="content/home.mdx"
+---
+title: My project
+---
+
+<Hero title="Hello" actions={[{ label: "Docs", href: "/docs" }]} />
+
+<Features items={[{ title: "One", description: "First card", icon: "Rocket" }]} />
+
+## A section with a code block
+
+...
+```
+
+## Header
+
+The name of the site on the left and the controls on the right (search, language, theme, and the sidebar button of the API page) are always there. The slots fill the space between them and the right side:
+
+```tsx title="custom/header.tsx"
+import type { HeaderSlotProps } from "docsivi";
+import { Link } from "react-router";
+
+// The middle of the header. `links` are the ones it shows by default.
+export default function Header({ links }: HeaderSlotProps) {
+  return (
+    <>
+      {links.map((link) => (
+        <Link key={link.url} to={link.url} className="text-sm">
+          {link.text}
+        </Link>
+      ))}
+      <a href="https://status.example.dev">Status</a>
+    </>
+  );
+}
+
+// Optional: items on the right, before the controls.
+export function End() {
+  return <a href="https://example.dev/signup">Sign up</a>;
+}
+```
+
+On a phone the menu keeps the default links, so navigation never disappears.
+
+## Footer
+
+The component receives `variant`: `full` on pages without a sidebar (home, blog), `compact` in the docs and the API reference. The default footer is available to reuse:
+
+```tsx title="custom/footer.tsx"
+import type { FooterSlotProps } from "docsivi";
+import { DefaultFooter } from "docsivi/components";
+
+export default function Footer(props: FooterSlotProps) {
+  return (
+    <>
+      <DefaultFooter {...props} />
+      {props.variant === "full" ? <p>Made in Berlin</p> : null}
+    </>
+  );
+}
+```
+
+The types of the props are in the [slots reference](/docs/v0/reference/slots).

@@ -1,0 +1,44 @@
+---
+title: Math and diagrams
+description: KaTeX formulas and Mermaid diagrams
+---
+
+## Math
+
+Inline math sits in a sentence: the sum of the first $n$ numbers is $\frac{n(n+1)}{2}$.
+
+Display math gets its own lines:
+
+$$
+\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
+$$
+
+Formulas are rendered at build time with KaTeX, so nothing flashes. Turn it off with `features.math`.
+
+## Diagrams
+
+A fenced `mermaid` block draws a diagram. It follows the light and dark theme.
+
+````mdx
+```mermaid
+flowchart LR
+  A[Config] --> B[Site]
+```
+````
+
+```mermaid
+flowchart LR
+  A[docs.config.ts] --> B[docsivi]
+  C[content] --> B
+  B --> D[Site]
+```
+
+```mermaid
+sequenceDiagram
+  participant R as Reader
+  participant S as Server
+  R->>S: GET /en/docs
+  S-->>R: 302 /en/docs/v0
+```
+
+Mermaid is loaded only on pages that have a diagram.

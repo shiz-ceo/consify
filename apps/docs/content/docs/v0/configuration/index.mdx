@@ -1,0 +1,44 @@
+---
+title: Configuration
+description: docs.config.ts at a glance
+---
+
+All settings live in `docs.config.ts`. Wrap them in `defineConfig` for editor hints:
+
+```ts title="docs.config.ts"
+import { defineConfig } from "docsivi";
+
+export default defineConfig({
+  site: { name: "My docs" },
+});
+```
+
+Only `site.name` is required. Everything else has a default.
+
+## Validation
+
+The config is validated when the dev server or a build starts. Unknown keys are errors (a typo in an option name is caught, not ignored), and messages name the path:
+
+```text
+Invalid docs.config:
+✖ Unrecognized key: "blogg"
+✖ i18n.defaultLanguage: defaultLanguage "de" must be one of: en, ru
+```
+
+## Sections
+
+| Key | What it configures |
+| --- | --- |
+| [`site`](/docs/v0/configuration/site) | Name, description, URL, favicon, GitHub repository |
+| [`i18n`](/docs/v0/configuration/languages) | Languages, their names, UI strings |
+| [`versions`](/docs/v0/configuration/versions) | Versions of the documentation |
+| [`features`](/docs/v0/configuration/features) | Switches for search, table of contents, OG images and more |
+| [`theme`](/docs/v0/configuration/theme) | Colors, radius, fonts |
+| [`home`, `nav`, `header`, `footer`, `slots`](/docs/v0/configuration/layout) | The frame around every page |
+| [`blog`](/docs/v0/configuration/blog) | The blog |
+| [`openapi`](/docs/v0/configuration/api-reference) | The API reference |
+| `deploy` | [Server or static](/docs/v0/deployment), `basePath` |
+| `twoslash` | Options for type-checked code blocks |
+| `plugins`, `components` | [Extending](/docs/v0/customizing) the Markdown pipeline and MDX |
+
+The complete list with types and defaults is in the [configuration reference](/docs/v0/reference/config).

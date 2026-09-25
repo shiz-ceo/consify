@@ -15,7 +15,10 @@
     "demo": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/demo dev --port 3300",
     "starter": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/starter dev",
     "build:demo": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/demo build",
-    "start:demo": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/demo start"
+    "start:demo": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/demo start",
+    "docs": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/docs dev --port 3500",
+    "build:docs": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/docs build",
+    "start:docs": "PATH=\"$PWD/packages/core/bin:$PATH\" bun run --cwd apps/docs start"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",

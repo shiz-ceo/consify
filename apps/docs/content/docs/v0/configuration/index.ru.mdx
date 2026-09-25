@@ -1,0 +1,44 @@
+---
+title: Конфигурация
+description: docs.config.ts с высоты птичьего полёта
+---
+
+Все настройки находятся в `docs.config.ts`. Оберните их в `defineConfig`, чтобы редактор давал подсказки:
+
+```ts title="docs.config.ts"
+import { defineConfig } from "docsivi";
+
+export default defineConfig({
+  site: { name: "My docs" },
+});
+```
+
+Обязателен только `site.name`. У всего остального есть значения по умолчанию.
+
+## Валидация
+
+Конфигурация проверяется при запуске dev-сервера или сборки. Неизвестные ключи считаются ошибками (опечатка в названии опции будет замечена, а не проигнорирована), а в сообщениях указывается путь к ошибке:
+
+```text
+Invalid docs.config:
+✖ Unrecognized key: "blogg"
+✖ i18n.defaultLanguage: defaultLanguage "de" must be one of: en, ru
+```
+
+## Разделы
+
+| Ключ | Что настраивает |
+| --- | --- |
+| [`site`](/docs/v0/configuration/site) | Название, описание, URL, favicon, репозиторий на GitHub |
+| [`i18n`](/docs/v0/configuration/languages) | Языки, их названия, строки интерфейса |
+| [`versions`](/docs/v0/configuration/versions) | Версии документации |
+| [`features`](/docs/v0/configuration/features) | Переключатели поиска, оглавления, OG-изображений и не только |
+| [`theme`](/docs/v0/configuration/theme) | Цвета, скругления, шрифты |
+| [`home`, `nav`, `header`, `footer`, `slots`](/docs/v0/configuration/layout) | Рамка вокруг каждой страницы |
+| [`blog`](/docs/v0/configuration/blog) | Блог |
+| [`openapi`](/docs/v0/configuration/api-reference) | Справочник API |
+| `deploy` | [Сервер или статика](/docs/v0/deployment), `basePath` |
+| `twoslash` | Параметры блоков кода с проверкой типов |
+| `plugins`, `components` | [Расширение](/docs/v0/customizing) конвейера Markdown и MDX |
+
+Полный список с типами и значениями по умолчанию есть в [справочнике по конфигурации](/docs/v0/reference/config).

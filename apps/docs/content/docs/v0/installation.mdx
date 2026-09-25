@@ -1,0 +1,98 @@
+---
+title: Installation
+description: Requirements and how to create a project
+icon: Download
+---
+
+## Requirements
+
+- [Bun](https://bun.sh) 1.2 or newer.
+- Node.js 24 or newer, which runs the build tools under the hood.
+
+## Create a project
+
+The quickest way is the generator. It asks for a name, copies the starter and installs the dependencies:
+
+```bash
+bunx create-docsivi@latest my-docs
+cd my-docs
+bun run dev
+```
+
+Open `http://localhost:5173`. Edit `content/docs/index.mdx` and the page updates.
+
+## Add it to an existing project
+
+```bash
+bun add docsivi react react-dom react-router
+bun add -d vite typescript @types/react @types/react-dom @types/node
+```
+
+Then create these files.
+
+```ts title="docs.config.ts"
+import { defineConfig } from "docsivi";
+
+export default defineConfig({
+  site: { name: "My docs" },
+});
+```
+
+```ts title="vite.config.ts"
+import { docsivi } from "docsivi/vite";
+import { defineConfig } from "vite";
+import config from "./docs.config.ts";
+
+export default defineConfig({ plugins: [docsivi(config)] });
+```
+
+```ts title="react-router.config.ts"
+import { defineRouterConfig } from "docsivi/react-router";
+import config from "./docs.config.ts";
+
+export default defineRouterConfig(config);
+```
+
+```json title="package.json"
+{
+  "type": "module",
+  "scripts": {
+    "dev": "docsivi dev",
+    "build": "docsivi build",
+    "start": "docsivi start",
+    "typecheck": "docsivi typegen && tsc --noEmit"
+  }
+}
+```
+
+Add a first page, and a `tsconfig.json` (copy the one from the starter):
+
+```mdx title="content/docs/index.mdx"
+---
+title: Welcome
+---
+
+Hello from docsivi.
+```
+
+```json title="content/docs/meta.json"
+{ "pages": ["index"] }
+```
+
+Add `.docsivi`, `build` and `.react-router` to `.gitignore`. They are generated.
+
+<Callout type="info" title="Import paths">
+  Write the extension in imports of your own files (`./docs.config.ts`). Vite warns about
+  extensionless imports in configuration files.
+</Callout>
+
+## The commands
+
+| Command | What it does |
+| --- | --- |
+| `docsivi dev` | Development server with hot reload |
+| `docsivi build` | Production build (and the pre-rendered pages) |
+| `docsivi start` | Serves a `server` build (`build/server`) |
+| `docsivi typegen` | Generates route types, used by `typecheck` |
+
+Anything after the command is passed on to the underlying tool, for example `docsivi dev --port 3000`.

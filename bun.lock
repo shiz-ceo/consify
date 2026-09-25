@@ -33,6 +33,24 @@
       "name": "lattice",
       "version": "2.2.0",
     },
+    "apps/docs": {
+      "name": "docsivi-docs",
+      "version": "0.0.0",
+      "dependencies": {
+        "docsivi": "workspace:*",
+        "isbot": "^5",
+        "react": "19.3.0",
+        "react-dom": "19.3.0",
+        "react-router": "8.4.0",
+      },
+      "devDependencies": {
+        "@types/node": "24",
+        "@types/react": "19.3.0",
+        "@types/react-dom": "19.3.0",
+        "typescript": "7.0.2",
+        "vite": "8.3.0",
+      },
+    },
     "apps/starter": {
       "name": "docsivi-starter",
       "version": "0.0.0",
@@ -960,6 +978,8 @@
     "docsivi": ["docsivi@workspace:packages/core"],
 
     "docsivi-demo": ["docsivi-demo@workspace:apps/demo"],
+
+    "docsivi-docs": ["docsivi-docs@workspace:apps/docs"],
 
     "docsivi-starter": ["docsivi-starter@workspace:apps/starter"],
 

@@ -1,0 +1,32 @@
+---
+title: Сайт
+description: Название, описание, URL, favicon и репозиторий
+---
+
+```ts title="docs.config.ts"
+site: {
+  name: "Lattice",
+  description: "A typed job queue for TypeScript.",
+  url: "https://lattice.example.dev",
+  favicon: "/favicon.svg",
+  github: { repo: "example/lattice", branch: "main", contentDir: "content/docs" },
+},
+```
+
+<TypeTable
+  type={{
+    name: { description: "Показывается в шапке, в подвале и в заголовках страниц.", type: "string", required: true },
+    description: { description: "Описание сайта по умолчанию для поисковых систем и подвала.", type: "string" },
+    url: { description: "Публичный origin. Нужен, чтобы у канонических ссылок, карты сайта, OG-изображений и RSS-ленты были абсолютные адреса.", type: "string" },
+    logo: { description: "Путь или URL логотипа.", type: "string" },
+    favicon: { description: "Путь (от `public/`) или URL. Если не задан, генерируется значок с первой буквой названия.", type: "string" },
+    "github.repo": { description: "`owner/name`. Включает ссылку «Редактировать на GitHub» и значок GitHub в шапке.", type: "string" },
+    "github.branch": { description: "Ветка, которая используется в ссылках на редактирование.", type: "string", default: '"main"' },
+    "github.contentDir": { description: "Где в репозитории лежит документация.", type: "string", default: '"content/docs"' },
+  }}
+/>
+
+<Callout type="info">
+  Без `site.url` карта сайта будет пустой (для неё нужны абсолютные адреса), а картинки для
+  соцсетей будут использовать относительные пути. Задайте его до публикации.
+</Callout>

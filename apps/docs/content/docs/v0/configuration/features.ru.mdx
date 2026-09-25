@@ -1,0 +1,26 @@
+---
+title: Функции
+description: Включение и отключение встроенного поведения
+---
+
+Каждый переключатель — булево значение и по умолчанию включён.
+
+```ts title="docs.config.ts"
+features: { og: false, twoslash: false },
+```
+
+<TypeTable
+  type={{
+    search: { description: "Окно поиска и его endpoint (или статический индекс).", type: "boolean", default: "true" },
+    toc: { description: "Оглавление справа на странице.", type: "boolean", default: "true" },
+    breadcrumbs: { description: "Путь над заголовком страницы.", type: "boolean", default: "true" },
+    pagination: { description: "Ссылки на предыдущую и следующую страницы внизу.", type: "boolean", default: "true" },
+    llmsTxt: { description: "`/{lang}/llms.txt` и `llms-full.txt`: документация в виде простого текста для языковых моделей.", type: "boolean", default: "true" },
+    og: { description: "Сгенерированные изображения для соцсетей, `/{lang}/og/<page>/image.png`.", type: "boolean", default: "true" },
+    editOnGithub: { description: "Ссылка «Редактировать эту страницу» (нужен `site.github`).", type: "boolean", default: "true" },
+    math: { description: "Формулы KaTeX через `$...$` и `$$...$$`.", type: "boolean", default: "true" },
+    twoslash: { description: "Блоки кода `twoslash` с проверкой типов и подсказками при наведении.", type: "boolean", default: "true" },
+  }}
+/>
+
+Отключение `math` или `twoslash` также убирает их из сборки, отчего она становится чуть быстрее.

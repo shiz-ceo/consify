@@ -1,0 +1,5 @@
+{
+  "title": "Справочник",
+  "icon": "Library",
+  "pages": ["index", "cli", "config", "plugins", "slots", "mdx-components", "environment"]
+}

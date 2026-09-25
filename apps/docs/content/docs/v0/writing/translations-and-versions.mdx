@@ -1,0 +1,38 @@
+---
+title: Languages and versions
+description: How translations and versions are stored
+---
+
+## Translations
+
+A translation is a sibling file with the language code:
+
+```
+guides/
+├─ meta.json
+├─ meta.ru.json
+├─ caching.mdx
+└─ caching.ru.mdx
+```
+
+- A page without a translation is shown in the default language.
+- `meta.ru.json` translates titles of folders and the order of pages. Without it the default file is used.
+- The language switcher goes to the same page in the other language when it exists.
+
+## Versions
+
+A version is a top-level folder with `"root": "version"`:
+
+```json title="content/docs/v0/meta.json"
+{ "title": "v0 (latest)", "root": "version", "pages": ["index"] }
+```
+
+Add it to `versions.list` in the config (see [Versions](/docs/v0/configuration/versions)). Then:
+
+- The sidebar has a version switcher that keeps the page when it exists in both.
+- A `deprecated` version shows a banner that points to the latest.
+- Versions and languages combine: `v1/guide.ru.mdx` is the Russian page of version 1.
+
+## Adding a new version
+
+Copy the folder (`cp -r v0 v1`), change its `meta.json` title, and add `{ id: "v1", status: "latest" }` to the list, setting the old one to `stable` or `deprecated`.

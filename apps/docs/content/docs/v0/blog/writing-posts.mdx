@@ -1,0 +1,42 @@
+---
+title: Writing posts
+description: Files, front matter, covers and translations
+---
+
+## Files
+
+A post is `content/blog/<slug>.mdx`. The slug becomes the address: `/en/blog/<slug>`. A translation is a sibling file with the language code, `<slug>.ru.mdx`. A language without its own file gets the default language.
+
+Slugs are lowercase letters, digits and `-`.
+
+## Front matter
+
+<TypeTable
+  type={{
+    title: { description: "Title of the post.", type: "string", required: true },
+    description: { description: "One or two sentences. Shown in the list and used in meta tags.", type: "string", required: true },
+    date: { description: "Publication date, `2026-09-01`. A future date keeps the post unpublished.", type: "date", required: true },
+    categories: { description: "Ids from `blog.categories`.", type: "string[]", default: "[]" },
+    tags: { description: "Free words. The list offers them as quick filters.", type: "string[]", default: "[]" },
+    authors: { description: "Ids from `blog.authors`.", type: "string[]", default: "[]" },
+    cover: { description: "Path (from `public/`) or URL of the cover image.", type: "string" },
+    coverAlt: { description: "Alt text of the cover.", type: "string" },
+    draft: { description: "`true` keeps the post out of the site.", type: "boolean", default: "false" },
+  }}
+/>
+
+A mistake in the header (a missing title, an unknown category or author) stops the build with the name of the file.
+
+## The body
+
+The body is normal MDX: headings, code, tables and every [built-in component](/docs/v0/writing/components). Headings feed the table of contents, so use `##` and `###`. Code blocks support [highlighted lines and diffs](/docs/v0/writing/code-blocks).
+
+## Covers
+
+A cover is shown at the top of the post, on the cards of the list and as the background of the social image. Any image works. Without a cover a gradient is made from the slug.
+
+Images inside a post get a thin translucent border that takes the tint of the picture. It works the same for GIFs and videos.
+
+## Reading time
+
+It is counted from the text (200 words a minute, at least one minute) and shown in the list and on the post.

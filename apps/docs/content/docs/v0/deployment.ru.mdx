@@ -1,0 +1,93 @@
+---
+title: Деплой
+description: Соберите сайт и выложите его в сеть
+icon: Cloud
+---
+
+Выберите режим в конфиге (см. [Серверный и статический режимы](/docs/v0/concepts/rendering-modes)):
+
+```ts title="docs.config.ts"
+deploy: { mode: "static" },          // or "server" (default)
+```
+
+## Статический сайт
+
+```bash
+bun run build
+```
+
+Загрузите папку `build/client` на любой статический хостинг. Каждая страница — это файл. Сначала задайте `site.url`.
+
+<Tabs items={["GitHub Pages", "Cloudflare Pages", "Nginx", "S3"]}>
+  <Tab value="GitHub Pages">
+```yaml title=".github/workflows/docs.yml"
+name: docs
+on: { push: { branches: [main] } }
+permissions: { pages: write, id-token: write, contents: read }
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: build/client }
+      - uses: actions/deploy-pages@v4
+```
+  </Tab>
+  <Tab value="Cloudflare Pages">
+Команда сборки `bun run build`, выходная папка `build/client`.
+  </Tab>
+  <Tab value="Nginx">
+```nginx
+root /var/www/docs;
+location / { try_files $uri $uri/index.html /__spa-fallback.html; }
+```
+  </Tab>
+  <Tab value="S3">
+Загрузите `build/client` и отдавайте `index.html` для папок (через CloudFront или сайтовый эндпоинт бакета).
+  </Tab>
+</Tabs>
+
+Статическая сборка также создаёт `__spa-fallback.html`. Отдавайте его для неизвестных адресов, если ваш хостинг позволяет задать собственный fallback.
+
+## Node-сервер
+
+```bash
+bun run build
+bun run start
+```
+
+`docsivi start` раздаёт `build/`. Он слушает порт 3000; чтобы изменить его, задайте `PORT`.
+
+```dockerfile title="Dockerfile"
+FROM oven/bun:1
+WORKDIR /app
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
+COPY . .
+RUN bun run build
+ENV NODE_ENV=production
+EXPOSE 3000
+CMD ["bun", "run", "start"]
+```
+
+## Подпуть
+
+Если сайт отдаётся из папки, например `https://example.com/docs`, задайте `basePath`. Он должен начинаться с `/` и не должен заканчиваться на `/`:
+
+```ts title="docs.config.ts"
+deploy: { mode: "static", basePath: "/docs" },
+```
+
+Префикс получают все ссылки, ресурсы и эндпоинт поиска.
+
+## Чек-лист
+
+- Задан `site.url` (канонические ссылки, sitemap, RSS и социальные картинки).
+- В окружении продакшен-сборки нет `DOCSIVI_DRAFTS`.
+- Отложенные посты: сборка запускается после их даты.
+- Хостингам, которым нужны собственные редиректы (для старых адресов), их нужно настраивать в собственных настройках: docsivi их не создаёт.

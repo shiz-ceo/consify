@@ -164,3 +164,81 @@ pre .line.highlighted::after {
 [data-blog-post] :is(h2, h3, h4) {
   scroll-margin-top: 6rem;
 }
+
+/*
+ * Mermaid diagrams (shared/ui/mermaid.tsx). The colors come from the theme variables that the
+ * component hands to Mermaid; this removes what those cannot: shadows, thick outlines, gray label
+ * plates, and lines that run through the titles of groups.
+ */
+.docsivi-mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Mermaid styles its shapes by the id of the diagram, so these need `!important` to win. */
+.docsivi-mermaid
+  svg
+  :is(.node, .actor, .statediagram-state, .note, .cluster)
+  :is(rect, polygon, circle, ellipse, path),
+.docsivi-mermaid svg rect.actor,
+.docsivi-mermaid svg rect.note {
+  filter: none !important;
+  stroke-width: 1px !important;
+}
+
+.docsivi-mermaid svg :is(.node rect, rect.actor, rect.note, .statediagram-state rect) {
+  rx: 10px !important;
+  ry: 10px !important;
+}
+
+.docsivi-mermaid svg .cluster rect {
+  rx: 14px !important;
+  ry: 14px !important;
+  stroke-dasharray: 5 4 !important;
+  fill: transparent !important;
+}
+
+.docsivi-mermaid svg :is(.edgePath path, .flowchart-link, .messageLine0, .messageLine1) {
+  stroke-width: 1.25px !important;
+}
+
+.docsivi-mermaid svg marker path {
+  fill: var(--color-fd-muted-foreground) !important;
+  stroke: none !important;
+}
+
+/* titles of groups and labels of arrows are cut out of the lines behind them */
+.docsivi-mermaid svg :is(.cluster-label, .edgeLabel) :is(span, p, div, text, tspan) {
+  paint-order: stroke;
+  stroke: var(--color-fd-card);
+  stroke-width: 6px;
+  stroke-linejoin: round;
+}
+
+.docsivi-mermaid svg :is(.edgeLabel, .labelBkg) {
+  background-color: transparent !important;
+  opacity: 1 !important;
+}
+
+.docsivi-mermaid svg .edgeLabel rect {
+  fill: var(--color-fd-card) !important;
+  opacity: 1 !important;
+}
+
+.docsivi-mermaid svg .edgeLabel text {
+  fill: var(--color-fd-muted-foreground) !important;
+}
+
+.docsivi-mermaid svg .edgeLabel :is(span, p) {
+  background: var(--color-fd-background) !important;
+  padding: 1px 6px;
+  border-radius: 6px;
+  color: var(--color-fd-muted-foreground) !important;
+  font-size: 0.85em;
+}
+
+.docsivi-mermaid svg .cluster-label :is(span, p, div) {
+  color: var(--color-fd-muted-foreground);
+  font-size: 0.85em;
+  font-weight: 500;
+}

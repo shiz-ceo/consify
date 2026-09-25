@@ -1,0 +1,75 @@
+---
+title: Структура проекта
+description: Какой файл за что отвечает
+---
+
+```
+my-docs/
+├─ docs.config.ts            all settings
+├─ vite.config.ts            plugins: [docsivi(config)]
+├─ react-router.config.ts    export default defineRouterConfig(config)
+├─ content/
+│  ├─ docs/<version>/        pages of the documentation
+│  ├─ blog/                  articles
+│  └─ home.mdx               optional, the home page in MDX (home.ru.mdx, ...)
+├─ custom/
+│  ├─ components/            Foo.tsx becomes <Foo /> in every .mdx file
+│  ├─ home.tsx               optional, replaces the home page
+│  ├─ header.tsx             optional, the middle and the right of the header
+│  ├─ footer.tsx             optional, replaces the footer
+│  └─ theme.css              optional, your styles, loaded after the core theme
+├─ public/                   files served as they are (favicon, images)
+├─ .docsivi/                 generated, do not edit, do not commit
+└─ build/                    the result of `docsivi build`
+```
+
+## Файлы, которые вы пишете
+
+<TypeTable
+  type={{
+    "docs.config.ts": { description: "Все настройки. Проверяются при запуске.", type: "file", required: true },
+    "vite.config.ts": { description: "Одна строка: плагин docsivi.", type: "file", required: true },
+    "react-router.config.ts": { description: "Одна строка: настройки роутера, выведенные из вашего конфига.", type: "file", required: true },
+    "content/docs": { description: "Страницы документации, по одной папке на версию.", type: "folder" },
+    "content/blog": { description: "Статьи: `slug.mdx`, `slug.ru.mdx` для перевода.", type: "folder" },
+    "custom/components": { description: "React-компоненты для MDX, находятся автоматически.", type: "folder" },
+  }}
+/>
+
+## Сгенерированные файлы
+
+`.docsivi/` записывается при запуске сервера разработки или сборки. В нём лежит:
+
+| Файл | Назначение |
+| --- | --- |
+| `instance.ts` | Вызывает макрос контента Fumadocs и создаёт объект сайта из вашего конфига |
+| `blog.ts` | Опубликованные посты блога (черновики и будущие посты исключены) |
+| `home.ts` | Главная страница на MDX, если она у вас есть |
+| `app/root.tsx`, `app/routes.ts` | Корень приложения на React Router и список маршрутов |
+
+Добавьте `.docsivi` в `.gitignore`.
+
+## Папки в `content/docs`
+
+Каждая папка — раздел боковой панели. Файл `meta.json` в папке задаёт её заголовок, иконку и порядок страниц:
+
+```json title="content/docs/v0/guides/meta.json"
+{
+  "title": "Guides",
+  "icon": "Compass",
+  "pages": ["intro", "---Advanced---", "caching", "..."]
+}
+```
+
+- `"---Text---"` рисует разделитель с подписью.
+- `"..."` обозначает все страницы, которые вы не перечислили.
+- `"root": "version"` помечает верхнюю папку версии документации (см. [Языки и версии](/docs/v0/writing/translations-and-versions)).
+
+Front matter страницы:
+
+| Поле | Значение |
+| --- | --- |
+| `title` | Заголовок страницы (обязательное) |
+| `description` | Показывается под заголовком, используется в поиске и мета-тегах |
+| `icon` | Название иконки [Lucide](https://lucide.dev/icons) для боковой панели |
+| `full` | `true` растягивает страницу на всю ширину |

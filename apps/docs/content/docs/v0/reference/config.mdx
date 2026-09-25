@@ -1,0 +1,85 @@
+---
+title: Configuration options
+description: Every option of docs.config.ts with its type and default
+---
+
+`defineConfig` accepts the object below. Unknown keys are errors.
+
+## site
+
+<TypeTable
+  type={{
+    name: { description: "Name of the site.", type: "string", required: true },
+    description: { description: "Description of the site.", type: "string" },
+    url: { description: "Public origin.", type: "string (URL)" },
+    logo: { description: "Path or URL of the logo.", type: "string" },
+    favicon: { description: "Path or URL of the favicon.", type: "string" },
+    github: { description: "`{ repo: 'owner/name', branch?: 'main', contentDir?: 'content/docs' }`", type: "object" },
+  }}
+/>
+
+## i18n
+
+<TypeTable
+  type={{
+    defaultLanguage: { description: "Fallback language.", type: "string", default: '"en"' },
+    languages: { description: "Language codes.", type: "string[]", default: '["en"]' },
+    labels: { description: "Names in the switcher.", type: "Record<string, string>", default: "{}" },
+    messages: { description: "Overrides of interface strings.", type: "Record<string, Record<string, string>>", default: "{}" },
+  }}
+/>
+
+## versions
+
+<TypeTable
+  type={{
+    list: { description: "`{ id, label?, status?: 'latest' | 'stable' | 'deprecated' }[]`", type: "object[]", default: "[]" },
+    default: { description: "Version that `/docs` opens.", type: "string", default: "latest, else first" },
+  }}
+/>
+
+## features
+
+`search`, `toc`, `breadcrumbs`, `pagination`, `llmsTxt`, `og`, `editOnGithub`, `math`, `twoslash`: booleans, all `true` by default. See [Features](/docs/v0/configuration/features).
+
+## theme
+
+<TypeTable
+  type={{
+    radius: { description: "Base corner radius, `--radius`.", type: "string" },
+    "colors.light": { description: "Color tokens for the light scheme.", type: "Record<string, string>", default: "{}" },
+    "colors.dark": { description: "Color tokens for the dark scheme.", type: "Record<string, string>", default: "{}" },
+    "fonts.sans": { description: "`font-family` of text.", type: "string", default: "Geist" },
+    "fonts.mono": { description: "`font-family` of code.", type: "string", default: "Geist Mono" },
+  }}
+/>
+
+## twoslash
+
+<TypeTable
+  type={{
+    compilerOptions: { description: "A tsconfig `compilerOptions` for every `twoslash` block.", type: "object" },
+    cache: { description: "Keep results between builds.", type: "boolean", default: "true" },
+  }}
+/>
+
+## Sections
+
+<TypeTable
+  type={{
+    home: { description: "`Record<language, { hero, features }>`. The home page of the config.", type: "object" },
+    nav: { description: "`{ title, url, external? }[]`. Extra links in the header.", type: "object[]", default: "[]" },
+    header: { description: "`{ hideSearchOn: ('home' | 'docs' | 'api-reference' | 'blog')[] }`", type: "object" },
+    footer: { description: "`{ description?, columns?, social?, legal? }`, or `false`.", type: "object | false" },
+    slots: { description: "`{ home?, header?, headerEnd?, footer? }`: React components.", type: "object" },
+    blog: { description: "`{ title?, description?, perPage?, categories?, authors?, share?, rss? }`", type: "object" },
+    openapi: { description: "`{ input, title? }`. Turns the API reference on.", type: "object" },
+    deploy: { description: "`{ mode?: 'server' | 'static', basePath? }`", type: "object" },
+    components: { description: "MDX components by tag name (capital letter).", type: "Record<string, Component>", default: "{}" },
+    plugins: { description: "[Plugins](/docs/v0/reference/plugins), applied in order.", type: "DocsPlugin[]", default: "[]" },
+  }}
+/>
+
+## Deprecations
+
+A renamed option keeps working for a while and prints a warning that names the replacement. See [Upgrading](/docs/v0/upgrading).

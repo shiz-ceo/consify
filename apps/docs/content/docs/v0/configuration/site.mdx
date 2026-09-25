@@ -1,0 +1,32 @@
+---
+title: Site
+description: Name, description, URL, favicon and repository
+---
+
+```ts title="docs.config.ts"
+site: {
+  name: "Lattice",
+  description: "A typed job queue for TypeScript.",
+  url: "https://lattice.example.dev",
+  favicon: "/favicon.svg",
+  github: { repo: "example/lattice", branch: "main", contentDir: "content/docs" },
+},
+```
+
+<TypeTable
+  type={{
+    name: { description: "Shown in the header, in the footer and in page titles.", type: "string", required: true },
+    description: { description: "Default description of the site for search engines and the footer.", type: "string" },
+    url: { description: "Public origin. Needed for canonical links, the sitemap, OG images and the RSS feed to have absolute addresses.", type: "string" },
+    logo: { description: "Path or URL of a logo.", type: "string" },
+    favicon: { description: "Path (from `public/`) or URL. Without it, an icon with the first letter of the name is generated.", type: "string" },
+    "github.repo": { description: "`owner/name`. Enables Edit on GitHub and the GitHub icon in the header.", type: "string" },
+    "github.branch": { description: "Branch used in Edit links.", type: "string", default: '"main"' },
+    "github.contentDir": { description: "Where the docs live in the repository.", type: "string", default: '"content/docs"' },
+  }}
+/>
+
+<Callout type="info">
+  Without `site.url` the sitemap is empty (a sitemap needs absolute addresses) and social images
+  use relative paths. Set it before you publish.
+</Callout>

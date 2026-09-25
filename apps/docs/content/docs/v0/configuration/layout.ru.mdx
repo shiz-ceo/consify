@@ -1,0 +1,100 @@
+---
+title: Главная, шапка и подвал
+description: Рамка вокруг каждой страницы
+---
+
+Главная страница, шапка и подвал описываются **один раз**, и их используют все страницы: документация, блог, справочник API и сама главная. Так сайт остаётся единообразным. Своя главная страница рисуется внутри той же шапки и того же подвала, что и всё остальное.
+
+У каждой части есть три уровня. Берите самый нижний из тех, что решают задачу.
+
+| Уровень | Главная | Шапка | Подвал |
+| --- | --- | --- | --- |
+| Настроить | блок `home` | `nav`, `header` | блок `footer` |
+| Отключить | не указывать (перенаправляет на документацию) | (есть всегда) | `footer: false` |
+| Заменить | `content/home.mdx` или `custom/home.tsx` | `custom/header.tsx` | `custom/footer.tsx` |
+
+О замене рассказано в разделе [Слоты](/docs/v0/customizing/slots). Эта страница — про настройку.
+
+## Главная страница
+
+Страница по адресу `/{lang}` показывает первый из существующих вариантов:
+
+1. `custom/home.tsx` или `slots.home`, React-компонент.
+2. `content/home.mdx` (и `home.ru.mdx` для другого языка).
+3. Блок `home` в конфигурации.
+4. Ничего. Читателей отправляют в документацию.
+
+Блок `home` — это заголовок с кнопками и сетка карточек для каждого языка:
+
+```ts title="docs.config.ts"
+home: {
+  en: {
+    hero: {
+      title: "Background jobs without the guesswork",
+      description: "A typed job queue for TypeScript.",
+      actions: [
+        { label: "Get started", href: "/docs" },
+        { label: "Why?", href: "/docs/v0/concepts", variant: "secondary" },
+      ],
+    },
+    features: [
+      { icon: "ShieldCheck", title: "Typed", description: "One type for the whole flow.", href: "/docs/v0" },
+    ],
+  },
+},
+```
+
+Язык без записи использует язык по умолчанию. Ссылки, начинающиеся с `/`, получают язык; `/docs` открывает версию по умолчанию. `icon` — это название значка [Lucide](https://lucide.dev/icons).
+
+## Навигация
+
+В шапке перечислены включённые разделы (Документация, API, Блог). Дополнительные ссылки добавляются через `nav`:
+
+```ts title="docs.config.ts"
+nav: [
+  { title: "Changelog", url: "/docs/v0/changelog" },
+  { title: "Status", url: "https://status.example.dev", external: true },
+],
+```
+
+## Шапка
+
+Слева в шапке всегда стоит название сайта, а справа — поиск, язык, тема и (на странице API) кнопка боковой панели. Чтобы убрать поиск в некоторых разделах:
+
+```ts title="docs.config.ts"
+header: { hideSearchOn: ["blog"] }, // home | docs | api-reference | blog
+```
+
+Сочетание Cmd/Ctrl+K остаётся доступным.
+
+## Подвал
+
+Без настроек подвал перечисляет включённые разделы, показывает описание сайта и строку об авторских правах. Настройка:
+
+```ts title="docs.config.ts"
+footer: {
+  description: { en: "A typed job queue.", ru: "Типизированная очередь задач." },
+  columns: [
+    {
+      title: "Product",
+      links: [
+        { title: { en: "Docs", ru: "Документация" }, url: "/docs" },
+        { title: "GitHub", url: "https://github.com/example/lattice" },
+      ],
+    },
+  ],
+  social: [{ type: "github", url: "https://github.com/example/lattice" }],
+  legal: "© 2026 Lattice",
+},
+```
+
+<TypeTable
+  type={{
+    description: { description: "Текст под названием сайта.", type: "string | Record<language, string>", default: "site.description" },
+    columns: { description: "Колонки со ссылками. Заголовки и тексты ссылок могут быть строками или объектом со строкой для каждого языка.", type: "{ title, links[] }[]", default: "the sections that are on" },
+    social: { description: "Значки: `github`, `x`, `bluesky`, `linkedin`, `discord`, `youtube`, `rss`.", type: "{ type, url }[]", default: "[]" },
+    legal: { description: "Нижняя строка.", type: "string | Record<language, string>", default: "© {year} {name}. All rights reserved." },
+  }}
+/>
+
+На страницах без боковой панели (главная, блог) показывается полный подвал. В документации и справочнике API показывается компактный, выровненный по контенту. `footer: false` убирает оба.

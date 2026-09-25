@@ -1,0 +1,65 @@
+---
+title: API слотов
+description: Props главной страницы, шапки и подвала
+---
+
+```ts
+import type { ComponentType } from "react";
+import type { Docsivi } from "docsivi";
+
+interface LayoutLink {
+  text: string;
+  url: string; // with the language
+  external: boolean;
+}
+
+interface HomeSlotProps {
+  docsivi: Docsivi; // the site: config, source, slots
+  lang: string;
+}
+
+interface HeaderSlotProps {
+  docsivi: Docsivi;
+  lang: string;
+  /** The links the header shows by default. */
+  links: LayoutLink[];
+}
+
+interface FooterSlotProps {
+  docsivi: Docsivi;
+  lang: string;
+  /** `full` (home, blog, 404) or `compact` (docs, API reference). */
+  variant: "full" | "compact";
+  /** Link to edit the page on GitHub (docs pages). */
+  editUrl?: string;
+}
+
+interface Slots {
+  Home?: ComponentType<HomeSlotProps>;
+  Header?: ComponentType<HeaderSlotProps>;
+  HeaderEnd?: ComponentType<HeaderSlotProps>;
+  Footer?: ComponentType<FooterSlotProps>;
+}
+```
+
+Импортируйте типы из `docsivi`. `Hero` и `Features` для главной страницы и `DefaultFooter` для подвала берутся из `docsivi/components`.
+
+## Hero
+
+<TypeTable
+  type={{
+    title: { description: "Заголовок.", type: "string", required: true },
+    description: { description: "Текст под заголовком.", type: "string" },
+    actions: { description: "Кнопки. `variant` — `primary` или `secondary`. Ссылки получают язык.", type: "{ label, href, variant? }[]" },
+  }}
+/>
+
+## Features
+
+<TypeTable
+  type={{
+    items: { description: "Карточки. `icon` — название иконки Lucide; `href` превращает карточку в ссылку.", type: "{ title, description, icon?, href? }[]", required: true },
+  }}
+/>
+
+`Hero` и `Features` работают только на главной странице, внутри `custom/home.tsx` или `content/home.mdx`.

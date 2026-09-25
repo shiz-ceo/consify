@@ -1,0 +1,21 @@
+---
+title: API reference
+description: An interactive API page from an OpenAPI schema
+---
+
+The API reference is off unless the config has an `openapi` block. This documentation site does not have one.
+
+```ts title="docs.config.ts"
+openapi: { input: "./openapi.json", title: "API" },
+```
+
+<TypeTable
+  type={{
+    input: { description: "An OpenAPI schema file relative to the project root, a URL, or a list of them.", type: "string | string[]", required: true },
+    title: { description: "The label of the link in the header.", type: "string", default: '"API"' },
+  }}
+/>
+
+The page lives at `/{lang}/api` and is rendered with [Scalar](https://scalar.com): operations, models, examples in several languages and a client to try requests. It follows the theme of the site (light or dark), and its search opens from the search of the header.
+
+Nothing of it is loaded unless the reader opens the page.

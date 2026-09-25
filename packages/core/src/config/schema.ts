@@ -296,9 +296,9 @@ const blogSchema = z
 
 const deploySchema = z.strictObject({
   /**
-   * `server`: a Node server (`next start`, Docker). `static`: `output: "export"`, plain files for any
-   * static host. Static mode has no proxy: `/` redirects to the default language and search runs
-   * in the browser.
+   * `server`: a Node server (`docsivi start`, Docker). `static`: plain files for any static host.
+   * Static mode has no server: `/` and `/docs` are pages that redirect, and search runs in the
+   * browser.
    */
   mode: z.enum(["server", "static"]).default("server"),
   /** Set when the site is served from a sub path, e.g. `/docs`. */

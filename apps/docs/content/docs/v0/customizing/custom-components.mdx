@@ -1,0 +1,43 @@
+---
+title: Custom components
+description: Use your own React components in MDX
+---
+
+Put a file in `custom/components/` and use it in any page. **There is no import and no registration.** The file name is the tag, the default export is the component.
+
+```tsx title="custom/components/Since.tsx"
+export default function Since({ version }: { version: string }) {
+  return <span className="rounded-full border px-2 py-0.5 text-xs">since {version}</span>;
+}
+```
+
+```mdx title="content/docs/v0/guides/caching.mdx"
+Recurring jobs <Since version="0.3" />
+```
+
+## Rules
+
+- The file name starts with a capital letter and is the tag (`Since.tsx` gives `<Since />`).
+- Interactive components work. Add `"use client"` where your framework needs it, and use hooks as usual.
+- A component with the name of a built-in **replaces** it. That is how you restyle `Callout` or `Card` for your project.
+- The list is regenerated while the dev server runs, so a new file is available at once.
+
+<Callout type="warn">
+  Do not put a component inside a heading. Headings feed the table of contents, which is built
+  outside the page and cannot see components. Put the component in the text under the heading.
+</Callout>
+
+## From the config
+
+The same components can be listed in the config, which is handy for a component that comes from a package:
+
+```ts title="docs.config.ts"
+import { Chart } from "my-chart-package";
+
+export default defineConfig({
+  site: { name: "Docs" },
+  components: { Chart },
+});
+```
+
+Names must start with a capital letter (MDX treats lowercase tags as HTML).

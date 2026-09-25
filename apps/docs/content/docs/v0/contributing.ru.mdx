@@ -1,0 +1,50 @@
+---
+title: Участие в разработке
+description: Как устроено ядро
+icon: GitBranch
+---
+
+Репозиторий — это рабочее пространство Bun:
+
+| Папка | Что это |
+| --- | --- |
+| `packages/core` | Пакет `docsivi` |
+| `apps/starter` | Минимальный шаблон |
+| `apps/demo` | Полный пример сайта (вымышленная очередь задач) |
+| `apps/docs` | Эта документация |
+
+```bash
+bun install
+bun run docs     # this site, http://localhost:3500
+bun run demo     # the demo, http://localhost:3300
+bun run check    # lint, typecheck, tests
+```
+
+## Устройство ядра
+
+```
+packages/core/src/
+├─ config/     the schema of docs.config.ts and its deprecations
+├─ features/   sections that can be on or off: home, docs, api-reference, blog
+├─ system/     what every site has: site (redirect, 404), search, seo
+├─ shared/     layout, UI, links, messages, versions, slots
+├─ build/      the Vite plugin and the React Router adapter (scaffold, routes, pre-render)
+├─ mdx/        the Markdown pipeline
+├─ plugins/    the plugin type
+└─ theme/      the stylesheet and the design tokens
+```
+
+Раздел (feature) — это папка с файлом `feature.ts`, который его описывает (маршруты, ссылка в шапке, включён ли он), и кодом его страниц. Маршруты, шапка, список предварительного рендеринга и sitemap строятся из списков в `features/index.ts` и `system/index.ts`, поэтому чтобы добавить раздел, достаточно добавить папку и одну строку.
+
+## Добавление раздела
+
+<Steps>
+<Step>Создайте `features/<name>/feature.ts` с полями `id`, `dir: import.meta.url`, `routes` и, при необходимости, `nav` и `enabled`.</Step>
+<Step>Положите модули маршрутов в `features/<name>/routes/`.</Step>
+<Step>Добавьте раздел в список в `features/index.ts`. Если у него есть страницы для предварительного рендеринга, добавьте `prerender.ts` и укажите его в `features/prerender.ts`.</Step>
+<Step>Если раздел должен попасть в sitemap, добавьте `sitemap.ts` и укажите его в `features/sitemap.ts`.</Step>
+</Steps>
+
+## Тесты
+
+Тесты лежат в `packages/core/test` и запускаются командой `bun test`. Тестами покрыты проверка конфига, список предварительного рендеринга, scaffold и блог (публикация, фильтры, RSS). Перед отправкой изменений запустите `bun run check`.

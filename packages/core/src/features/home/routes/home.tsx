@@ -6,6 +6,7 @@ import { Redirecting } from "../../../shared/layout/redirecting.tsx";
 import { SiteLayout } from "../../../shared/layout/site-layout.tsx";
 import { buildMeta, docsivi, isStatic, requireLang } from "../../../shared/router.ts";
 import { getMDXComponents } from "../../../shared/ui/mdx.tsx";
+import { SiteLink } from "../../../shared/ui/site-link.tsx";
 import { defaultDocsPath } from "../../../shared/versions.ts";
 import { HomeProvider } from "../ui/context.tsx";
 import { Features, Hero } from "../ui/home-parts.tsx";
@@ -70,7 +71,7 @@ function MdxHomePage({ path }: { path: string }) {
         <Body
           components={getMDXComponents(
             docsivi.config,
-            { Hero, Features },
+            { a: SiteLink, Hero, Features },
             docsivi.customComponents,
           )}
         />

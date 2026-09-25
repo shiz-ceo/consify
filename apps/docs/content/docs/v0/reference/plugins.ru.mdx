@@ -1,0 +1,33 @@
+---
+title: API плагинов
+description: Тип плагина
+---
+
+```ts
+import type { ComponentType } from "react";
+import type { ShikiTransformer } from "shiki";
+import type { Pluggable } from "unified";
+
+export interface DocsPlugin {
+  /** Unique name, used in error messages. */
+  name: string;
+  /** Remark plugins, appended after the built-in ones. */
+  remark?: Pluggable[];
+  /** Rehype plugins, appended after the built-in ones. */
+  rehype?: Pluggable[];
+  shiki?: {
+    /** Appended after the built-in transformers. */
+    transformers?: ShikiTransformer[];
+    /** Languages to preload. */
+    langs?: string[];
+  };
+  /** MDX components, available without imports. */
+  components?: Record<string, ComponentType<never>>;
+}
+
+export function definePlugin(plugin: DocsPlugin): DocsPlugin;
+```
+
+Импортируйте `definePlugin` из `docsivi/plugins`. Плагины выполняются в порядке массива `plugins`, после встроенного поведения (блоки кода, Mermaid, математика, Twoslash). У двух плагинов не может быть одинакового имени.
+
+Пример смотрите в разделе [Плагины](/docs/v0/customizing/plugins).

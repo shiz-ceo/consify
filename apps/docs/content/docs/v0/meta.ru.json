@@ -1,0 +1,23 @@
+{
+  "title": "v0 (актуальная)",
+  "root": "version",
+  "pages": [
+    "index",
+    "installation",
+    "quickstart",
+    "---Основы---",
+    "concepts",
+    "---Создайте свой сайт---",
+    "configuration",
+    "writing",
+    "customizing",
+    "blog",
+    "---Публикация---",
+    "deployment",
+    "---Справочник---",
+    "reference",
+    "---Ещё---",
+    "upgrading",
+    "contributing"
+  ]
+}

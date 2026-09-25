@@ -1,0 +1,33 @@
+---
+title: Plugin API
+description: The type of a plugin
+---
+
+```ts
+import type { ComponentType } from "react";
+import type { ShikiTransformer } from "shiki";
+import type { Pluggable } from "unified";
+
+export interface DocsPlugin {
+  /** Unique name, used in error messages. */
+  name: string;
+  /** Remark plugins, appended after the built-in ones. */
+  remark?: Pluggable[];
+  /** Rehype plugins, appended after the built-in ones. */
+  rehype?: Pluggable[];
+  shiki?: {
+    /** Appended after the built-in transformers. */
+    transformers?: ShikiTransformer[];
+    /** Languages to preload. */
+    langs?: string[];
+  };
+  /** MDX components, available without imports. */
+  components?: Record<string, ComponentType<never>>;
+}
+
+export function definePlugin(plugin: DocsPlugin): DocsPlugin;
+```
+
+Import `definePlugin` from `docsivi/plugins`. Plugins run in the order of the `plugins` array, after the built-in behavior (code blocks, Mermaid, math, Twoslash). Two plugins cannot have the same name.
+
+See [Plugins](/docs/v0/customizing/plugins) for an example.

@@ -1,0 +1,76 @@
+---
+title: Blog components
+description: Components made for articles
+---
+
+These are available in every `.mdx` file, and are most useful in posts.
+
+## Authors
+
+A block with the avatars, names and roles of the people (ids from `blog.authors`):
+
+```mdx
+<Authors ids={["ada", "leo"]} />
+```
+
+## Expand
+
+A section that opens on click, for asides and long lists:
+
+```mdx
+<Expand title="Breaking changes">
+
+- `queue.add()` is now `queue.enqueue()`.
+
+</Expand>
+```
+
+## PR
+
+A link to a pull request or an issue of `site.github.repo`:
+
+```mdx
+See <PR n={412} /> and <PR n={98} kind="issues" />.
+```
+
+## Benchmark
+
+Horizontal bars for comparing numbers. `highlight` marks a row, `lowerIsBetter` only adds a hint for the reader:
+
+```mdx
+<Benchmark
+  title="Idle CPU"
+  unit="%"
+  lowerIsBetter
+  rows={[{ label: "1.9", value: 4.2 }, { label: "2.0", value: 0.3, highlight: true }]}
+  note="Measured on a 2 vCPU instance."
+/>
+```
+
+<Benchmark title="Idle CPU" unit="%" lowerIsBetter rows={[{ label: "1.9", value: 4.2 }, { label: "2.0", value: 0.3, highlight: true }]} note="Measured on a 2 vCPU instance." />
+
+## Figure
+
+An image with a caption:
+
+```mdx
+<Figure src="/blog/diagram.png" alt="How it works" caption="The flow of a request." />
+```
+
+## Embed
+
+An iframe for a video or a demo:
+
+```mdx
+<Embed url="https://example.com/demo" title="Demo" />
+```
+
+## CTA
+
+A call to action block. The link gets the language of the page:
+
+```mdx
+<CTA title="Try it" description="Five minutes." href="/docs" label="Get started" />
+```
+
+<CTA title="Try it" description="Five minutes." href="/docs" label="Get started" />

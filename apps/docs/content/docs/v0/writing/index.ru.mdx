@@ -1,0 +1,36 @@
+---
+title: Написание контента
+description: Страницы, папки и всё, что можно в них добавить
+---
+
+Страница — это Markdown-файл с заголовком и, если нужно, React-компонентами. В этом разделе рассказано, что можно писать.
+
+- [Встроенные компоненты](/docs/v0/writing/components): врезки, вкладки, шаги, деревья файлов, таблицы типов и другое.
+- [Блоки кода](/docs/v0/writing/code-blocks): заголовки, подсветка строк, диффы, вкладки и код с проверкой типов.
+- [Математика и диаграммы](/docs/v0/writing/math-and-diagrams): KaTeX и Mermaid.
+- [Языки и версии](/docs/v0/writing/translations-and-versions): перевод и версионирование страниц.
+- [Поиск и SEO](/docs/v0/writing/search-and-seo): поиск, sitemap, `llms.txt` и картинки для соцсетей.
+
+## Страница
+
+```mdx title="content/docs/v0/guides/caching.mdx"
+---
+title: Caching
+description: Keep answers for a while
+icon: Database
+---
+
+Write **Markdown**, use `code`, add [links](/docs/v0/quickstart).
+
+<Callout type="warn">A component, no import needed.</Callout>
+```
+
+## Ссылки
+
+- Абсолютные пути должны содержать язык и версию: `/en/docs/v0/quickstart`.
+- Относительные ссылки на файлы работают: `[caching](./caching.mdx)`. Они сохраняют язык страницы.
+- Внешние ссылки — обычный Markdown.
+
+## Врезки в стиле GitHub
+
+Демо-сайт включает плагин, который превращает цитаты вида `> [!NOTE]` во врезки. Это небольшой плагин (см. [Плагины](/docs/v0/customizing/plugins)), поэтому по умолчанию он выключен.

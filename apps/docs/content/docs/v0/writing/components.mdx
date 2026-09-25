@@ -1,0 +1,95 @@
+---
+title: Built-in components
+description: Everything available in .mdx without an import
+---
+
+## Callout
+
+<Callout type="info" title="Info">Neutral information.</Callout>
+<Callout type="warn" title="Warning">Something to be careful about.</Callout>
+<Callout type="error" title="Error">Something that will break.</Callout>
+
+```mdx
+<Callout type="warn" title="Warning">Something to be careful about.</Callout>
+```
+
+Types: `info`, `warn`, `error`, `success`, `idea`.
+
+## Tabs
+
+<Tabs items={["bun", "npm"]}>
+  <Tab value="bun">
+```bash
+bun add docsivi
+```
+  </Tab>
+  <Tab value="npm">
+```bash
+npm install docsivi
+```
+  </Tab>
+</Tabs>
+
+```mdx
+<Tabs items={["bun", "npm"]}>
+  <Tab value="bun">...</Tab>
+  <Tab value="npm">...</Tab>
+</Tabs>
+```
+
+## Steps
+
+<Steps>
+<Step>Install the package.</Step>
+<Step>Create `docs.config.ts`.</Step>
+<Step>Write your first page.</Step>
+</Steps>
+
+## Cards
+
+<Cards>
+  <Card title="Quickstart" description="Your first site." href="/docs/v0/quickstart" />
+  <Card title="Configuration" description="Every option." href="/docs/v0/configuration" />
+</Cards>
+
+## Accordion
+
+<Accordions>
+  <Accordion title="Can I nest components?">Yes: an accordion can hold tabs, code and other accordions.</Accordion>
+</Accordions>
+
+## File tree
+
+<Files>
+  <Folder name="content" defaultOpen>
+    <Folder name="docs" defaultOpen>
+      <File name="index.mdx" />
+    </Folder>
+  </Folder>
+  <File name="docs.config.ts" />
+</Files>
+
+## Type table
+
+<TypeTable
+  type={{
+    title: { description: "Text of the sidebar and the page header.", type: "string", required: true },
+    full: { description: "Use the full page width.", type: "boolean", default: "false" },
+  }}
+/>
+
+## Badge
+
+<Badge>default</Badge> <Badge variant="new">new</Badge> <Badge variant="beta">beta</Badge> <Badge variant="deprecated">deprecated</Badge> <Badge variant="danger">breaking</Badge>
+
+## Video and images
+
+`<Video src="..." title="..." />` embeds a video with controls. Every image, GIF and video gets a thin border that takes the tint of the media under it. Use `<img plain />` to leave one without.
+
+## Blog components
+
+The blog adds `Authors`, `Expand`, `PR`, `Benchmark`, `Figure`, `Embed` and `CTA`. See [Blog components](/docs/v0/blog/components).
+
+## Your own
+
+Drop a file into `custom/components/`. See [Custom components](/docs/v0/customizing/custom-components).

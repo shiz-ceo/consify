@@ -1,0 +1,26 @@
+---
+title: Features
+description: Switch the built-in behavior on and off
+---
+
+Every switch is a boolean and is on by default.
+
+```ts title="docs.config.ts"
+features: { og: false, twoslash: false },
+```
+
+<TypeTable
+  type={{
+    search: { description: "The search dialog and its endpoint (or the static index).", type: "boolean", default: "true" },
+    toc: { description: "The table of contents on the right of a page.", type: "boolean", default: "true" },
+    breadcrumbs: { description: "The path above the title of a page.", type: "boolean", default: "true" },
+    pagination: { description: "Previous and next links under a page.", type: "boolean", default: "true" },
+    llmsTxt: { description: "`/{lang}/llms.txt` and `llms-full.txt`, the docs as plain text for language models.", type: "boolean", default: "true" },
+    og: { description: "Generated images for social networks, `/{lang}/og/<page>/image.png`.", type: "boolean", default: "true" },
+    editOnGithub: { description: "An Edit this page link (needs `site.github`).", type: "boolean", default: "true" },
+    math: { description: "KaTeX formulas with `$...$` and `$$...$$`.", type: "boolean", default: "true" },
+    twoslash: { description: "Type-checked `twoslash` code blocks with hovers.", type: "boolean", default: "true" },
+  }}
+/>
+
+Turning `math` or `twoslash` off also removes them from the build, which makes it a little faster.

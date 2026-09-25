@@ -1,0 +1,26 @@
+{
+  "name": "docsivi-docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "docsivi": "workspace:*",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-router": "8.4.0",
+    "isbot": "^5"
+  },
+  "devDependencies": {
+    "@types/node": "24",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.0"
+  },
+  "scripts": {
+    "dev": "docsivi dev",
+    "build": "docsivi build",
+    "start": "docsivi start",
+    "typecheck": "docsivi typegen && tsc --noEmit"
+  }
+}

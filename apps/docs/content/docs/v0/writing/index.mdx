@@ -1,0 +1,36 @@
+---
+title: Writing content
+description: Pages, folders and everything you can put in them
+---
+
+A page is a Markdown file with a header and, when you want, React components. This section covers what you can write.
+
+- [Built-in components](/docs/v0/writing/components): callouts, tabs, steps, file trees, tables of types and more.
+- [Code blocks](/docs/v0/writing/code-blocks): titles, highlighted lines, diffs, tabs and type-checked code.
+- [Math and diagrams](/docs/v0/writing/math-and-diagrams): KaTeX and Mermaid.
+- [Languages and versions](/docs/v0/writing/translations-and-versions): translating and versioning pages.
+- [Search and SEO](/docs/v0/writing/search-and-seo): search, sitemap, `llms.txt` and social images.
+
+## A page
+
+```mdx title="content/docs/v0/guides/caching.mdx"
+---
+title: Caching
+description: Keep answers for a while
+icon: Database
+---
+
+Write **Markdown**, use `code`, add [links](/docs/v0/quickstart).
+
+<Callout type="warn">A component, no import needed.</Callout>
+```
+
+## Links
+
+- Absolute paths need the language and version: `/en/docs/v0/quickstart`.
+- Relative links to files work: `[caching](./caching.mdx)`. They keep the language of the page.
+- External links are plain Markdown.
+
+## GitHub-style alerts
+
+The demo site enables a plugin that turns quotes such as `> [!NOTE]` into callouts. It is a small plugin (see [Plugins](/docs/v0/customizing/plugins)), so it is not on by default.

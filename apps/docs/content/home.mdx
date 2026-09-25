@@ -1,0 +1,52 @@
+---
+title: docsivi
+description: A documentation site foundation you configure instead of maintain.
+---
+
+<Hero
+  title="Documentation you configure, not maintain"
+  description="docsivi is a foundation for documentation sites. Your project is a config file and your pages. The core is a package that you update with one command."
+  actions={[
+    { label: "Get started", href: "/docs/v0/quickstart" },
+    { label: "How it works", href: "/docs/v0/concepts", variant: "secondary" },
+  ]}
+/>
+
+<Features
+  items={[
+    { icon: "FileCog", title: "Only config", description: "docs.config.ts, your content and a few lines of glue. No forked layout to keep in sync.", href: "/docs/v0/concepts" },
+    { icon: "Languages", title: "Languages and versions", description: "Translate page by page with a fallback and keep several versions side by side.", href: "/docs/v0/writing/translations-and-versions" },
+    { icon: "Newspaper", title: "A blog built in", description: "Categories, search, RSS, social images and drafts that never reach the browser.", href: "/docs/v0/blog" },
+    { icon: "Palette", title: "Yours to change", description: "Tokens for the look, plugins for the pipeline, slots for the home page, header and footer.", href: "/docs/v0/customizing" },
+    { icon: "Server", title: "Server or static", description: "Run it on Node or export plain files for any static host.", href: "/docs/v0/deployment" },
+    { icon: "Sparkles", title: "Types where it matters", description: "Type-checked code blocks with hovers, and a validated config with clear errors.", href: "/docs/v0/writing/code-blocks" },
+  ]}
+/>
+
+## A project in three files
+
+```ts title="docs.config.ts"
+import { defineConfig } from "docsivi";
+
+export default defineConfig({
+  site: { name: "My project", github: { repo: "me/my-project" } },
+  i18n: { languages: ["en", "ru"] },
+});
+```
+
+```ts title="vite.config.ts"
+import { docsivi } from "docsivi/vite";
+import { defineConfig } from "vite";
+import config from "./docs.config.ts";
+
+export default defineConfig({ plugins: [docsivi(config)] });
+```
+
+```ts title="react-router.config.ts"
+import { defineRouterConfig } from "docsivi/react-router";
+import config from "./docs.config.ts";
+
+export default defineRouterConfig(config);
+```
+
+Then write pages in `content/docs/`, run `bun run dev`, and you have a site. Read [How it works](/docs/v0/concepts) to see what happens in between, or [how docsivi was made](/blog/how-docsivi-was-made) to see why it looks like this.

@@ -1,0 +1,109 @@
+---
+title: Plugins
+description: Extend the Markdown pipeline and the code blocks
+---
+
+A plugin is one object. Every field is optional:
+
+```ts title="custom/plugins/my-plugin.ts"
+import { definePlugin } from "docsivi/plugins";
+
+export const myPlugin = definePlugin({
+  name: "my-plugin",
+  remark: [],     // Markdown syntax tree
+  rehype: [],     // HTML syntax tree
+  shiki: {        // code blocks
+    transformers: [],
+    langs: [],
+  },
+  components: {}, // MDX components
+});
+```
+
+```ts title="docs.config.ts"
+import { myPlugin } from "./custom/plugins/my-plugin.ts";
+
+export default defineConfig({
+  site: { name: "Docs" },
+  plugins: [myPlugin],
+});
+```
+
+Plugins run in the order they are listed, after the built-in behavior. Names must be unique.
+
+## An example: alerts from quotes
+
+A small remark plugin that turns `> [!NOTE]` quotes into callouts:
+
+```ts title="custom/plugins/github-alerts.ts"
+import { definePlugin } from "docsivi/plugins";
+
+// Remark plugin: GitHub-style alerts in plain Markdown become <Callout>.
+//
+//   > [!NOTE]
+//   > Text of the note.
+//
+// Supported: NOTE, TIP, WARNING, IMPORTANT, CAUTION.
+type Node = { type: string; value?: string; children?: Node[]; [key: string]: unknown };
+
+const types: Record<string, { type: string; title: string }> = {
+  NOTE: { type: "info", title: "Note" },
+  TIP: { type: "idea", title: "Tip" },
+  IMPORTANT: { type: "info", title: "Important" },
+  WARNING: { type: "warn", title: "Warning" },
+  CAUTION: { type: "error", title: "Caution" },
+};
+
+function remarkGithubAlerts() {
+  return (tree: Node) => {
+    const visit = (node: Node) => {
+      const children = node.children ?? [];
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i] as Node;
+        const firstText =
+          child.type === "blockquote" ? child.children?.[0]?.children?.[0] : undefined;
+        const match =
+          firstText?.type === "text" ? /^\[!(\w+)\]\s*/.exec(firstText.value ?? "") : null;
+        const alert = match ? types[(match[1] as string).toUpperCase()] : undefined;
+        if (child.type === "blockquote" && match && alert) {
+          (firstText as Node).value = (firstText?.value ?? "").slice(match[0].length);
+          children[i] = {
+            type: "mdxJsxFlowElement",
+            name: "Callout",
+            attributes: [
+              { type: "mdxJsxAttribute", name: "type", value: alert.type },
+              { type: "mdxJsxAttribute", name: "title", value: alert.title },
+            ],
+            children: child.children ?? [],
+          };
+        } else {
+          visit(child);
+        }
+      }
+    };
+    visit(tree);
+  };
+}
+
+export const githubAlerts = definePlugin({
+  name: "github-alerts",
+  remark: [remarkGithubAlerts],
+});
+```
+
+Register it with `plugins: [githubAlerts]`. It has no dependencies: it walks the syntax tree itself.
+
+## What each field is for
+
+| Field | Use it to |
+| --- | --- |
+| `remark` | Change Markdown before it becomes HTML: new syntax, automatic components |
+| `rehype` | Change the HTML tree: add attributes, wrap elements |
+| `shiki.transformers` | Change how code is rendered: line decorations, badges |
+| `shiki.langs` | Preload a language for highlighting |
+| `components` | Add MDX components together with the plugin that needs them |
+
+<Callout type="info">
+  Shiki and remark/rehype plugins come from their own ecosystems. Any plugin that works with
+  `unified` or Shiki works here.
+</Callout>

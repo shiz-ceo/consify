@@ -1,0 +1,98 @@
+---
+title: Установка
+description: Требования и создание проекта
+icon: Download
+---
+
+## Требования
+
+- [Bun](https://bun.sh) версии 1.2 или новее.
+- Node.js версии 24 или новее — на нём под капотом работают инструменты сборки.
+
+## Создание проекта
+
+Быстрее всего воспользоваться генератором. Он спросит название, скопирует стартовый шаблон и установит зависимости:
+
+```bash
+bunx create-docsivi@latest my-docs
+cd my-docs
+bun run dev
+```
+
+Откройте `http://localhost:5173`. Отредактируйте `content/docs/index.mdx`, и страница обновится.
+
+## Добавление в существующий проект
+
+```bash
+bun add docsivi react react-dom react-router
+bun add -d vite typescript @types/react @types/react-dom @types/node
+```
+
+Затем создайте следующие файлы.
+
+```ts title="docs.config.ts"
+import { defineConfig } from "docsivi";
+
+export default defineConfig({
+  site: { name: "My docs" },
+});
+```
+
+```ts title="vite.config.ts"
+import { docsivi } from "docsivi/vite";
+import { defineConfig } from "vite";
+import config from "./docs.config.ts";
+
+export default defineConfig({ plugins: [docsivi(config)] });
+```
+
+```ts title="react-router.config.ts"
+import { defineRouterConfig } from "docsivi/react-router";
+import config from "./docs.config.ts";
+
+export default defineRouterConfig(config);
+```
+
+```json title="package.json"
+{
+  "type": "module",
+  "scripts": {
+    "dev": "docsivi dev",
+    "build": "docsivi build",
+    "start": "docsivi start",
+    "typecheck": "docsivi typegen && tsc --noEmit"
+  }
+}
+```
+
+Добавьте первую страницу и `tsconfig.json` (скопируйте его из стартового шаблона):
+
+```mdx title="content/docs/index.mdx"
+---
+title: Welcome
+---
+
+Hello from docsivi.
+```
+
+```json title="content/docs/meta.json"
+{ "pages": ["index"] }
+```
+
+Добавьте `.docsivi`, `build` и `.react-router` в `.gitignore`. Эти папки генерируются автоматически.
+
+<Callout type="info" title="Пути импорта">
+  Указывайте расширение в импортах своих файлов (`./docs.config.ts`). Vite предупреждает об импортах
+  без расширения в конфигурационных файлах.
+</Callout>
+
+## Команды
+
+| Команда | Что делает |
+| --- | --- |
+| `docsivi dev` | Сервер разработки с горячей перезагрузкой |
+| `docsivi build` | Продакшен-сборка (вместе с предварительно отрендеренными страницами) |
+| `docsivi start` | Запускает сборку `server` (`build/server`) |
+| `docsivi typegen` | Генерирует типы маршрутов, которые использует `typecheck` |
+
+Всё, что идёт после команды, передаётся нижележащему инструменту, например `docsivi dev --port 3000`.

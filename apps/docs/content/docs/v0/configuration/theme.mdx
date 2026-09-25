@@ -1,0 +1,41 @@
+---
+title: Theme
+description: Colors, radius and fonts
+---
+
+The look of the site is a set of CSS variables (design tokens). The defaults are a neutral black and white palette with the Geist font.
+
+```ts title="docs.config.ts"
+theme: {
+  radius: "0.75rem",
+  colors: {
+    light: { primary: "oklch(0.55 0.2 260)", "primary-foreground": "white" },
+    dark: { primary: "oklch(0.75 0.15 260)" },
+  },
+  fonts: { sans: "Inter, sans-serif", mono: "'JetBrains Mono', monospace" },
+},
+```
+
+Token names are written without the leading `--`. Values are CSS, so any color syntax works (`oklch`, `hsl`, hex, `var(...)`). Values that could close a rule or a tag (`{`, `}`, `<`, `>`, `;`) are rejected.
+
+## Tokens
+
+| Token | Used for |
+| --- | --- |
+| `background`, `foreground` | Page background and text |
+| `card`, `card-foreground` | Cards and panels |
+| `popover`, `popover-foreground` | Menus and dialogs |
+| `primary`, `primary-foreground` | Buttons and accents |
+| `secondary`, `muted`, `accent` | Quiet surfaces and hover states |
+| `muted-foreground` | Secondary text |
+| `border`, `input`, `ring` | Lines and focus rings |
+
+## Your own CSS
+
+For anything a token cannot do, add `custom/theme.css`. It is loaded after the theme of docsivi, so it wins:
+
+```css title="custom/theme.css"
+.prose h2 {
+  letter-spacing: -0.02em;
+}
+```

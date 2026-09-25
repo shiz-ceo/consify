@@ -1,0 +1,71 @@
+---
+title: Code blocks
+description: Titles, highlights, diffs, tabs and type-checked code
+---
+
+Code is highlighted with [Shiki](https://shiki.style), in the light or dark theme of the site.
+
+## Title and line numbers
+
+````mdx
+```ts title="server.ts" lineNumbers
+````
+
+```ts title="server.ts" lineNumbers
+import { createServer } from "node:http";
+
+createServer((_, res) => res.end("ok")).listen(3000);
+```
+
+## Highlighted lines
+
+List line numbers in braces, or mark a line with a comment:
+
+````mdx
+```ts {2,4-5}
+````
+
+```ts {2,4-5}
+const a = 1;
+const b = 2; // highlighted
+const c = 3;
+const d = 4; // highlighted
+const e = 5; // highlighted
+```
+
+```ts
+const kept = true; // [!code highlight]
+```
+
+## Diffs
+
+```ts
+const mode = "server"; // [!code --]
+const mode = "static"; // [!code ++]
+```
+
+## Tabs
+
+Blocks with the same `tab` group become tabs:
+
+````mdx
+```ts tab="Producer"
+await queue.add(job);
+```
+
+```ts tab="Worker"
+worker.process(handler);
+```
+````
+
+## Type-checked code
+
+A block marked `twoslash` is compiled, and every identifier gets a hover with its type. Only these blocks are compiled, so ordinary blocks stay fast.
+
+````mdx
+```ts twoslash
+const n: number = 1;
+```
+````
+
+Use `// ^?` under a line to print a type, `// @errors: 2322` to expect an error, and `// ---cut---` to hide the setup above it. Set the compiler options in [`twoslash`](/docs/v0/reference/config).

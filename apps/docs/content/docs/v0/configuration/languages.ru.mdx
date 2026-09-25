@@ -1,0 +1,36 @@
+---
+title: Языки
+description: Перевод страниц и интерфейса
+---
+
+```ts title="docs.config.ts"
+i18n: {
+  defaultLanguage: "en",
+  languages: ["en", "ru"],
+  labels: { en: "English", ru: "Русский" },
+  messages: { ru: { documentation: "Доки" } },
+},
+```
+
+<TypeTable
+  type={{
+    defaultLanguage: { description: "Используется, если у страницы нет перевода. Должен входить в `languages`.", type: "string", default: '"en"' },
+    languages: { description: "Коды языков: `en`, `ru`, `pt-BR`.", type: "string[]", default: '["en"]' },
+    labels: { description: "Названия в переключателе языка.", type: "Record<string, string>", default: "{}" },
+    messages: { description: "Переопределения строк интерфейса docsivi для каждого языка.", type: "Record<string, Record<string, string>>", default: "{}" },
+  }}
+/>
+
+## URL
+
+В адресе каждой страницы есть язык: `/en/docs/v0/quickstart`, `/ru/docs/v0/quickstart`. Адрес `/` перенаправляет на язык по умолчанию.
+
+## Перевод страниц
+
+Добавьте рядом файл с кодом языка: `guide.mdx` и `guide.ru.mdx`. Страница без перевода показывается на языке по умолчанию, так что переводить можно постепенно. `meta.json` работает так же (`meta.ru.json`). Подробнее в разделе [Языки и версии](/docs/v0/writing/translations-and-versions).
+
+## Строки интерфейса
+
+docsivi содержит английские и русские строки для того, что рисует сам (блог, подвал, уведомления). Для другого языка используется английский, а любую строку можно переопределить через `messages`. Доступные ключи: `documentation`, `deprecatedVersion`, `goToLatest`, `editOnGithub`, `notFound`, `backToDocs`, `blog`, `allPosts`, `searchPosts`, `filter`, `tags`, `clearFilters`, `noPosts`, `minRead`, `share`, `relatedPosts`, `backToBlog`, `inThisArticle`, `previous`, `next`, `page`, `rss`, `postedBy`, `footerSections`, `footerRights`.
+
+Тексты окна поиска, боковой панели и подобного берутся из Fumadocs и переводятся автоматически, если перевод существует.

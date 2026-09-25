@@ -7,6 +7,7 @@ touching your content. See [TASKS.md](TASKS.md) for the plan and the log of deci
 ## Structure
 
 - `packages/core`: the `docsivi` package (config, plugins, components, theme, React Router adapter, Vite plugin, CLI).
+- `apps/docs`: the documentation of docsivi itself (English and Russian, versioned as `v0`, with a blog), built with docsivi.
 - `apps/starter`: the minimal template for a new docs site.
 - `apps/demo`: a full, realistic example ("Lattice", a fictional job queue): sections, nested categories, two languages, two versions, custom components and plugins.
 
@@ -33,6 +34,7 @@ In this repository:
 
 ```bash
 bun install
+bun run docs       # the documentation of docsivi on http://localhost:3500
 bun run demo       # demo site on http://localhost:3300
 bun run starter    # the minimal starter
 bun run build:demo # production build of the demo

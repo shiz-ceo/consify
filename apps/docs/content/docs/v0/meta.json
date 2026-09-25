@@ -1,0 +1,23 @@
+{
+  "title": "v0 (latest)",
+  "root": "version",
+  "pages": [
+    "index",
+    "installation",
+    "quickstart",
+    "---Learn---",
+    "concepts",
+    "---Build your site---",
+    "configuration",
+    "writing",
+    "customizing",
+    "blog",
+    "---Ship it---",
+    "deployment",
+    "---Reference---",
+    "reference",
+    "---More---",
+    "upgrading",
+    "contributing"
+  ]
+}

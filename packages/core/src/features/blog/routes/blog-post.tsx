@@ -10,6 +10,7 @@ import { resolveHref } from "../../../shared/links.ts";
 import { format, getMessages } from "../../../shared/messages.ts";
 import { absoluteUrl, buildMeta, docsivi, requireLang } from "../../../shared/router.ts";
 import { getMDXComponents } from "../../../shared/ui/mdx.tsx";
+import { SiteLink } from "../../../shared/ui/site-link.tsx";
 import { categoryLabels } from "../labels.ts";
 import type { BlogPost } from "../posts.ts";
 import { relatedPosts } from "../posts.ts";
@@ -82,21 +83,6 @@ export function meta({ loaderData }: { loaderData?: PostData }) {
     ...post.tags.map((tag) => ({ property: "article:tag", content: tag })),
   );
   return tags;
-}
-
-/** Links in a post: `/docs` and other site paths get the language of the post. */
-function PostLink({ href, ...props }: ComponentProps<"a">) {
-  const { lang } = useParams();
-  const to = href && lang ? resolveHref(docsivi.config, lang, href) : href;
-  if (to?.startsWith("/")) return <Link to={to} {...(props as object)} />;
-  const external = to?.startsWith("http");
-  return (
-    <a
-      href={to}
-      {...props}
-      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-    />
-  );
 }
 
 export default function BlogPostRoute({ loaderData }: { loaderData: PostData }) {
@@ -198,7 +184,7 @@ export default function BlogPostRoute({ loaderData }: { loaderData: PostData }) 
                 }}
               >
                 <Body
-                  components={getMDXComponents(config, { a: PostLink }, docsivi.customComponents)}
+                  components={getMDXComponents(config, { a: SiteLink }, docsivi.customComponents)}
                 />
               </BlogProvider>
             </DocsBody>
