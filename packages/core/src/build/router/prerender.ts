@@ -11,5 +11,9 @@ export function prerenderPaths(
   config: Readonly<DocsConfig>,
   cwd: string = process.cwd(),
 ): string[] {
-  return [...new Set([...systemPrerenderers, ...featurePrerenderers].flatMap((paths) => paths(config, cwd)))];
+  return [
+    ...new Set(
+      [...systemPrerenderers, ...featurePrerenderers].flatMap((paths) => paths(config, cwd)),
+    ),
+  ];
 }

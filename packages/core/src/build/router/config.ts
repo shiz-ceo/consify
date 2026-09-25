@@ -1,7 +1,7 @@
 import type { Config } from "@react-router/dev/config";
 import type { DocsConfig } from "../../config/index.ts";
-import { enabledRouteKeys } from "./route-list.ts";
 import { prerenderPaths } from "./prerender.ts";
+import { enabledRouteKeys } from "./route-list.ts";
 import { appDirectory, scaffold } from "./scaffold.ts";
 
 /**

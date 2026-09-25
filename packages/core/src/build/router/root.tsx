@@ -11,11 +11,11 @@ import {
   useParams,
   useRouteError,
 } from "react-router";
-import { ServerSearchDialog, StaticSearchBridge } from "../../system/search/search-bridge.tsx";
 import { createTranslations } from "../../shared/layout/layout-options.tsx";
-import { themeToCss } from "../../theme/tokens.ts";
 import { NotFound } from "../../shared/layout/not-found-view.tsx";
 import { consify } from "../../shared/router.ts";
+import { ServerSearchDialog, StaticSearchBridge } from "../../system/search/search-bridge.tsx";
+import { themeToCss } from "../../theme/tokens.ts";
 
 const translations = createTranslations(consify);
 
@@ -49,7 +49,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     .map((match) => (match.handle as { page?: string } | undefined)?.page)
     .findLast((value) => value !== undefined);
   const searchHidden =
-    page !== undefined && (consify.config.header?.hideSearchOn as string[] | undefined)?.includes(page);
+    page !== undefined &&
+    (consify.config.header?.hideSearchOn as string[] | undefined)?.includes(page);
   // a page shown without a translation is written in another language than the address says
   const contentLanguage = matches
     .map((match) => (match.loaderData as { contentLanguage?: string } | undefined)?.contentLanguage)

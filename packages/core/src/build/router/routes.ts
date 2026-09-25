@@ -37,5 +37,5 @@ export default [...system, ...features].flatMap((feature) =>
     .map((spec) => {
       const file = resolveRouteFile(fileURLToPath(new URL(spec.file, feature.dir)));
       return spec.index ? index(file) : route(spec.path as string, file);
-  }),
+    }),
 ) satisfies RouteConfig;

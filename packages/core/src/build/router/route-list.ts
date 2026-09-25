@@ -8,7 +8,12 @@ import { system } from "../../system/index.ts";
  * Routes that need something on disk to have any page. A static site cannot have a route with a
  * loader that nothing is pre-rendered for, so a blog without a published post has no post pages.
  */
-function needsContent(featureId: string, file: string, config: FeatureConfig, cwd: string): boolean {
+function needsContent(
+  featureId: string,
+  file: string,
+  config: FeatureConfig,
+  cwd: string,
+): boolean {
   if (featureId === "blog" && (file === "routes/blog-post" || file === "routes/blog-og")) {
     return config.blog !== undefined && hasPublishedPosts(cwd, config.i18n.languages);
   }

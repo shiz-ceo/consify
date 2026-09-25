@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import type { DocsConfig } from "../../config/index.ts";
 import { blogDir, checkPosts, publishedFiles, scanPosts } from "../../features/blog/scan.ts";
 import { homeFiles } from "../../features/home/scan.ts";
-import type { DocsConfig } from "../../config/index.ts";
 
 /** Generated files live here (gitignored). React Router's `appDirectory` points at `.consify/app`. */
 export const generatedDir = ".consify";

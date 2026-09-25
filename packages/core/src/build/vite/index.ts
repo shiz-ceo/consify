@@ -7,9 +7,9 @@ import tailwindcss from "@tailwindcss/vite";
 import { fumadocsMdx } from "fumadocs-mdx/vite";
 import { type Plugin, type PluginOption, searchForWorkspaceRoot } from "vite";
 import type { DocsConfig } from "../../config/index.ts";
+import { scalarCreditPlugin } from "../../features/api-reference/scalar-credit.ts";
 import { createMdxOptions } from "../../mdx/options.ts";
 import { generatedDir, scaffold } from "../router/scaffold.ts";
-import { scalarCreditPlugin } from "../../features/api-reference/scalar-credit.ts";
 
 /**
  * Client dependencies of consify that Vite would otherwise discover one by one while the page
