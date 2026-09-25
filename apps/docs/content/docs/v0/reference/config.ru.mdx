@@ -26,6 +26,7 @@ description: Все опции docs.config.ts с типами и значени�
     languages: { description: "Коды языков.", type: "string[]", default: '["en"]' },
     labels: { description: "Названия в переключателе.", type: "Record<string, string>", default: "{}" },
     messages: { description: "Переопределения строк интерфейса.", type: "Record<string, Record<string, string>>", default: "{}" },
+    fallback: { description: "Страница без перевода: `notice`, `show` или `hide`.", type: '"notice" | "show" | "hide"', default: '"notice"' },
   }}
 />
 

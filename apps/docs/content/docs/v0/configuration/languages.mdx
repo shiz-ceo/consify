@@ -18,6 +18,7 @@ i18n: {
     languages: { description: "Language codes: `en`, `ru`, `pt-BR`.", type: "string[]", default: '["en"]' },
     labels: { description: "Names in the language switcher.", type: "Record<string, string>", default: "{}" },
     messages: { description: "Overrides for the interface strings of docsivi, per language.", type: "Record<string, Record<string, string>>", default: "{}" },
+    fallback: { description: "What a page without a translation does: `notice`, `show` or `hide`.", type: '"notice" | "show" | "hide"', default: '"notice"' },
   }}
 />
 
@@ -28,6 +29,20 @@ Every page has the language in its address: `/en/docs/v0/quickstart`, `/ru/docs/
 ## Translating pages
 
 Add a sibling file with the language code: `guide.mdx` and `guide.ru.mdx`. A page without a translation is shown in the default language, so you can translate gradually. `meta.json` works the same way (`meta.ru.json`). See [Languages and versions](/docs/v0/writing/translations-and-versions).
+
+## Pages without a translation
+
+A page that has no file in a language is shown in the default language, so you can translate gradually. `i18n.fallback` decides how that looks:
+
+| Value | What the reader sees |
+| --- | --- |
+| `notice` (default) | The original text with a note "This page has not been translated yet", a small `EN` mark in the sidebar and on blog cards, `lang` of the document set to the language of the text, the original address as the canonical one, and no address in the sitemap |
+| `show` | The original text as if it were translated, no marks |
+| `hide` | The page does not exist in that language: its address leads to the default language, and it is missing from the sidebar, the blog list, the feed and the sitemap. Every language then needs its own `meta.<language>.json` |
+
+Links to the other languages (`hreflang`) list only translations that exist.
+
+`meta.<language>.json` translates the title of a folder and the order of its pages. Whatever is not text (`root`, `icon`, `defaultOpen`) is taken from `meta.json`, so the version switcher looks the same in every language. A page that the translated list forgets is added at its end, with a warning in the console, so it never disappears from the sidebar.
 
 ## Interface strings
 

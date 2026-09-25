@@ -10,6 +10,7 @@ describe("defineConfig", () => {
     expect(config.i18n).toEqual({
       defaultLanguage: "en",
       languages: ["en"],
+      fallback: "notice",
       labels: {},
       messages: {},
     });

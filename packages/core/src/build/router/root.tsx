@@ -7,6 +7,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useMatches,
   useParams,
   useRouteError,
 } from "react-router";
@@ -40,11 +41,16 @@ const themeCss = themeToCss(docsivi.config.theme);
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { lang } = useParams();
+  const matches = useMatches();
   const language =
     lang && docsivi.config.i18n.languages.includes(lang) ? lang : docsivi.i18n.defaultLanguage;
+  // a page shown without a translation is written in another language than the address says
+  const contentLanguage = matches
+    .map((match) => (match.loaderData as { contentLanguage?: string } | undefined)?.contentLanguage)
+    .findLast((value) => value !== undefined);
 
   return (
-    <html lang={language} suppressHydrationWarning>
+    <html lang={contentLanguage ?? language} suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

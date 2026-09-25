@@ -17,6 +17,8 @@ interface ListData {
   authors: NonNullable<typeof docsivi.config.blog>["authors"];
   perPage: number;
   rss: boolean;
+  /** Code of the default language, put on the cards of posts that are not translated (or none). */
+  fallbackBadge?: string | undefined;
 }
 
 /** `/{lang}/blog`: only published posts reach this loader, so nothing else can be sent to the browser. */
@@ -29,11 +31,14 @@ export async function loader({ params }: { params: Params }): Promise<ListData> 
     lang,
     title: localized(config, lang, config.blog.title) ?? getMessages(config, lang).blog,
     description: localized(config, lang, config.blog.description) ?? config.site.description,
-    posts: await blog.posts(lang),
+    posts: await blog.posts(lang, { exact: config.i18n.fallback === "hide" }),
     categories: config.blog.categories.map((c) => ({ id: c.id, label: labels[c.id] ?? c.id })),
     authors: config.blog.authors,
     perPage: config.blog.perPage,
     rss: config.blog.rss,
+    ...(config.i18n.fallback === "notice"
+      ? { fallbackBadge: config.i18n.defaultLanguage.toUpperCase() }
+      : {}),
   };
 }
 
@@ -60,7 +65,8 @@ export function meta({ loaderData }: { loaderData?: ListData }) {
 }
 
 export default function BlogRoute({ loaderData }: { loaderData: ListData }) {
-  const { lang, title, description, posts, categories, authors, perPage, rss } = loaderData;
+  const { lang, title, description, posts, categories, authors, perPage, rss, fallbackBadge } =
+    loaderData;
   const messages = getMessages(docsivi.config, lang);
   return (
     <SiteLayout docsivi={docsivi} lang={lang} page="blog">
@@ -87,6 +93,7 @@ export default function BlogRoute({ loaderData }: { loaderData: ListData }) {
           categories={categories}
           authors={authors}
           perPage={perPage}
+          fallbackBadge={fallbackBadge}
           messages={messages}
         />
       </main>

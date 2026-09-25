@@ -1,10 +1,12 @@
 import { blog } from "docsivi:blog";
+import { Callout } from "fumadocs-ui/components/callout";
 import { InlineTOC } from "fumadocs-ui/components/inline-toc";
 import { TOCProvider, TOCScrollArea } from "fumadocs-ui/components/toc";
 import { TOCItem, TOCItems } from "fumadocs-ui/components/toc/default";
 import { DocsBody } from "fumadocs-ui/layouts/notebook/page";
 import { type ComponentProps, use } from "react";
-import { Link, useParams } from "react-router";
+import { Link, redirect } from "react-router";
+import { languageLabel } from "../../../shared/fallback.ts";
 import { SiteLayout } from "../../../shared/layout/site-layout.tsx";
 import { resolveHref } from "../../../shared/links.ts";
 import { format, getMessages } from "../../../shared/messages.ts";
@@ -34,6 +36,10 @@ interface PostData {
   share: boolean;
   shareUrl: string;
   alternates: Record<string, string>;
+  /** The post is the one of the default language, shown because there is no translation. */
+  fallback: boolean;
+  /** Language of the text: the default language for a fallback post, else `lang`. */
+  contentLanguage: string;
 }
 
 export async function loader({ params }: { params: Params }): Promise<PostData> {
@@ -45,11 +51,20 @@ export async function loader({ params }: { params: Params }): Promise<PostData> 
 
   const found = await blog.post(segments[0] as string, lang);
   if (!found) throw new Response("Not found", { status: 404 });
+
+  const { defaultLanguage, fallback: mode } = config.i18n;
+  const isFallback = found.post.lang !== lang;
+  if (isFallback && mode === "hide") {
+    // untranslated posts are not shown: lead the reader to the original
+    throw redirect(`/${defaultLanguage}/blog/${found.post.slug}`);
+  }
   await found.entry.preload();
 
+  // links to the other languages: only translations that really exist
   const alternates: Record<string, string> = {};
   for (const other of config.i18n.languages) {
-    if (await blog.post(found.post.slug, other))
+    const alt = await blog.post(found.post.slug, other);
+    if (alt && (mode === "show" || alt.post.lang === other))
       alternates[other] = `/${other}/blog/${found.post.slug}`;
   }
 
@@ -63,17 +78,20 @@ export async function loader({ params }: { params: Params }): Promise<PostData> 
     share: config.blog.share,
     shareUrl: absoluteUrl(`/${lang}/blog/${found.post.slug}`),
     alternates,
+    fallback: mode !== "show" && isFallback,
+    contentLanguage: isFallback && mode !== "show" ? defaultLanguage : lang,
   };
 }
 
 export function meta({ loaderData }: { loaderData?: PostData }) {
   if (!loaderData) return [];
-  const { lang, post, alternates } = loaderData;
+  const { lang, post, alternates, fallback } = loaderData;
   const tags = buildMeta({
     lang,
     title: `${post.title} | ${docsivi.config.site.name}`,
     description: post.description,
-    path: `/${lang}/blog/${post.slug}`,
+    // a post shown without a translation is a copy: the original is its canonical address
+    path: `/${fallback ? docsivi.config.i18n.defaultLanguage : lang}/blog/${post.slug}`,
     alternates,
     image: `/${lang}/blog/${post.slug}/og.png`,
   });
@@ -95,6 +113,7 @@ export default function BlogPostRoute({ loaderData }: { loaderData: PostData }) 
     authors,
     share,
     shareUrl,
+    fallback,
   } = loaderData;
   const { config } = docsivi;
   const messages = getMessages(config, lang);
@@ -122,6 +141,13 @@ export default function BlogPostRoute({ loaderData }: { loaderData: PostData }) 
           >
             ← {messages.backToBlog}
           </Link>
+          {fallback ? (
+            <Callout type="info" className="mt-6">
+              {format(messages.notTranslated, {
+                language: languageLabel(config, config.i18n.defaultLanguage),
+              })}
+            </Callout>
+          ) : null}
           {post.categories.length > 0 ? (
             <div className="mt-8 flex flex-wrap gap-2">
               {post.categories.map((id) => (

@@ -13,6 +13,8 @@ export interface BlogListProps {
   authors: Record<string, BlogAuthor>;
   perPage: number;
   messages: Messages;
+  /** Put on the card of a post written in another language than `lang` (e.g. `EN`). */
+  fallbackBadge?: string | undefined;
 }
 
 export function PostCard({
@@ -21,12 +23,14 @@ export function PostCard({
   authors,
   categoryLabels,
   featured,
+  fallbackBadge,
 }: {
   post: BlogPost;
   lang: string;
   authors: Record<string, BlogAuthor>;
   categoryLabels: Record<string, string>;
   featured: boolean;
+  fallbackBadge?: string | undefined;
 }) {
   const category = post.categories[0];
   return (
@@ -50,6 +54,11 @@ export function PostCard({
           <AuthorLine ids={post.authors} authors={authors} />
           <time dateTime={post.date}>{formatDate(post.date, lang)}</time>
           {category ? <span>{categoryLabels[category] ?? category}</span> : null}
+          {fallbackBadge && post.lang !== lang ? (
+            <span className="rounded border border-fd-border px-1 py-px text-[10px] font-medium leading-none">
+              {fallbackBadge}
+            </span>
+          ) : null}
         </div>
         <p
           className={`text-fd-muted-foreground ${featured ? "line-clamp-4 text-base" : "line-clamp-3 text-sm"}`}
@@ -133,7 +142,15 @@ function Pagination({
  * browser over the published posts the loader sent, and the state lives in the address
  * (`?category=…&tag=…&q=…&page=2`) so a filtered list can be shared.
  */
-export function BlogList({ lang, posts, categories, authors, perPage, messages }: BlogListProps) {
+export function BlogList({
+  lang,
+  posts,
+  categories,
+  authors,
+  perPage,
+  messages,
+  fallbackBadge,
+}: BlogListProps) {
   const [params, setParams] = useSearchParams();
   // The page is pre-rendered without a query: the first render must match it.
   const [mounted, setMounted] = useState(false);
@@ -291,6 +308,7 @@ export function BlogList({ lang, posts, categories, authors, perPage, messages }
                   lang={lang}
                   authors={authors}
                   categoryLabels={labels}
+                  fallbackBadge={fallbackBadge}
                   featured
                 />
               ))}
@@ -305,6 +323,7 @@ export function BlogList({ lang, posts, categories, authors, perPage, messages }
                   lang={lang}
                   authors={authors}
                   categoryLabels={labels}
+                  fallbackBadge={fallbackBadge}
                   featured={false}
                 />
               ))}

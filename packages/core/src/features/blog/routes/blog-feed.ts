@@ -11,7 +11,7 @@ export async function loader({ params }: { params: Record<string, string | undef
   if (!config.blog?.rss || !blog) throw new Response("Not found", { status: 404 });
 
   const title = `${config.site.name}: ${localized(config, lang, config.blog.title) ?? getMessages(config, lang).blog}`;
-  const xml = buildRss(await blog.posts(lang), {
+  const xml = buildRss(await blog.posts(lang, { exact: config.i18n.fallback === "hide" }), {
     title,
     description:
       localized(config, lang, config.blog.description) ?? config.site.description ?? title,

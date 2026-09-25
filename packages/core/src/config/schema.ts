@@ -35,6 +35,12 @@ const i18nSchema = z
   .strictObject({
     defaultLanguage: languageCode.default("en"),
     languages: z.array(languageCode).min(1).default(["en"]),
+    /**
+     * What a page without a translation does. `notice` (default): the page of the default language
+     * is shown with a note, marked in the sidebar and left out of the sitemap; `show`: it is shown as
+     * if it were translated; `hide`: it is not shown (its address leads to the default language).
+     */
+    fallback: z.enum(["notice", "show", "hide"]).default("notice"),
     /** Display names for the language switcher, e.g. `{ ru: "Русский" }`. */
     labels: z.record(languageCode, z.string()).prefault({}),
     /** Overrides for docsivi UI strings per language, e.g. `{ ru: { documentation: "Доки" } }`. */

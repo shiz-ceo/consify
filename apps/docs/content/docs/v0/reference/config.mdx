@@ -26,6 +26,7 @@ description: Every option of docs.config.ts with its type and default
     languages: { description: "Language codes.", type: "string[]", default: '["en"]' },
     labels: { description: "Names in the switcher.", type: "Record<string, string>", default: "{}" },
     messages: { description: "Overrides of interface strings.", type: "Record<string, Record<string, string>>", default: "{}" },
+    fallback: { description: "A page without a translation: `notice`, `show` or `hide`.", type: '"notice" | "show" | "hide"', default: '"notice"' },
   }}
 />
 

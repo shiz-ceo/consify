@@ -27,6 +27,8 @@ export const messageKeys = [
   "postedBy",
   "footerSections",
   "footerRights",
+  "notTranslated",
+  "openOriginal",
 ] as const;
 export type MessageKey = (typeof messageKeys)[number];
 export type Messages = Record<MessageKey, string>;
@@ -60,6 +62,8 @@ const builtin: Record<string, Messages> = {
     postedBy: "By",
     footerSections: "Explore",
     footerRights: "All rights reserved.",
+    notTranslated: "This page has not been translated yet. The {language} version is shown.",
+    openOriginal: "Open the {language} address",
   },
   ru: {
     documentation: "Документация",
@@ -87,6 +91,8 @@ const builtin: Record<string, Messages> = {
     postedBy: "Автор",
     footerSections: "Разделы",
     footerRights: "Все права защищены.",
+    notTranslated: "Эту страницу ещё не перевели. Показана версия: {language}.",
+    openOriginal: "Открыть адрес на языке: {language}",
   },
 };
 

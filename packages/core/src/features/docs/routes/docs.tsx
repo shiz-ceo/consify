@@ -6,6 +6,7 @@ import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { ComponentProps } from "react";
 import { use } from "react";
 import { redirect } from "react-router";
+import { isFallbackPage, languageLabel } from "../../../shared/fallback.ts";
 import { Footer } from "../../../shared/layout/footer.tsx";
 import { docsLayoutOptions } from "../../../shared/layout/layout-options.tsx";
 import { Redirecting } from "../../../shared/layout/redirecting.tsx";
@@ -20,6 +21,12 @@ type Params = Record<string, string | undefined>;
 
 interface PageData {
   lang: string;
+  /** The page is the one of the default language, shown because there is no translation. */
+  fallback: boolean;
+  /** The language of the text: the default language for a fallback page, else `lang`. */
+  contentLanguage: string;
+  /** Address of the page in the default language (the canonical one for a fallback page). */
+  originalUrl?: string | undefined;
   slugs: string[];
   /** Path of the file relative to `content/docs`. */
   path: string;
@@ -45,18 +52,36 @@ export async function loader({ params }: { params: Params }): Promise<LoaderData
     }
   }
 
+  const { defaultLanguage } = config.i18n;
+  const mode = config.i18n.fallback;
   const page = source.getPage(slugs, lang);
+  if (!page && mode === "hide" && lang !== defaultLanguage) {
+    // no translation, and untranslated pages are not shown: lead the reader to the original
+    const original = source.getPage(slugs, defaultLanguage);
+    if (original) {
+      if (!isStatic) throw redirect(original.url);
+      return { redirectTo: original.url };
+    }
+  }
   if (!page) throw new Response("Not found", { status: 404 });
   await docs.getPage(page.path)?.preload();
 
+  const fallback = mode !== "show" && isFallbackPage(page.path, lang, defaultLanguage);
+
+  // links to the other languages: only translations that really exist
   const alternates: Record<string, string> = {};
   for (const other of config.i18n.languages) {
     const alt = source.getPage(slugs, other);
-    if (alt) alternates[other] = alt.url;
+    if (alt && (mode === "show" || !isFallbackPage(alt.path, other, defaultLanguage))) {
+      alternates[other] = alt.url;
+    }
   }
 
   return {
     lang,
+    fallback,
+    contentLanguage: fallback ? defaultLanguage : lang,
+    originalUrl: source.getPage(slugs, defaultLanguage)?.url,
     slugs,
     path: page.path,
     title: page.data.title,
@@ -73,7 +98,8 @@ export function meta({ loaderData: data }: { loaderData?: LoaderData }) {
     lang: data.lang,
     title: data.title,
     description: data.description,
-    path: data.url,
+    // a page shown without a translation is a copy: the original is its canonical address
+    path: data.fallback && data.originalUrl ? data.originalUrl : data.url,
     alternates: data.alternates,
     ...(config.features.og
       ? { image: `/${data.lang}/og/${[...data.slugs, "image.png"].join("/")}` }
@@ -116,6 +142,23 @@ function Content({ data }: { data: PageData }) {
       breadcrumb={{ enabled: config.features.breadcrumbs }}
       footer={{ enabled: config.features.pagination, children: compactFooter }}
     >
+      {data.fallback ? (
+        <Callout type="info">
+          {format(messages.notTranslated, {
+            language: languageLabel(config, config.i18n.defaultLanguage),
+          })}
+          {data.originalUrl ? (
+            <>
+              {" "}
+              <a className="font-medium underline" href={data.originalUrl}>
+                {format(messages.openOriginal, {
+                  language: languageLabel(config, config.i18n.defaultLanguage),
+                })}
+              </a>
+            </>
+          ) : null}
+        </Callout>
+      ) : null}
       {deprecated ? (
         <Callout type="warn">
           {format(messages.deprecatedVersion, {

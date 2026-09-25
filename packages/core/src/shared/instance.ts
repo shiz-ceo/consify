@@ -5,6 +5,7 @@ import { lucideIconsPlugin } from "fumadocs-core/source/plugins/lucide-icons";
 import type { TableOfContents } from "fumadocs-core/toc";
 import type { MDXContent } from "mdx/types";
 import type { DocsConfig } from "../config/index.ts";
+import { completeMetaPages, fallbackBadgePlugin } from "./fallback.ts";
 import type { Slots } from "./slots.ts";
 
 /** Frontmatter and metadata available for every page without loading its content. */
@@ -46,17 +47,27 @@ export function createDocsivi(
   /** Slots discovered in `custom/` (`home.tsx`, `header.tsx`, `footer.tsx`). */
   customSlots: Slots = {},
 ) {
+  const { fallback } = config.i18n;
   const i18n = defineI18n({
     defaultLanguage: config.i18n.defaultLanguage,
     languages: config.i18n.languages,
+    // `hide`: a page without a translation does not exist in that language
+    ...(fallback === "hide" ? { fallbackLanguage: null } : {}),
   });
 
   const source = loader({
     baseUrl: "/docs",
-    source: docs.toFumadocsSource(),
+    source: completeMetaPages(
+      docs.toFumadocsSource(),
+      config.i18n.languages,
+      config.i18n.defaultLanguage,
+    ),
     i18n,
     // `icon: "Rocket"` in frontmatter and meta.json (any Lucide icon name)
-    plugins: [lucideIconsPlugin()],
+    plugins: [
+      lucideIconsPlugin(),
+      ...(fallback === "notice" ? [fallbackBadgePlugin(config.i18n.defaultLanguage)] : []),
+    ],
   });
 
   const docsLlms = llms(source, {

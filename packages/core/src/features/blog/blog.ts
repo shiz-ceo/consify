@@ -74,12 +74,17 @@ export function createBlog(config: Readonly<DocsConfig>, collection: BlogCollect
     /** Slugs of all published posts. */
     slugs: (): string[] => [...bySlug.keys()],
 
-    /** All published posts for a language, newest first. */
-    async posts(lang: string): Promise<BlogPost[]> {
+    /**
+     * All published posts for a language, newest first. A post without a translation is listed in
+     * the default language, unless `exact` is set: then only posts written in `lang` are returned.
+     */
+    async posts(lang: string, options: { exact?: boolean } = {}): Promise<BlogPost[]> {
       const posts: BlogPost[] = [];
       for (const [slug, versions] of bySlug) {
         const chosen = pickLanguage(versions, lang, defaultLanguage);
-        if (chosen) posts.push(await toPost(slug, chosen.lang, chosen.entry));
+        if (!chosen) continue;
+        if (options.exact && (chosen.lang ?? defaultLanguage) !== lang) continue;
+        posts.push(await toPost(slug, chosen.lang, chosen.entry));
       }
       return sortByDate(posts);
     },

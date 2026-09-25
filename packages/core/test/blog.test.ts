@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { defineConfig } from "../src/config/index.ts";
+import { createBlog } from "../src/features/blog/blog.ts";
 import { buildRss } from "../src/features/blog/feed.ts";
 import { authorNames, categoryLabels, localized } from "../src/features/blog/labels.ts";
 import {
@@ -322,5 +323,38 @@ describe("buildRss", () => {
     expect(xml).toContain("<category>Updates</category>");
     expect(xml).toContain("<category>t</category>");
     expect(xml).toContain('rel="self"');
+  });
+});
+
+describe("posts without a translation", () => {
+  const entry = (path: string) => ({
+    info: { path },
+    title: path,
+    description: "d",
+    date: "2026-01-01",
+    categories: [],
+    tags: [],
+    authors: [],
+    load: async () => ({ toc: [] }),
+    preload: async () => {},
+    getText: async () => "words",
+    body: (() => null) as never,
+  });
+  const entries = [entry("a.mdx"), entry("a.ru.mdx"), entry("b.mdx")];
+  const blog = createBlog(
+    defineConfig({ site: { name: "D" }, i18n: { languages: ["en", "ru"] } }),
+    {
+      entries,
+      get: (path: string) => entries.find((e) => e.info.path === path),
+    },
+  );
+
+  test("are listed in the default language unless the list is exact", async () => {
+    expect((await blog.posts("ru")).map((p) => [p.slug, p.lang]).sort()).toEqual([
+      ["a", "ru"],
+      ["b", "en"],
+    ]);
+    expect((await blog.posts("ru", { exact: true })).map((p) => p.slug)).toEqual(["a"]);
+    expect((await blog.posts("en", { exact: true })).map((p) => p.slug).sort()).toEqual(["a", "b"]);
   });
 });
