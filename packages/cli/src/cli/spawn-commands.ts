@@ -3,7 +3,7 @@
 // gains one consify-specific option (`--socket`) on top of forwarding everything else to
 // `@react-router/serve` unexamined.
 import { spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { Command } from "commander";
 import { resolvePackageJson } from "./resolve-package.ts";
@@ -20,11 +20,37 @@ function bin(cwd: string, pkg: string, name: string): string {
   return join(dirname(manifestPath), rel);
 }
 
-function spawnAndForward(command: string, args: readonly string[]): void {
+function spawnAndForward(command: string, args: readonly string[], then?: () => void): void {
   const child = spawn(process.execPath, [command, ...args], { stdio: "inherit" });
-  child.on("exit", (code, signal) =>
-    signal ? process.kill(process.pid, signal) : (process.exitCode = code ?? 0),
-  );
+  child.on("exit", (code, signal) => {
+    if (signal) process.kill(process.pid, signal);
+    else {
+      process.exitCode = code ?? 0;
+      if (code === 0) then?.();
+    }
+  });
+}
+
+/**
+ * React Router writes a `.data` file next to every pre-rendered file that is not a page: a social
+ * image, a feed, the compiled text of a page. Nothing asks for it (only a link to a page does), and
+ * it repeats the file in full. A page has `x.data` next to the folder `x/`, so only a `.data` next to
+ * a file is removed. Returns how many.
+ */
+export function pruneResourceData(dir: string): number {
+  let removed = 0;
+  for (const entry of readdirSync(dir, { recursive: true, withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".data")) continue;
+    const file = join(entry.parentPath, entry.name);
+    try {
+      if (!statSync(file.slice(0, -".data".length)).isFile()) continue;
+    } catch {
+      continue;
+    }
+    rmSync(file);
+    removed++;
+  }
+  return removed;
 }
 
 /** `dev`, `build`, `typegen`: forward every argument to `@react-router/dev`'s own CLI, unexamined. */
@@ -36,7 +62,17 @@ export function registerSpawnCommands(program: Command): void {
       .allowUnknownOption(true)
       .argument("[args...]", "forwarded to @react-router/dev")
       .action((args: string[]) => {
-        spawnAndForward(bin(process.cwd(), "@react-router/dev", "react-router"), [sub, ...args]);
+        const cwd = process.cwd();
+        spawnAndForward(bin(cwd, "@react-router/dev", "react-router"), [sub, ...args], () => {
+          // a static build: `build/client` is the whole site
+          if (sub === "build") {
+            try {
+              pruneResourceData(join(cwd, "build", "client"));
+            } catch {
+              // no `build/client`: nothing to clean
+            }
+          }
+        });
       });
   }
 }

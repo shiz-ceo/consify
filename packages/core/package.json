@@ -1,6 +1,6 @@
 {
   "name": "@consify/core",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "The core of a customizable documentation site: config, layout, theme, features, Vite and React Router integration",
   "license": "MIT",
   "keywords": [
@@ -57,7 +57,7 @@
     "@tailwindcss/vite": "4.3.3",
     "@types/mdx": "2.0.14",
     "fumadocs-core": "16.15.13",
-    "fumadocs-twoslash": "4.0.1",
+    "fumadocs-twoslash": "3.3.1",
     "fumadocs-ui": "16.15.13",
     "isbot": "5.2.2",
     "katex": "0.18.9",
@@ -69,6 +69,7 @@
     "shiki": "4.4.3",
     "tailwindcss": "4.3.3",
     "takumi-js": "2.14.0",
+    "typescript": "6.0.3",
     "unified": "11.0.5",
     "yaml": "2.9.1",
     "zod": "4.6.5"

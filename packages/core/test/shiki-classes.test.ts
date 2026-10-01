@@ -62,7 +62,7 @@ describe("the pipeline", () => {
     const code = String(
       await compile("```ts\nconst a = 1;\n```", { outputFormat: "function-body", ...pipeline }),
     );
-    expect(code).toMatch(/className: "sl\d sd\d"/);
+    expect(code).toMatch(/class='sl\d sd\d'/);
     // only the block itself keeps its style (the background)
     expect(code.match(/"--shiki-light":/g)).toHaveLength(1);
   });

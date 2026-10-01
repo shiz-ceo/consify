@@ -8,4 +8,4 @@ export {
   type ProjectFiles,
 } from "../shared/instance.ts";
 export { slotsFromGlob } from "../shared/slots.ts";
-export { pageComponent, pageHandle, pageMeta } from "./page.tsx";
+export { pageClientLoader, pageComponent, pageHandle, pageMeta } from "./page.tsx";

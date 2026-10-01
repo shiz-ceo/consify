@@ -78,8 +78,11 @@ export async function siteAddresses(
         await expand(
           key,
           "file",
-          kind === "og"
-            ? async () => (await entries()).map((e) => ({ "*": `${e.slug || "index"}.png` }))
+          kind === "og" || kind === "mdx"
+            ? async () =>
+                (await entries()).map((e) => ({
+                  "*": `${e.slug || "index"}.${kind === "og" ? "png" : "js"}`,
+                }))
             : undefined,
         );
       }

@@ -65,9 +65,10 @@ export function rehypeShikiClasses() {
       const light = lightColors.indexOf(match?.[1]?.toLowerCase() ?? "");
       const dark = darkColors.indexOf(match?.[2]?.toLowerCase() ?? "");
       if (light < 0 || dark < 0) return;
-      // the highlighter writes `class` as a string, MDX wants `className`: add to whichever is there
-      const props = element.properties as { class?: string; className?: unknown };
+      // the highlighter writes `class` (a string, an array once a class is added), MDX wants `className`: add to whichever is there
+      const props = element.properties as { class?: string | string[]; className?: unknown };
       if (typeof props.class === "string") props.class += ` sl${light} sd${dark}`;
+      else if (Array.isArray(props.class)) props.class.push(`sl${light}`, `sd${dark}`);
       else {
         const classes = props.className;
         props.className = [

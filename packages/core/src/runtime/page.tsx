@@ -2,6 +2,7 @@
 // Generated route modules call these with the id of the feature and the key of the page.
 import { useMemo } from "react";
 import type { MetaArgs } from "react-router";
+import { preloadMdx } from "../content/mdx.ts";
 import { featureUrl } from "../feature/paths.ts";
 import { featureText } from "../feature/text.ts";
 import { createTranslate } from "../feature/translate.ts";
@@ -14,6 +15,19 @@ import { findPage, type PageData, pageParams } from "./find.ts";
 /** `handle` of a page: the feature it belongs to (the search, the header use it). */
 export function pageHandle(id: string) {
   return { page: id };
+}
+
+/**
+ * `clientLoader` of a page, which runs when the visitor goes to the page (not on the first load).
+ * The data of the page does not hold its text, only where to get it: the text is loaded here, so the
+ * page is shown whole at once.
+ */
+export function pageClientLoader() {
+  return async ({ serverLoader }: { serverLoader: () => Promise<unknown> }) => {
+    const data = await serverLoader();
+    await preloadMdx(data);
+    return data;
+  };
 }
 
 /** `meta` of a page: its `meta`, else `title` and `description`, else the feature and the site. */

@@ -1,13 +1,16 @@
 // The server half of a page or a file of a feature: its loader. Only the server bundle has it
 // (React Router removes `loader` from the browser bundle, and this module with it).
 /// <reference path="../build/router/instance.d.ts" />
+
 import { content as bundled } from "consify:content";
+import { createHash } from "node:crypto";
 import { redirect } from "react-router";
 import { llmsText, ogImage, rssText, searchResponse } from "../content/collection.ts";
 import { bundledSource } from "../content/files.ts";
-import { type ContentFileKind, ogImagePath } from "../feature/content-files.ts";
+import { registerMdx } from "../content/mdx.ts";
+import { type ContentFileKind, mdxFilePath, ogImagePath } from "../feature/content-files.ts";
 import { createLoadContext, RedirectSignal } from "../feature/load-context.ts";
-import { featureUrl } from "../feature/paths.ts";
+import { encodePath, featureUrl } from "../feature/paths.ts";
 import { featureText } from "../feature/text.ts";
 import type { EntryPage, Feature, FileBody, LoadContext, PageMeta } from "../feature/types.ts";
 import { consify, isStatic, requireLang } from "../shared/router.ts";
@@ -55,6 +58,32 @@ function redirectTo(lang: string, to: string): PageData {
   return { lang, redirectTo: to };
 }
 
+/** `value` with every `from` in it replaced by `to` (plain objects and arrays are copied, the rest is shared). */
+function swap(value: unknown, from: string, to: string): unknown {
+  if (value === from) return to;
+  if (Array.isArray(value)) return value.map((item) => swap(item, from, to));
+  if (value && typeof value === "object" && Object.getPrototypeOf(value) === Object.prototype) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, swap(item, from, to)]),
+    );
+  }
+  return value;
+}
+
+/**
+ * The compiled text of a page is the largest part of its data, and the data of a page is sent twice:
+ * in the HTML and in its `.data` file. So the data carries only a reference, `mdx:<address>?v=<hash>`,
+ * and the browser loads the text once, from the file at that address (`<feature>/_mdx/<slug>.js`,
+ * served by `contentFileLoader`). The server renders the page with the text it has just compiled.
+ */
+function lazyCode(data: unknown, entry: EntryPage, feature: Feature, lang: string): unknown {
+  const path = mdxFilePath(featureUrl(feature, lang), encodePath(entry.slug));
+  const hash = createHash("sha1").update(entry.code).digest("hex").slice(0, 8);
+  const ref = `mdx:${consify.config.deploy.basePath ?? ""}${path}?v=${hash}`;
+  registerMdx(ref, entry.code);
+  return swap(data, entry.code, ref);
+}
+
 /** `loader` of a page. */
 export function pageLoader(id: string, key: string) {
   return async (args: LoaderArgs): Promise<PageData> => {
@@ -74,7 +103,7 @@ export function pageLoader(id: string, key: string) {
       const data = page.load ? await page.load({ ...context, entry }) : entry;
       return {
         lang,
-        data,
+        data: lazyCode(data, entry, feature, lang),
         meta: entryMeta(feature, entry, lang),
         ...(entry.fallback ? { contentLanguage: entry.lang } : {}),
       };
@@ -147,6 +176,19 @@ export function contentFileLoader(id: string, kind: ContentFileKind) {
         await rssText(feature, content, config, lang, title.join(": "), url),
         ".xml",
       );
+    }
+    if (kind === "mdx") {
+      const slug = (pageParams(args.params)["*"] ?? "").replace(/\.js$/, "");
+      const entry = await content.entry(slug === "index" ? "" : slug);
+      if (!entry) throw new Response("Not found", { status: 404 });
+      // the address of a page carries the hash of the text: a changed text is another address
+      const hashed = new URL(args.request.url).searchParams.has("v");
+      return new Response(entry.code, {
+        headers: {
+          "Content-Type": types.js as string,
+          "Cache-Control": hashed ? "public, max-age=31536000, immutable" : "no-cache",
+        },
+      });
     }
     if (kind === "search") return searchResponse(feature, content, config, args.request);
     if (kind === "og") {

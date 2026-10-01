@@ -22,11 +22,12 @@ function builtin(path: string): string {
 export function pageModule(id: string, key: string): string {
   const args = `${JSON.stringify(id)}, ${JSON.stringify(key)}`;
   return `${header}
-import { pageComponent, pageHandle, pageMeta } from "@consify/core/runtime";
+import { pageClientLoader, pageComponent, pageHandle, pageMeta } from "@consify/core/runtime";
 import { pageLoader } from "@consify/core/runtime/server";
 
 export const handle = pageHandle(${JSON.stringify(id)});
 export const loader = pageLoader(${args});
+export const clientLoader = pageClientLoader();
 export const meta = pageMeta(${args});
 export default pageComponent(${args});
 `;

@@ -1,16 +1,19 @@
 import type { Feature } from "./types.ts";
 
 /** A file core serves for the content of a feature. */
-export type ContentFileKind = "search" | "llms" | "llms-full" | "og" | "rss";
+export type ContentFileKind = "search" | "llms" | "llms-full" | "og" | "rss" | "mdx";
 
 /**
  * The files core adds to a feature with content, by address: its search index, `llms.txt`, the
- * social images of its entries (`/og/v2/guide.png`) and its feed.
+ * social images of its entries (`/og/v2/guide.png`), the compiled text of its entries
+ * (`/_mdx/v2/guide.js`) and its feed.
  */
 export function contentFiles(feature: Pick<Feature, "content">): Record<string, ContentFileKind> {
   const content = feature.content;
   if (!content) return {};
   return {
+    // the text of a page is a file of its own, not a part of the data of the page: see `lazyCode`
+    "/_mdx/*": "mdx" as const,
     ...(content.search === false ? {} : { "/search.json": "search" as const }),
     ...(content.llms
       ? { "/llms.txt": "llms" as const, "/llms-full.txt": "llms-full" as const }
@@ -23,4 +26,9 @@ export function contentFiles(feature: Pick<Feature, "content">): Record<string, 
 /** The social image of an entry: `/en/docs/og/v2/guide.png`, `…/og/index.png` for `index.mdx`. */
 export function ogImagePath(featureUrl: string, slug: string): string {
   return `${featureUrl}/og/${slug || "index"}.png`;
+}
+
+/** The address of the compiled text of an entry: `/en/docs/_mdx/v2/guide.js`, `…/_mdx/index.js` for `index.mdx`. */
+export function mdxFilePath(featureUrl: string, slug: string): string {
+  return `${featureUrl}/_mdx/${slug || "index"}.js`;
 }

@@ -14,11 +14,26 @@ import { transformerTwoslash } from "fumadocs-twoslash";
 import { createFileSystemTypesCache } from "fumadocs-twoslash/cache-fs";
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
+import ts from "typescript";
 import type { PluggableList } from "unified";
 import type { DocsConfig } from "../config/index.ts";
+import { rehypeCodeHtml } from "./code-html.ts";
 import { recmaHoistPopups } from "./hoist-popups.ts";
 import { transformerLineRanges } from "./line-highlight.ts";
 import { rehypeShikiClasses } from "./shiki-classes.ts";
+
+/**
+ * `compilerOptions` of `docs.config.ts` are the ones of a `tsconfig.json` (`target: "ES2022"`), and
+ * the compiler takes them parsed (`target` is a number there), so they are converted.
+ */
+function tsOptions(options: Record<string, unknown>, cwd: string) {
+  const { options: parsed, errors } = ts.convertCompilerOptionsFromJson(options, cwd);
+  if (errors.length > 0) {
+    const text = errors.map((e) => ts.flattenDiagnosticMessageText(e.messageText, "\n"));
+    throw new Error(`consify: mdx.twoslash.compilerOptions: ${text.join("; ")}`);
+  }
+  return parsed;
+}
 
 export interface MdxPipeline {
   remarkPlugins: PluggableList;
@@ -67,7 +82,11 @@ export function createMdxPipeline(config: Readonly<DocsConfig>, cwd: string): Md
               ? [
                   transformerTwoslash({
                     ...(twoslash.compilerOptions
-                      ? { twoslashOptions: { compilerOptions: twoslash.compilerOptions } }
+                      ? {
+                          twoslashOptions: {
+                            compilerOptions: tsOptions(twoslash.compilerOptions, cwd),
+                          },
+                        }
                       : {}),
                     ...(twoslash.cache ? { typesCache: createFileSystemTypesCache() } : {}),
                   }),
@@ -77,11 +96,12 @@ export function createMdxPipeline(config: Readonly<DocsConfig>, cwd: string): Md
           ],
         },
       ],
-      // after the highlighter, so it also shortens the code of the Twoslash popups
-      rehypeShikiClasses,
       ...plugins.flatMap((p) => p.rehype ?? []),
+      // the last ones, so a plugin of the site sees the highlighted code as the highlighter made it
+      rehypeShikiClasses,
+      rehypeCodeHtml,
     ],
-    // the compiled page is sent to the browser twice (in the HTML and in `.data`): keep it small
+    // the compiled page is a file the browser loads (and the HTML of the page has it too): keep it small
     recmaPlugins: [recmaHoistPopups],
   };
 }
