@@ -93,4 +93,4 @@ export const FallbackNotice = lazy(() =>
 );
 
 /** The version of `@consify/core`. */
-export const version = "1.0.2";
+export const version = "1.0.3";

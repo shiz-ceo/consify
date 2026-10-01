@@ -21,6 +21,7 @@ import { rehypeCodeHtml } from "./code-html.ts";
 import { recmaHoistPopups } from "./hoist-popups.ts";
 import { transformerLineRanges } from "./line-highlight.ts";
 import { rehypeShikiClasses } from "./shiki-classes.ts";
+import { plainText } from "./structure.ts";
 
 /**
  * `compilerOptions` of `docs.config.ts` are the ones of a `tsconfig.json` (`target: "ES2022"`), and
@@ -59,7 +60,7 @@ export function createMdxPipeline(config: Readonly<DocsConfig>, cwd: string): Md
       [remarkImage, { useImport: false, publicDir: join(cwd, "public"), onError: "ignore" }],
       remarkCodeTab,
       remarkNpm,
-      remarkStructure,
+      [remarkStructure, { stringify: plainText }],
       remarkMdxMermaid,
       ...(math ? [remarkMath] : []),
       ...plugins.flatMap((p) => p.remark ?? []),
