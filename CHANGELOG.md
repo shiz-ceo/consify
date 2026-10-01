@@ -22,6 +22,12 @@ All notable changes to `consify` are documented here. Format: [Keep a Changelog]
 - **Accessibility:** every text pair of every preset and brand color passes WCAG AA in both color schemes. The muted text color is darker (`#6b6b6b` on light), and code uses the `github-light-high-contrast` and `github-dark-default` themes; Twoslash error lines and removed diff lines were adjusted.
 - **Tests and CI:** end-to-end tests with Playwright (`bun run e2e`, the `e2e` job in CI) and the `compat.yml` workflow (unit tests on Ubuntu, Windows and macOS; the packed packages installed with npm and pnpm on Node 22 and 24).
 
+
+## [1.0.4] - 2026-10-02
+
+- **Fix: a long Twoslash popup closed when it was scrolled.** The popup closed on any scroll, including the scroll of the popup itself (a long type has a scrollbar), so it could not be read or dragged. Now only the scroll of the page closes it.
+- **Fix: social images had empty boxes instead of Cyrillic.** The font Takumi has inside covers Latin only, so a title or description in Russian was not drawn (the preview of a link in a messenger). The images now use Geist (the font of the site) in its Latin, Latin Extended, Cyrillic, Cyrillic Extended and Vietnamese pieces. Other scripts (Greek, CJK, Arabic) are still not covered.
+
 ## [1.0.3] - 2026-10-02
 
 - **Fix: any bold text crashed the page on a fresh install.** The text of a page for the search index was made by Fumadocs with `mdast-util-to-markdown`, and with `mdast-util-to-markdown@2.1.3` (what a new install gets) that failed with "Maximum call stack size exceeded". A project had to pin 2.1.2 in `overrides`. Core now takes the plain text from the tree itself (`mdx/structure.ts`) and does not use `mdast-util-to-markdown` at all, so no pin is needed. The search text has the words without Markdown marks (`bold`, not `**bold**`).

@@ -1,34 +1,34 @@
 {
   "consify": {
     "source": "@consify/core",
-    "version": "1.0.3"
+    "version": "1.0.4"
   },
   "consify-content-audit": {
     "source": "@consify/core",
-    "version": "1.0.3"
+    "version": "1.0.4"
   },
   "consify-extension-engineering": {
     "source": "@consify/core",
-    "version": "1.0.3"
+    "version": "1.0.4"
   },
   "consify-theme": {
     "source": "@consify/core",
-    "version": "1.0.3"
+    "version": "1.0.4"
   },
   "consify-translate": {
     "source": "@consify/core",
-    "version": "1.0.3"
+    "version": "1.0.4"
   },
   "consify-upgrade": {
     "source": "@consify/core",
-    "version": "1.0.3"
+    "version": "1.0.4"
   },
   "consify-docs-authoring": {
     "source": "@consify/docs",
-    "version": "1.0.3"
+    "version": "1.0.4"
   },
   "consify-blog-authoring": {
     "source": "@consify/blog",
-    "version": "1.0.3"
+    "version": "1.0.4"
   }
 }

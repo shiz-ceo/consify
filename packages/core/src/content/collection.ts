@@ -8,6 +8,7 @@ import type { Content, Entry, EntryPage, Feature } from "../feature/types.ts";
 import { completeMetaPages, fallbackBadgePlugin } from "../shared/fallback.ts";
 import { fumadocsI18n } from "../shared/i18n.ts";
 import { splitFrontmatter } from "./compile.ts";
+import { ogFonts } from "./og-fonts.ts";
 
 /**
  * Kept while the site runs, per config; built again on every request while it is edited
@@ -271,6 +272,7 @@ export async function ogImage(
   if (!entry) return undefined;
   const { generateOGImage } = await import("fumadocs-ui/og/takumi");
   return generateOGImage({
+    fonts: await ogFonts(),
     title: typeof entry.data.title === "string" ? entry.data.title : entry.slug,
     description: typeof entry.data.description === "string" ? entry.data.description : undefined,
     site: config.site.name,

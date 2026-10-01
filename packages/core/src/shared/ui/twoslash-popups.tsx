@@ -80,6 +80,10 @@ export function TwoslashPopups({ data }: { data: string }) {
       if (anchor) return current === anchor ? close() : open(anchor);
       if (!inside(event.target)) close();
     };
+    // the page scrolling closes the popup, the popup scrolling (a long type) does not
+    const onScroll = (event: Event) => {
+      if (!inside(event.target)) close();
+    };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") close();
     };
@@ -90,7 +94,7 @@ export function TwoslashPopups({ data }: { data: string }) {
     document.addEventListener("focusout", onBlur);
     document.addEventListener("click", onClick);
     document.addEventListener("keydown", onKey);
-    window.addEventListener("scroll", close, { capture: true, passive: true });
+    window.addEventListener("scroll", onScroll, { capture: true, passive: true });
     window.addEventListener("resize", close);
     return () => {
       document.removeEventListener("pointerover", onOver);
@@ -99,7 +103,7 @@ export function TwoslashPopups({ data }: { data: string }) {
       document.removeEventListener("focusout", onBlur);
       document.removeEventListener("click", onClick);
       document.removeEventListener("keydown", onKey);
-      window.removeEventListener("scroll", close, { capture: true });
+      window.removeEventListener("scroll", onScroll, { capture: true });
       window.removeEventListener("resize", close);
       window.clearTimeout(openTimer);
       window.clearTimeout(closeTimer);
