@@ -4,7 +4,6 @@ import { Banner } from "fumadocs-ui/components/banner";
 import { File, Files, Folder } from "fumadocs-ui/components/files";
 import { Step, Steps } from "fumadocs-ui/components/steps";
 import { Tab, Tabs } from "fumadocs-ui/components/tabs";
-import { TypeTable } from "fumadocs-ui/components/type-table";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import type { MDXComponents } from "mdx/types";
 import { Badge } from "./badge.tsx";
@@ -14,6 +13,7 @@ import { MdxImage, MdxVideo } from "./media.tsx";
 import { Mermaid } from "./mermaid.tsx";
 import { SiteLink } from "./site-link.tsx";
 import { TwoslashPopups } from "./twoslash-popups.tsx";
+import { TypeTable } from "./type-table.tsx";
 import { Video } from "./video.tsx";
 
 /** Components available in every `.mdx` file without imports. */
