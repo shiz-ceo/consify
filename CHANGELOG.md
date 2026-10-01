@@ -22,7 +22,11 @@ All notable changes to `consify` are documented here. Format: [Keep a Changelog]
 - **Accessibility:** every text pair of every preset and brand color passes WCAG AA in both color schemes. The muted text color is darker (`#6b6b6b` on light), and code uses the `github-light-high-contrast` and `github-dark-default` themes; Twoslash error lines and removed diff lines were adjusted.
 - **Tests and CI:** end-to-end tests with Playwright (`bun run e2e`, the `e2e` job in CI) and the `compat.yml` workflow (unit tests on Ubuntu, Windows and macOS; the packed packages installed with npm and pnpm on Node 22 and 24).
 
-## [1.0.0] - not released yet
+## [1.0.1] - 2026-10-01
+
+- **Smaller compiled pages:** the compiled MDX of a page is sent to the browser twice (in the HTML and in `.data`), so its size is paid twice. It is now much smaller: the indent of the compiled code is dropped, the colors of code tokens are the classes `sl<n> sd<n>` (with rules in `theme.css`) instead of an inline style on every token, and a Twoslash popup that repeats on a page is made once. Nothing changes in how a page looks or works. A page full of Twoslash popups is several times smaller.
+
+## [1.0.0] - 2026-10-01
 
 The first version.
 

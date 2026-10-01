@@ -16,11 +16,14 @@ import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
 import type { PluggableList } from "unified";
 import type { DocsConfig } from "../config/index.ts";
+import { recmaHoistPopups } from "./hoist-popups.ts";
 import { transformerLineRanges } from "./line-highlight.ts";
+import { rehypeShikiClasses } from "./shiki-classes.ts";
 
 export interface MdxPipeline {
   remarkPlugins: PluggableList;
   rehypePlugins: PluggableList;
+  recmaPlugins: PluggableList;
 }
 
 /**
@@ -74,7 +77,11 @@ export function createMdxPipeline(config: Readonly<DocsConfig>, cwd: string): Md
           ],
         },
       ],
+      // after the highlighter, so it also shortens the code of the Twoslash popups
+      rehypeShikiClasses,
       ...plugins.flatMap((p) => p.rehype ?? []),
     ],
+    // the compiled page is sent to the browser twice (in the HTML and in `.data`): keep it small
+    recmaPlugins: [recmaHoistPopups],
   };
 }

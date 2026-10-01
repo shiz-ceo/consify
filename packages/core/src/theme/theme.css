@@ -253,3 +253,74 @@ pre .line.highlighted::after {
 .shiki:not(.not-fumadocs-codeblock *) .diff.remove {
   opacity: 1;
 }
+
+/* Token colors of code: `sl<n>` light, `sd<n>` dark. The list is in mdx/shiki-classes.ts. */
+.sl0 {
+  --shiki-light: #0e1116;
+}
+.sl1 {
+  --shiki-light: #66707b;
+}
+.sl2 {
+  --shiki-light: #a0111f;
+}
+.sl3 {
+  --shiki-light: #023b95;
+}
+.sl4 {
+  --shiki-light: #702c00;
+}
+.sl5 {
+  --shiki-light: #622cbc;
+}
+.sl6 {
+  --shiki-light: #024c1a;
+}
+.sl7 {
+  --shiki-light: #032563;
+}
+.sl8 {
+  --shiki-light: #6e011a;
+}
+.sl9 {
+  --shiki-light: #ffffff;
+}
+.sl10 {
+  --shiki-light: #e7ecf0;
+}
+.sl11 {
+  --shiki-light: #4b535d;
+}
+.sd0 {
+  --shiki-dark: #e6edf3;
+}
+.sd1 {
+  --shiki-dark: #8b949e;
+}
+.sd2 {
+  --shiki-dark: #ff7b72;
+}
+.sd3 {
+  --shiki-dark: #79c0ff;
+}
+.sd4 {
+  --shiki-dark: #ffa657;
+}
+.sd5 {
+  --shiki-dark: #d2a8ff;
+}
+.sd6 {
+  --shiki-dark: #7ee787;
+}
+.sd7 {
+  --shiki-dark: #a5d6ff;
+}
+.sd8 {
+  --shiki-dark: #ffa198;
+}
+.sd9 {
+  --shiki-dark: #f0f6fc;
+}
+.sd10 {
+  --shiki-dark: #161b22;
+}

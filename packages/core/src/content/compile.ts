@@ -27,6 +27,27 @@ export interface Compiled {
   structuredData: unknown;
 }
 
+/**
+ * The compiled code is printed with an indent, which is more than half of its size. It goes to the
+ * browser twice per page, so the indent is dropped. A line can only start inside a template literal
+ * (a quoted string cannot hold a line break), where spaces may be on purpose: code with a template
+ * literal is left as it is. The backticks of the page's own text are inside quoted strings, so
+ * they do not count.
+ */
+export function shrink(code: string): string {
+  let quote = "";
+  for (let i = 0; i < code.length; i++) {
+    const char = code[i];
+    if (quote) {
+      if (char === "\\") i++;
+      else if (char === quote) quote = "";
+      else if (char === "\n") return code;
+    } else if (char === "`") return code;
+    else if (char === '"' || char === "'") quote = char;
+  }
+  return quote ? code : code.replace(/\n[ \t]+/g, "\n");
+}
+
 const pipelines = new WeakMap<object, MdxPipeline>();
 // per config: a changed config (a new plugin in dev) is a new object, and must not reuse the old output
 const caches = new WeakMap<object, Map<string, Promise<Compiled>>>();
@@ -70,7 +91,7 @@ export function compileMdx(
         ...pipeline,
       },
     ).then((file) => ({
-      code: String(file),
+      code: shrink(String(file)),
       toc: ((file.data as { toc?: TocItem[] }).toc ?? []).map(({ title, url, depth }) => ({
         title: typeof title === "string" ? title : String(title),
         url,

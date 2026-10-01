@@ -1,6 +1,6 @@
 {
   "name": "@consify/api-reference",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An API reference for a consify documentation site, generated from an OpenAPI schema with Scalar",
   "license": "MIT",
   "keywords": [
@@ -45,7 +45,7 @@
     "vite": "8.3.0"
   },
   "peerDependencies": {
-    "@consify/core": "^1.0.0",
+    "@consify/core": "^1.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router": "^8.4.0"
