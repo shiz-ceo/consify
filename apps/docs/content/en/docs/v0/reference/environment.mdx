@@ -1,0 +1,12 @@
+---
+title: Environment
+description: Variables that change the behavior
+---
+
+| Variable | Effect |
+| --- | --- |
+| `CONSIFY_DRAFTS=1` | Includes drafts and posts dated in the future in the blog. For writing only, never for a production build |
+| `PORT` | Port of `consify start` |
+| `SOCKET_PATH` | A Unix socket for `consify start` instead of a port — same as `consify start --socket <path>`. See [Deployment](/docs/v0/deployment) |
+
+Other variables (`CONSIFY_DEPLOY_MODE`, `CONSIFY_ROUTES`) are set by consify itself while it starts, to hand the config to the router. Do not set them.

@@ -1,0 +1,72 @@
+---
+title: Установка
+description: Добавьте Lattice в проект
+icon: Download
+---
+
+## Требования
+
+| Требование | Версия |
+| ---------- | ------ |
+| Node.js    | 20 или новее |
+| Bun        | 1.1 или новее (необязательно) |
+| TypeScript | 5.4 или новее |
+
+## Установите пакет
+
+<Tabs groupId="package-manager" persist items={["bun", "npm", "pnpm", "yarn"]}>
+  <Tab value="bun">
+
+```bash
+bun add lattice
+```
+
+</Tab>
+  <Tab value="npm">
+
+```bash
+npm install lattice
+```
+
+</Tab>
+  <Tab value="pnpm">
+
+```bash
+pnpm add lattice
+```
+
+</Tab>
+  <Tab value="yarn">
+
+```bash
+yarn add lattice
+```
+
+</Tab>
+</Tabs>
+
+## Выберите бэкенд
+
+По умолчанию задачи хранятся **в памяти**. Для тестов и локальной работы это удобно, но при выходе из процесса задачи теряются. Для продакшена поставьте постоянный бэкенд:
+
+<Tabs items={["Redis", "Postgres"]}>
+  <Tab value="Redis">
+
+```bash
+bun add @lattice/redis
+```
+
+</Tab>
+  <Tab value="Postgres">
+
+```bash
+bun add @lattice/postgres
+```
+
+</Tab>
+</Tabs>
+
+> [!WARNING]
+> Не используйте бэкенд в памяти в продакшене. Перезапуск удалит все ожидающие задачи.
+
+Продолжайте с [быстрого старта](./quickstart.mdx).

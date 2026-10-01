@@ -1,0 +1,32 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "docs",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "PATH=\"$PWD/packages/cli/bin:$PATH\" bun run --cwd apps/docs dev --port 3599"
+      ],
+      "port": 3599
+    },
+    {
+      "name": "demo",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "demo"],
+      "port": 3300
+    },
+    {
+      "name": "demo-prod",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "start:demo"],
+      "port": 3000
+    },
+    {
+      "name": "demo-static",
+      "runtimeExecutable": "bunx",
+      "runtimeArgs": ["serve", "apps/demo/build/client", "-l", "3200"],
+      "port": 3200
+    }
+  ]
+}

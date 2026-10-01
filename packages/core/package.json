@@ -1,0 +1,100 @@
+{
+  "name": "@consify/core",
+  "version": "0.1.0",
+  "description": "The core of a customizable documentation site: config, layout, theme, features, Vite and React Router integration",
+  "license": "MIT",
+  "keywords": [
+    "documentation",
+    "docs",
+    "mdx",
+    "fumadocs",
+    "react-router",
+    "vite",
+    "i18n",
+    "blog",
+    "static-site"
+  ],
+  "author": "Shiz-Ceo",
+  "homepage": "https://github.com/shiz-ceo/consify#readme",
+  "bugs": {
+    "url": "https://github.com/shiz-ceo/consify/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiz-ceo/consify.git",
+    "directory": "packages/core"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./runtime": "./src/runtime/index.ts",
+    "./runtime/server": "./src/runtime/server.ts",
+    "./ui": "./src/ui.ts",
+    "./node": "./src/node.ts",
+    "./vite": "./src/build/vite/index.ts",
+    "./react-router": "./src/build/router/config.ts",
+    "./react-router/routes": "./src/build/router/routes.ts",
+    "./react-router/root": "./src/build/router/root.tsx",
+    "./react-router/instance": "./src/build/router/instance.d.ts",
+    "./components": "./src/shared/ui/index.ts",
+    "./plugins": "./src/plugins/index.ts",
+    "./search": "./src/shared/fumadocs-search.ts",
+    "./theme.css": "./src/theme/theme.css",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "bun test",
+    "build": "bun run ../../scripts/build-package.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "5.3.0",
+    "@fontsource-variable/geist-mono": "5.3.0",
+    "@mdx-js/mdx": "3.1.1",
+    "@react-router/dev": "8.4.0",
+    "@react-router/node": "8.4.0",
+    "@react-router/serve": "8.4.0",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/mdx": "2.0.14",
+    "fumadocs-core": "16.15.13",
+    "fumadocs-twoslash": "4.0.1",
+    "fumadocs-ui": "16.15.13",
+    "isbot": "5.2.2",
+    "katex": "0.18.9",
+    "lucide-react": "1.47.0",
+    "mermaid": "12.0.0",
+    "next-themes": "0.4.6",
+    "rehype-katex": "7.0.1",
+    "remark-math": "6.0.0",
+    "shiki": "4.4.3",
+    "tailwindcss": "4.3.3",
+    "takumi-js": "2.14.0",
+    "unified": "11.0.5",
+    "yaml": "2.9.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/katex": "0.16.8",
+    "@types/mdx": "2.0.14",
+    "@types/node": "24",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-router": "8.4.0",
+    "vite": "8.3.0"
+  },
+  "peerDependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router": "^8.4.0",
+    "vite": "^7.0.0 || ^8.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://npm.pkg.github.com"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "consify-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "themes": "bun run gallery.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.0",
+    "@playwright/test": "1.57.0",
+    "@types/bun": "^1.4.2",
+    "@types/node": "24",
+    "@consify/core": "workspace:*",
+    "serve": "14.2.5",
+    "typescript": "7.0.2"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "name": "@consify/cli",
+  "version": "0.1.0",
+  "description": "The consify CLI: dev/build/start, deploy, doctor, skills, and the component/feature registry",
+  "license": "MIT",
+  "keywords": [
+    "documentation",
+    "docs",
+    "cli",
+    "consify"
+  ],
+  "author": "Shiz-Ceo",
+  "homepage": "https://github.com/shiz-ceo/consify#readme",
+  "bugs": {
+    "url": "https://github.com/shiz-ceo/consify/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiz-ceo/consify.git",
+    "directory": "packages/cli"
+  },
+  "type": "module",
+  "bin": {
+    "consify": "./bin/consify"
+  },
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "bun test",
+    "build": "bun run ../../scripts/build-package.ts"
+  },
+  "dependencies": {
+    "@react-router/express": "8.4.0",
+    "commander": "^15.0.0",
+    "compression": "^1.8.1",
+    "express": "^5.2.1",
+    "morgan": "^1.10.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.8.1",
+    "@types/express": "^5.0.6",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "24",
+    "@consify/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "@consify/core": "^0.1.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://npm.pkg.github.com"
+  }
+}

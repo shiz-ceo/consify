@@ -1,0 +1,16 @@
+---
+title: Priority lanes
+description: Keep urgent jobs ahead of the bulk with separate lanes.
+level: advanced
+tags: [queues, priority]
+date: 2026-08-20
+---
+
+Give a queue several lanes and a weight for each:
+
+```ts
+const emails = createQueue("emails", { lanes: { urgent: 5, bulk: 1 } });
+await emails.add({ to: "a@b.c" }, { lane: "urgent" });
+```
+
+Workers take five urgent jobs for every bulk one, so the bulk never starves.

@@ -1,0 +1,15 @@
+{
+  "title": "Writing docs",
+  "icon": "PenLine",
+  "pages": [
+    "index",
+    "components",
+    "code-blocks",
+    "math-and-diagrams",
+    "custom-components",
+    "plugins",
+    "theming",
+    "layout",
+    "i18n-and-versions"
+  ]
+}

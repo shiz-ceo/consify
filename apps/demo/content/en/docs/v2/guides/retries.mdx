@@ -1,0 +1,37 @@
+---
+title: Retries and backoff
+description: Make failures cheap
+---
+
+A failed job is retried up to `retries` times. Between attempts Lattice waits with **exponential backoff plus jitter**:
+
+$$
+\text{delay}(n) = \min\left(d_{max},\; d_0 \cdot 2^{\,n-1}\right) + \text{jitter}
+$$
+
+where $d_0$ is the base delay, $n$ is the attempt number and $d_{max}$ caps the wait.
+
+```ts twoslash
+import { createQueue } from "lattice";
+
+const payments = createQueue<{ orderId: string }>("payments");
+
+await payments.add({ orderId: "o_42" }, { retries: 5, priority: "high" });
+```
+
+## Permanent failures
+
+Some errors will never succeed, for example a validation failure. Throw a `LatticeError`-free error and set `retries: 0` for such jobs, or catch the error and finish the job yourself.
+
+```diff
+- await queue.add(data, { retries: 3 });
++ await queue.add(data, { retries: 0 }); // never retry validation errors
+```
+
+## The dead-letter queue
+
+After the last attempt a job moves to `<queue>:dead`. Inspect it, fix the cause and requeue.
+
+<Callout type="warn" title="Watch the size">
+  Dead-letter queues grow silently. Alert when `stats().failed` keeps rising.
+</Callout>

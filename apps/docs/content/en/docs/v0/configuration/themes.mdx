@@ -1,0 +1,90 @@
+---
+title: Presets and brand color
+description: Ready-made looks, one brand color, and how they combine with your tokens
+---
+
+Two options of `theme` give a look without writing tokens: `preset` (a ready-made set of colors) and `brand` (one color for the accent). Both work in the light and the dark scheme.
+
+```ts title="docs.config.ts"
+theme: { preset: "paper", brand: "#0ea5e9", radius: "0.75rem" },
+```
+
+## Presets
+
+`theme.preset` is one of the names below. `neutral` is the default look and adds nothing.
+
+| Preset | Character |
+| --- | --- |
+| `neutral` | Black and white, the default |
+| `ocean` | Cool blues |
+| `forest` | Greens |
+| `sunset` | Warm orange and red |
+| `violet` | Purple |
+| `paper` | Warm paper, a serif system font, a smaller radius (`0.25rem`) |
+| `mono` | High contrast, sharp corners (`0.125rem`) |
+
+A preset sets the colors of both color schemes. The same docs page in every preset, light on the left and dark on the right:
+
+| Light | Dark |
+| --- | --- |
+| ![neutral, light](/themes/neutral-light.jpg) | ![neutral, dark](/themes/neutral-dark.jpg) |
+| ![ocean, light](/themes/ocean-light.jpg) | ![ocean, dark](/themes/ocean-dark.jpg) |
+| ![forest, light](/themes/forest-light.jpg) | ![forest, dark](/themes/forest-dark.jpg) |
+| ![sunset, light](/themes/sunset-light.jpg) | ![sunset, dark](/themes/sunset-dark.jpg) |
+| ![violet, light](/themes/violet-light.jpg) | ![violet, dark](/themes/violet-dark.jpg) |
+| ![paper, light](/themes/paper-light.jpg) | ![paper, dark](/themes/paper-dark.jpg) |
+| ![mono, light](/themes/mono-light.jpg) | ![mono, dark](/themes/mono-dark.jpg) |
+
+## Brand color
+
+`theme.brand` is one hex color: `"#0ea5e9"`, `#rgb` or `#rrggbb`. The accent is made from it for both color schemes:
+
+- the primary color: its lightness is adjusted, keeping hue and chroma, until it reads on the page background at 4.5:1;
+- the text on the primary color: black or white, whichever reads better;
+- the hover and selected background: the page color tinted with the brand;
+- the focus ring.
+
+## Order of application
+
+The last one wins:
+
+1. `preset`
+2. `brand`
+3. `colors`, `radius` and `fonts` of your `theme`
+
+So a preset gives the base, a brand color replaces its accent, and any token you set yourself replaces both. The example at the top is the `paper` look with a blue accent and a rounder radius.
+
+## Accessibility
+
+Every text pair of every preset, and of any brand color, passes WCAG AA (4.5:1) in both color schemes. Unit tests check the numbers, and browser tests measure the colors painted on the page. The highlighted code passes too: the code themes are `github-light-high-contrast` and `github-dark-default`.
+
+Tokens you set yourself in `colors` are not adjusted. Check their contrast yourself.
+
+## Your brand in five minutes
+
+A worked example: a pink brand `#e11d8f` on the `neutral` base.
+
+1. Add the color:
+
+   ```ts title="docs.config.ts"
+   theme: { brand: "#e11d8f" },
+   ```
+
+2. Open the site in both color schemes. Links, buttons and the focus ring use the brand color. The last screenshot pair shows the result on the same page:
+
+   | Light | Dark |
+   | --- | --- |
+   | ![brand, light](/themes/brand-light.jpg) | ![brand, dark](/themes/brand-dark.jpg) |
+
+3. If you like the base of a preset, add it: `preset: "paper"` changes the surfaces and the font, and the brand still sets the accent.
+4. Set the radius and the font if your brand has them:
+
+   ```ts title="docs.config.ts"
+   theme: {
+     brand: "#e11d8f",
+     radius: "0.5rem",
+     fonts: { sans: "Inter, sans-serif" },
+   },
+   ```
+
+5. For anything else, override a token or add your own [CSS](/docs/v0/configuration/theme).

@@ -1,0 +1,142 @@
+---
+title: Configuration options
+description: Every option of docs.config.ts with its type and default
+---
+
+`defineConfig` accepts the object below. Unknown keys are errors.
+
+## site
+
+<TypeTable
+  type={{
+    name: { description: "Name of the site.", type: "string", required: true },
+    description: { description: "Description of the site.", type: "string" },
+    url: { description: "Public origin.", type: "string (URL)" },
+    logo: { description: "Path or URL of the logo.", type: "string" },
+    favicon: { description: "Path or URL of the favicon.", type: "string" },
+    github: { description: "`{ repo: 'owner/name', branch?: 'main' }`", type: "object" },
+  }}
+/>
+
+## i18n
+
+<TypeTable
+  type={{
+    defaultLanguage: { description: "Fallback language.", type: "string", default: '"en"' },
+    languages: { description: "Language codes.", type: "string[]", default: '["en"]' },
+    labels: { description: "Names in the switcher.", type: "Record<string, string>", default: "{}" },
+    messages: { description: "Overrides of interface strings.", type: "Record<string, Record<string, string>>", default: "{}" },
+    fallback: { description: "A page without a translation: `notice`, `show` or `hide`.", type: '"notice" | "show" | "hide"', default: '"notice"' },
+  }}
+/>
+
+## theme
+
+<TypeTable
+  type={{
+    preset: { description: "A ready-made look: `neutral`, `ocean`, `forest`, `sunset`, `violet`, `paper` or `mono`. See [Presets](/docs/v0/configuration/themes).", type: "string", default: '"neutral"' },
+    brand: { description: "One hex color (`#rgb` or `#rrggbb`); the accent of both color schemes is made from it. Applied after `preset`.", type: "string" },
+    radius: { description: "Base corner radius, `--radius`.", type: "string" },
+    "colors.light": { description: "Color tokens for the light scheme.", type: "Record<string, string>", default: "{}" },
+    "colors.dark": { description: "Color tokens for the dark scheme.", type: "Record<string, string>", default: "{}" },
+    "fonts.sans": { description: "`font-family` of text.", type: "string", default: "Geist" },
+    "fonts.mono": { description: "`font-family` of code.", type: "string", default: "Geist Mono" },
+  }}
+/>
+
+## head
+
+Tags for the `<head>` of every page. An object, or a function of the language that returns it. See [Head and scripts](/docs/v0/configuration/head).
+
+<TypeTable
+  type={{
+    meta: { description: "`{ name | property | httpEquiv, content }[]`", type: "object[]", default: "[]" },
+    links: { description: "`{ rel, href, as?, type?, media?, sizes?, hrefLang?, crossOrigin? }[]`", type: "object[]", default: "[]" },
+    scripts: { description: "`{ src? | inline?, async?, defer?, type?, integrity?, crossOrigin?, data? }[]`", type: "object[]", default: "[]" },
+  }}
+/>
+
+## banner
+
+An announcement above the header that a reader can close. See [Banner](/docs/v0/configuration/banner).
+
+<TypeTable
+  type={{
+    text: { description: "The text, or a text per language.", type: "string | Record<string, string>", required: true },
+    href: { description: "An id of a place a section offers, or an address.", type: "string" },
+    id: { description: "Letters, digits, `_` and `-`. A closed banner stays closed until the id changes. Without it the text is the identity.", type: "string" },
+    variant: { description: "Look of the banner.", type: '"info" | "warning"', default: '"info"' },
+  }}
+/>
+
+## features
+
+The sections of the site, in the order of their links in the header: `docs()` from `@consify/docs` ([options](/docs/v0/configuration/docs)), `blog()` from `@consify/blog` ([options](/docs/v0/configuration/blog)), `apiReference()` from `@consify/api-reference` ([options](/docs/v0/configuration/api-reference)), or your own, made with [`defineFeature`](/docs/v0/features). Default `[]`. Two features cannot have the same `id` or address.
+
+```ts title="docs.config.ts"
+features: [docs(), blog(), apiReference({ input: "./openapi.json" }), status],
+```
+
+Search is on for every feature with content; there is no switch for it.
+
+## header
+
+<TypeTable
+  type={{
+    links: { description: "The [link items](/docs/v0/configuration/navigation) of the header: ids of the catalog (`consify links`), own addresses, drop-down menus. By default the main place of every feature.", type: "LinkItem[]" },
+  }}
+/>
+
+## footer
+
+`{ description?, columns?, social?, legal? }`, or `false` to remove it. `columns` is `{ title, links[] }[]` with [link items](/docs/v0/configuration/navigation). Without `columns` the footer lists the main places of the features.
+
+## slots
+
+`{ header?, headerEnd?, footer? }`: React components that replace parts of the site. `custom/header.tsx` and `custom/footer.tsx` do the same; the config wins when both exist. See [Slots](/docs/v0/customizing/slots).
+
+## deploy
+
+<TypeTable
+  type={{
+    mode: { description: "`server`: a Node server. `static`: plain files for any static host. See [Rendering modes](/docs/v0/concepts/rendering-modes).", type: '"server" | "static"', default: '"server"' },
+    basePath: { description: "The sub path the site is served from, like `/docs`. Starts with `/`, does not end with it.", type: "string" },
+  }}
+/>
+
+## mdx
+
+Everything about `.mdx` files.
+
+<TypeTable
+  type={{
+    math: { description: "`$…$` and `$$…$$` formulas (KaTeX). Off also removes it from the build.", type: "boolean", default: "true" },
+    twoslash: { description: "Type-checked `twoslash` code blocks with hovers: `true`, `false`, or `{ compilerOptions, cache }`.", type: "boolean | object", default: "true" },
+    "twoslash.compilerOptions": { description: "A tsconfig `compilerOptions` for every `twoslash` block.", type: "object" },
+    "twoslash.cache": { description: "Keep results between builds.", type: "boolean", default: "true" },
+    components: { description: "MDX components by tag name (capital letter). `custom/components/*.tsx` adds more. See [Custom components](/docs/v0/customizing/custom-components).", type: "Record<string, Component>", default: "{}" },
+    plugins: { description: "Remark, rehype and Shiki [plugins](/docs/v0/reference/plugins), applied in order after the built-in ones. See [Plugins](/docs/v0/customizing/plugins).", type: "DocsPlugin[]", default: "[]" },
+  }}
+/>
+
+## docs options
+
+Passed to `docs()` from `@consify/docs`, in `features`. All are optional. See [Docs](/docs/v0/configuration/docs).
+
+```ts title="docs.config.ts"
+import { docs } from "@consify/docs";
+```
+
+<TypeTable
+  type={{
+    id: { description: "The address (`/{lang}/<id>`), content folder and link id. Set it for a second docs section.", type: "string", default: '"docs"' },
+    title: { description: "The text of its link in the header. A text or a text per language.", type: "string | Record<string, string>", default: "Documentation, translated" },
+    versions: { description: "`{ list: { id, label?, status?: 'latest' | 'stable' | 'deprecated' }[], default? }`. See [Versions](/docs/v0/configuration/versions).", type: "object" },
+    toc: { description: "The table of contents on the right of a page.", type: "boolean", default: "true" },
+    breadcrumbs: { description: "The path above the title of a page.", type: "boolean", default: "true" },
+    pagination: { description: "Previous and next links under a page.", type: "boolean", default: "true" },
+    llmsTxt: { description: "`/{lang}/docs/llms.txt` and `llms-full.txt`.", type: "boolean", default: "true" },
+    og: { description: "A generated social image per page.", type: "boolean", default: "true" },
+    editOnGithub: { description: "An Edit this page link. `{ contentDir }` is the folder that holds the language folders in the repository (default `content`).", type: "boolean | { contentDir?: string }", default: "true" },
+  }}
+/>

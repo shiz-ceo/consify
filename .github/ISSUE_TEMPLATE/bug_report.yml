@@ -1,0 +1,33 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got. Paste the error text.
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: docs.config.ts (the relevant part)
+      render: ts
+  - type: input
+    id: version
+    attributes:
+      label: consify version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Node version and package manager
+      placeholder: "Node 24, bun 1.2"
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Deploy mode
+      options: [server, static, not sure]

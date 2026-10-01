@@ -1,0 +1,687 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Lattice API",
+    "description": "The API behind Lattice's dashboard: inspect the current principal, look up a queue, and browse namespaces. This is a demo schema — see the docs for the client libraries.",
+    "version": "1.0",
+    "contact": {}
+  },
+  "servers": [
+    {
+      "url": "https://api.lattice.example.dev",
+      "description": "Production"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Account",
+      "description": "The authenticated principal: a worker that processes jobs, or an admin that manages the workspace."
+    },
+    {
+      "name": "Queues",
+      "description": "Queues hold jobs waiting to run. Each one belongs to a namespace and has its own concurrency and retry settings."
+    },
+    {
+      "name": "Namespaces",
+      "description": "Namespaces group related queues (for example, one per environment or per team) in a tree, so access and quotas can be scoped to a subtree."
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Me": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/Worker"
+          },
+          {
+            "$ref": "#/components/schemas/Admin"
+          }
+        ],
+        "type": "object",
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "principal_type.worker": "#/components/schemas/Worker",
+            "principal_type.admin": "#/components/schemas/Admin"
+          }
+        }
+      },
+      "Worker": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+          },
+          "type": {
+            "type": "string",
+            "const": "principal_type.worker"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the worker"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "region": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["status.active", "status.suspended"]
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkerAssignment"
+            }
+          }
+        },
+        "required": [
+          "uuid",
+          "type",
+          "name",
+          "email",
+          "region",
+          "createdAt",
+          "status",
+          "assignments"
+        ],
+        "additionalProperties": false
+      },
+      "WorkerAssignment": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "queue": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "uuid": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "name": {
+                "type": "string"
+              },
+              "concurrency": {
+                "type": "number"
+              },
+              "maxRetries": {
+                "type": "number"
+              },
+              "namespaceTitle": {
+                "type": "string"
+              },
+              "regionTitle": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "uuid",
+              "name",
+              "concurrency",
+              "maxRetries",
+              "namespaceTitle",
+              "regionTitle"
+            ],
+            "additionalProperties": false
+          },
+          "grantedAt": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["role.consumer"]
+          },
+          "rateLimit": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "subdivision": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "alias",
+          "queue",
+          "grantedAt",
+          "state",
+          "role",
+          "rateLimit",
+          "startDate",
+          "endDate",
+          "subdivision"
+        ],
+        "additionalProperties": false
+      },
+      "Admin": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+          },
+          "type": {
+            "type": "string",
+            "const": "principal_type.admin"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the admin"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "region": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["status.active", "status.suspended"]
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminRole"
+            }
+          }
+        },
+        "required": ["uuid", "type", "name", "email", "region", "createdAt", "status", "roles"],
+        "additionalProperties": false
+      },
+      "AdminRole": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "alias": {
+            "type": "string"
+          },
+          "namespace_uid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "roleTitle": {
+            "type": "string"
+          },
+          "scope_type": {
+            "type": "string",
+            "enum": ["workspace", "namespace"]
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+          }
+        },
+        "required": [
+          "uuid",
+          "alias",
+          "namespace_uid",
+          "roleTitle",
+          "scope_type",
+          "startDate",
+          "endDate"
+        ],
+        "additionalProperties": false
+      },
+      "QueueDetails": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "code": {
+            "type": ["string", "null"]
+          },
+          "name": {
+            "type": "string"
+          },
+          "namespaceUid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "concurrency": {
+            "type": ["number", "null"]
+          },
+          "maxRetries": {
+            "type": ["number", "null"]
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pausedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "workers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkerShort"
+            }
+          }
+        },
+        "required": [
+          "uuid",
+          "code",
+          "name",
+          "namespaceUid",
+          "concurrency",
+          "maxRetries",
+          "createdAt",
+          "pausedAt",
+          "workers"
+        ],
+        "additionalProperties": false
+      },
+      "WorkerShort": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the worker"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": ["uuid", "name", "email"],
+        "additionalProperties": false
+      },
+      "NamespaceList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Namespace"
+        }
+      },
+      "Namespace": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "parentUid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "required": ["uuid", "slug", "parentUid", "isActive"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/v1/me": {
+      "get": {
+        "description": "\nReturns the profile of the currently authenticated principal.\n\nThe shape of the response depends on the principal's type:\n* **Worker** - returned when the principal processes jobs (`principal_type.worker`)\n* **Admin** - returned when the principal manages the workspace (`principal_type.admin`)\n\nThis endpoint returns:\n* Identification (UUID, type)\n* Display name, email, region\n* When the principal was created, and whether it is active or suspended\n* Role-specific data (queue assignments for a worker, namespace roles for an admin)\n\n**Authentication required:** yes — a JWT bearer token in the `Authorization` header.\n\n**Response contains:** the full principal, shaped as either a Worker or an Admin.\n    ",
+        "operationId": "AccountController_getMe_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "\nSuccessfully retrieved the current principal.\n\nReturns a full Worker or Admin profile depending on the principal's type.\n        ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                },
+                "examples": {
+                  "worker": {
+                    "summary": "Worker profile",
+                    "description": "Example of a worker principal with one queue assignment",
+                    "value": {
+                      "uuid": "018f2a3e-6b4d-7c21-9f3a-1a2b3c4d5e6f",
+                      "type": "principal_type.worker",
+                      "name": "Ada Novak",
+                      "email": "ada@example.dev",
+                      "region": "eu-west-1",
+                      "createdAt": "2025-02-10T09:00:00.000Z",
+                      "status": "status.active",
+                      "assignments": [
+                        {
+                          "uuid": "660e8400-e29b-41d4-a716-446655440001",
+                          "alias": "emails-eu",
+                          "queue": {
+                            "code": "emails",
+                            "uuid": "770e8400-e29b-41d4-a716-446655440002",
+                            "name": "emails",
+                            "concurrency": 20,
+                            "maxRetries": 5,
+                            "namespaceTitle": "production",
+                            "regionTitle": "eu-west-1"
+                          },
+                          "grantedAt": "2025",
+                          "state": "active",
+                          "role": "role.consumer",
+                          "rateLimit": "500/min",
+                          "startDate": "2025-02-10",
+                          "endDate": "2026-02-10",
+                          "subdivision": "delivery"
+                        }
+                      ]
+                    }
+                  },
+                  "admin": {
+                    "summary": "Admin profile",
+                    "description": "Example of an admin principal with one namespace role",
+                    "value": {
+                      "uuid": "018f2a3e-6b4d-7c21-9f3a-1a2b3c4d5e70",
+                      "type": "principal_type.admin",
+                      "name": "Priya Shah",
+                      "email": "priya@example.dev",
+                      "region": "us-east-1",
+                      "createdAt": "2024-11-01T09:00:00.000Z",
+                      "status": "status.active",
+                      "roles": [
+                        {
+                          "uuid": "660e8400-e29b-41d4-a716-446655440003",
+                          "alias": "production-owner",
+                          "namespace_uid": "880e8400-e29b-41d4-a716-446655440004",
+                          "roleTitle": "Owner",
+                          "scope_type": "namespace",
+                          "startDate": "2024-11-01",
+                          "endDate": "2030-11-01"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "\nUnauthorized — authentication failed or the token is missing or invalid.\n\nThis happens when:\n* No Authorization header is provided\n* The Authorization header is malformed\n* The JWT is invalid or expired\n* The token signature does not verify\n        ",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "no-token": {
+                    "summary": "No token provided",
+                    "value": {
+                      "status": 401,
+                      "type": "UNAUTHORIZED",
+                      "code": "NO_TOKEN",
+                      "message": "Authorization header is missing or empty",
+                      "metadata": {},
+                      "timestamp": "2026-09-24T11:34:04.010Z",
+                      "path": "v1/me"
+                    }
+                  },
+                  "invalid-token": {
+                    "summary": "Invalid token",
+                    "value": {
+                      "status": 401,
+                      "type": "UNAUTHORIZED",
+                      "code": "INVALID_TOKEN",
+                      "message": "Token is invalid or malformed",
+                      "metadata": {},
+                      "timestamp": "2026-09-24T11:34:04.010Z",
+                      "path": "v1/me"
+                    }
+                  },
+                  "expired-token": {
+                    "summary": "Token expired",
+                    "value": {
+                      "status": 401,
+                      "type": "UNAUTHORIZED",
+                      "code": "TOKEN_EXPIRED",
+                      "message": "Token has expired. Please sign in again",
+                      "metadata": {},
+                      "timestamp": "2026-09-24T11:34:04.010Z",
+                      "path": "v1/me"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get current principal",
+        "tags": ["Account"]
+      }
+    },
+    "/v1/queues/{uuid}": {
+      "get": {
+        "description": "\nRetrieves a queue by its unique identifier, together with the workers currently assigned to it.\n\n**Response contains:** queue details (code, name, namespace, concurrency and retry settings, pause state) plus a short profile for every worker assigned to it.\n    ",
+        "operationId": "QueueController_getById_v1",
+        "parameters": [
+          {
+            "name": "uuid",
+            "required": true,
+            "in": "path",
+            "description": "Queue UUID",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the queue and its workers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueDetails"
+                },
+                "examples": {
+                  "queue": {
+                    "summary": "Queue with assigned workers",
+                    "value": {
+                      "uuid": "770e8400-e29b-41d4-a716-446655440002",
+                      "code": "emails",
+                      "name": "emails",
+                      "namespaceUid": "880e8400-e29b-41d4-a716-446655440003",
+                      "concurrency": 20,
+                      "maxRetries": 5,
+                      "createdAt": "2025-01-15T09:00:00.000Z",
+                      "pausedAt": null,
+                      "workers": [
+                        {
+                          "uuid": "018f2a3e-6b4d-7c21-9f3a-1a2b3c4d5e6f",
+                          "name": "Ada Novak",
+                          "email": "ada@example.dev"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "\nBad Request — the provided queue UUID is malformed.\n        ",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid-uuid": {
+                    "summary": "Invalid queue UUID",
+                    "value": {
+                      "status": 400,
+                      "type": "BAD_REQUEST",
+                      "code": "INVALID_UUID",
+                      "message": "Queue UUID is not a valid UUID",
+                      "metadata": {},
+                      "timestamp": "2026-09-24T11:34:04.010Z",
+                      "path": "v1/queues/:uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get queue by ID",
+        "tags": ["Queues"]
+      }
+    },
+    "/v1/namespaces": {
+      "get": {
+        "description": "\nRetrieves the namespaces whose parent matches the given `parentUid` (for example, all namespaces belonging to a top-level environment).\n    ",
+        "operationId": "NamespaceController_getChildren_v1",
+        "parameters": [
+          {
+            "name": "parentUid",
+            "required": true,
+            "in": "query",
+            "description": "Parent namespace UUID",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the list of child namespaces.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NamespaceList"
+                },
+                "examples": {
+                  "namespaces": {
+                    "summary": "Child namespaces of an environment",
+                    "value": [
+                      {
+                        "uuid": "880e8400-e29b-41d4-a716-446655440003",
+                        "slug": "production",
+                        "parentUid": "990e8400-e29b-41d4-a716-446655440004",
+                        "isActive": true
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "\nBad Request — the provided parentUid is malformed.\n        ",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid-uuid": {
+                    "summary": "Invalid parent namespace UUID",
+                    "value": {
+                      "status": 400,
+                      "type": "BAD_REQUEST",
+                      "code": "INVALID_UUID",
+                      "message": "parentUid is not a valid UUID",
+                      "metadata": {},
+                      "timestamp": "2026-09-24T11:34:04.010Z",
+                      "path": "v1/namespaces"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get namespaces by parent",
+        "tags": ["Namespaces"]
+      }
+    }
+  }
+}

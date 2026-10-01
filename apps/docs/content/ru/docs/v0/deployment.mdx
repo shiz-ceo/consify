@@ -1,0 +1,150 @@
+---
+title: Деплой
+description: Соберите сайт — дальше consify сам напишет, что нужно хостингу
+icon: Cloud
+---
+
+Выберите режим в конфиге (см. [Серверный и статический режимы](/docs/v0/concepts/rendering-modes)):
+
+```ts title="docs.config.ts"
+deploy: { mode: "static" },          // or "server" (default)
+```
+
+## Перед деплоем
+
+```bash
+consify doctor        # Node version, matching @consify/* versions, a valid config
+consify deploy check  # obvious problems for the mode you picked (a missing site.url, ...)
+```
+
+Обе команды ничего не стоит запускать перед каждым деплоем — особенно `doctor`, который ловит именно ту рассинхронизацию, что потом вылезает загадочной ошибкой, например когда один из пакетов `@consify/*` забыли обновить вместе с остальными.
+
+## Выберите, куда
+
+```bash
+consify deploy            # a real terminal: asks which target, then its options
+consify deploy list        # or just see what there is
+```
+
+Каждая цель пишет файлы, которые нужны конкретному хостингу, говорит, что с ними делать дальше, и никогда не перезаписывает существующий файл без `--force`.
+
+### Готовые хостинги (только статика)
+
+<Tabs items={["GitHub Pages", "Cloudflare Pages", "Netlify", "Vercel"]}>
+  <Tab value="GitHub Pages">
+```bash
+consify deploy github-pages
+```
+Пишет `.github/workflows/deploy.yml`: сборка при пуше в `main`, деплой через `actions/deploy-pages`. В настройках репозитория, в разделе Pages, укажите источником "GitHub Actions". Без своего домена сайт отдаётся из `/<репозиторий>/` — задайте `deploy.basePath` этим путём; со своим доменом добавьте файл `public/CNAME`.
+  </Tab>
+  <Tab value="Cloudflare Pages">
+```bash
+consify deploy cloudflare-pages
+```
+Пишет `public/_redirects` (настоящий редирект `/` → `/<язык>/`) и `public/_headers` (долгое кэширование для `/assets/*`). Подключите репозиторий в дашборде Cloudflare — он сам их прочитает.
+  </Tab>
+  <Tab value="Netlify">
+```bash
+consify deploy netlify
+```
+Пишет `netlify.toml` (команда сборки, папка публикации, тот же редирект и заголовки). Импортируйте репозиторий в дашборде Netlify.
+  </Tab>
+  <Tab value="Vercel">
+```bash
+consify deploy vercel
+```
+Пишет `vercel.json` с тем же редиректом и заголовками. Импортируйте репозиторий в дашборде Vercel.
+  </Tab>
+</Tabs>
+
+Все четыре обслуживают только `static`; `consify deploy check` иначе их не пропустит. Ни одному не нужен сервер или порт — редирект и правила кэша лежат прямо в файле, который каждый из них пишет.
+
+<Callout type="info" title="Что угодно ещё, что отдаёт обычные файлы">
+  Хостинг без своей цели (например, S3 за CloudFront) тоже подойдёт: загрузите `build/client` и
+  отдавайте `index.html` для папок. Настоящего редиректа `/`, который пишут цели выше, не будет —
+  читатель попадёт на встроенную страницу-редирект. См. [Серверный и статический
+  режимы](/docs/v0/concepts/rendering-modes).
+</Callout>
+
+## Self-host
+
+Рассчитан на то, что сайт документации редко бывает единственным на машине: ничто здесь не забирает себе порт хоста или весь `nginx.conf` целиком, так что уживается рядом со всем остальным, что у вас уже работает.
+
+### Docker
+
+```bash
+consify deploy docker --name mysite --domain docs.example.com
+```
+
+Статический режим пишет `Dockerfile`, который собирает через Bun, а отдаёт результат обычным `nginx:1.27-alpine` — в итоговом контейнере нет Node, несколько мегабайт вместо сотен. Серверный режим пишет `Dockerfile`, который собирает и затем запускает `consify start` на `node:22-alpine`. В обоих случаях вы также получаете:
+
+- `docker-compose.yml` — контейнер никогда не публикует порт наружу. Он только `expose`-ит его во внешнюю docker-сеть `web`, так что достучаться до него может только ваш собственный фронтовый nginx (в Docker или на хосте).
+- `deploy/nginx/mysite.conf` — фрагмент для этого фронтового nginx: сделайте `include`, получите сертификат на домен, перезагрузите nginx. HTTP/3 включён по умолчанию.
+
+```bash
+docker network create web   # once, if it doesn't exist yet
+docker compose up -d --build
+```
+
+Каждый экземпляр consify (или что угодно ещё) на машине подключается к той же сети `web` и получает свой фрагмент — сталкиваться не с чем.
+
+### Nginx без Docker
+
+```bash
+consify deploy nginx --name mysite --domain docs.example.com
+```
+
+Пишет `deploy/nginx/mysite.conf` — опять же фрагмент для `include`, а не замена остального `nginx.conf` — с HTTP/3 по умолчанию (`listen 443 quic reuseport; http3 on;`; нужен nginx, собранный с модулем QUIC, и открытый в файрволе UDP/443). Статический режим отдаёт `/var/www/mysite/current` напрямую; смена симлинка (собрать в новую папку, затем перенаправить `current`) делает обновления атомарными.
+
+Серверный режим ещё пишет готовый systemd-юнит, `deploy/systemd/mysite.service`:
+
+```bash
+systemctl daemon-reload && systemctl enable --now mysite
+```
+
+Он запускает `consify start` на порту 4000 по умолчанию (`--port <n>`, чтобы изменить) — дайте каждому экземпляру на машине свой порт. Или обойдитесь вовсе без портов:
+
+```bash
+consify deploy nginx --name mysite --domain docs.example.com --socket /run/mysite.sock
+```
+
+nginx тогда проксирует прямо на сокет. Сам `consify start` в обычном режиме знает только `PORT`/`HOST`; `--socket` (systemd-юнит задаёт его через `SOCKET_PATH`) запускает собственный маленький сервер consify для этого случая — путь к сокету не выразить номером TCP-порта.
+
+### Автоматизация: пуш, проверка, деплой
+
+Добавьте `--ci` к любой self-host цели, чтобы дополнительно получить `.github/workflows/deploy.yml`:
+
+```bash
+consify deploy docker --name mysite --domain docs.example.com --ci
+consify deploy nginx --name mysite --domain docs.example.com --ci
+```
+
+Оба workflow делают одно и то же при каждом пуше в `main`, затрагивающем `content/`, `custom/`, `docs.config.ts` или `public/` (или при ручном запуске):
+
+1. **Проверка**: `consify doctor`, `typecheck` и `build` — сборка рендерит вообще все страницы на всех языках, так что битая ссылка или неправильный MDX упадёт прямо здесь, ещё до деплоя.
+2. **Доставка**: `docker` собирает образ и пушит его в `ghcr.io` (используя собственный `GITHUB_TOKEN` репозитория, никакого отдельного логина не нужно); `nginx` заливает новую сборку в свежую папку `/var/www/mysite/releases/<коммит>/` по SSH.
+3. **Переключение**: `docker` на сервере выполняет `docker compose pull && docker compose up -d`; `nginx` переключает симлинк `current` на новый релиз (и перезапускает systemd-юнит для серверной сборки) — то же атомарное обновление, что описано выше, просто больше не руками. Релизы старше последних 5 удаляются.
+
+Обоим нужны три секрета репозитория (Settings → Secrets and variables → Actions): `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` (приватный ключ, чей публичный есть в `authorized_keys` этого пользователя на сервере) — `docker` ещё нужен `DEPLOY_PATH`, папка на сервере с его `docker-compose.yml`. `consify deploy <цель> --ci` печатает точный список того, что записал.
+
+<Callout type="warn" title="Имя образа">
+  `docker --ci` берёт имя образа из GitHub-remote репозитория (`ghcr.io/<owner>/<repo>/<name>`). Вне GitHub-репозитория пишет вместо него заглушку `your-org/your-repo` — замените её и в `docker-compose.yml`, и в workflow перед использованием.
+</Callout>
+
+## Подпуть
+
+Если сайт отдаётся из папки, например `https://example.com/docs`, задайте `basePath`. Он должен начинаться с `/` и не должен заканчиваться на `/`:
+
+```ts title="docs.config.ts"
+deploy: { mode: "static", basePath: "/docs" },
+```
+
+Префикс получают все ссылки, ресурсы и эндпоинт поиска.
+
+## Чек-лист
+
+- `consify doctor` ни на что не жалуется.
+- Задан `site.url` (канонические ссылки, sitemap, RSS и социальные картинки).
+- В окружении продакшен-сборки нет `CONSIFY_DRAFTS`.
+- Отложенные посты: сборка запускается после их даты.
+- Хостингам, которым нужны собственные редиректы (для старых адресов), их нужно настраивать в собственных настройках: consify их не создаёт.

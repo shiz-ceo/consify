@@ -1,0 +1,72 @@
+---
+title: Languages and versions
+description: How translations and versions are stored
+---
+
+## Translations
+
+Every language has its own folder in `content/`, with the same tree inside. A translation has the same path and file name as the original, so slugs are never translated (`/ru/docs/v0/guides/caching`):
+
+```
+content/
+├─ en/
+│  ├─ home.mdx
+│  └─ docs/v0/guides/
+│     ├─ meta.json
+│     └─ caching.mdx
+└─ ru/
+   ├─ home.mdx
+   └─ docs/v0/guides/
+      ├─ meta.json
+      └─ caching.mdx
+```
+
+- The default language has a folder like every other language. A site with one language has just `content/en/`.
+- A page a language does not have is shown in the default language (see `i18n.fallback` in [Languages](/docs/v0/configuration/languages)).
+- A `meta.json` in a language folder translates titles of folders and the order of pages. `root`, `icon`, `defaultOpen` and `collapsible` are taken from the `meta.json` of the default language.
+- The language switcher goes to the same page in the other language when it exists.
+
+## Adding a language
+
+```bash
+consify lang add de
+```
+
+It creates `content/de/` with a copy of every `meta.json` of the default language, so you can translate the titles, and writes `custom/locales/de.ts`, the pack of interface strings (like `consify locale de`), unless the language is built in (`en`, `ru`) or already has a pack. Then it prints what to do next: add the code to `i18n.languages` and translate the files, keeping their path. It never overwrites an existing file, and refuses the default language and a bad code.
+
+Add `--copy` to copy every page (docs, blog and home) of the default language as a starting point.
+
+## What is left to translate
+
+```bash
+consify lang status
+```
+
+It prints one row per language, with the sections of the default language as columns (`translated/total` pages), the translated `meta.json` files (`menus`) and the interface strings:
+
+```
+language      home  docs   blog  menus  interface
+en (default)  1/1   33/33  7/7   8/8    -
+ru            1/1   11/33  1/7   6/8    built in
+de            0/1   0/33   0/7   0/8    none (English)
+```
+
+The `interface` column is `built in`, `custom/locales/<language>.ts: N/M strings` or `none (English)`. The command also lists the files a language has that have no original in the default language. Pass a language (`consify lang status de`) to see only that one, and `--missing` to list the files it lacks, such as `content/de/docs/v0/guides/caching.mdx`.
+
+## Versions
+
+A version is a top-level folder with `"root": "version"`:
+
+```json title="content/en/docs/v0/meta.json"
+{ "title": "v0 (latest)", "root": "version", "pages": ["index"] }
+```
+
+Add it to `versions.list` in the options of `docs()` (see [Versions](/docs/v0/configuration/versions)). Then:
+
+- The sidebar has a version switcher that keeps the page when it exists in both.
+- A `deprecated` version shows a banner that points to the latest.
+- Versions and languages combine: `content/ru/docs/v1/guide.mdx` is the Russian page of version 1.
+
+## Adding a new version
+
+Copy the folder (`cp -r v0 v1`), change its `meta.json` title, and add `{ id: "v1", status: "latest" }` to `versions.list`, setting the old one to `stable` or `deprecated`.

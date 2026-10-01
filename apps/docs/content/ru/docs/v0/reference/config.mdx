@@ -1,0 +1,142 @@
+---
+title: Опции конфигурации
+description: Все опции docs.config.ts с типами и значениями по умолчанию
+---
+
+`defineConfig` принимает объект, описанный ниже. Неизвестные ключи приводят к ошибке.
+
+## site
+
+<TypeTable
+  type={{
+    name: { description: "Название сайта.", type: "string", required: true },
+    description: { description: "Описание сайта.", type: "string" },
+    url: { description: "Публичный origin.", type: "string (URL)" },
+    logo: { description: "Путь или URL логотипа.", type: "string" },
+    favicon: { description: "Путь или URL favicon.", type: "string" },
+    github: { description: "`{ repo: 'owner/name', branch?: 'main' }`", type: "object" },
+  }}
+/>
+
+## i18n
+
+<TypeTable
+  type={{
+    defaultLanguage: { description: "Язык по умолчанию.", type: "string", default: '"en"' },
+    languages: { description: "Коды языков.", type: "string[]", default: '["en"]' },
+    labels: { description: "Названия в переключателе.", type: "Record<string, string>", default: "{}" },
+    messages: { description: "Переопределения строк интерфейса.", type: "Record<string, Record<string, string>>", default: "{}" },
+    fallback: { description: "Страница без перевода: `notice`, `show` или `hide`.", type: '"notice" | "show" | "hide"', default: '"notice"' },
+  }}
+/>
+
+## theme
+
+<TypeTable
+  type={{
+    preset: { description: "Готовый вид: `neutral`, `ocean`, `forest`, `sunset`, `violet`, `paper` или `mono`. См. [Пресеты](/docs/v0/configuration/themes).", type: "string", default: '"neutral"' },
+    brand: { description: "Один hex-цвет (`#rgb` или `#rrggbb`); из него делается акцент обеих цветовых схем. Применяется после `preset`.", type: "string" },
+    radius: { description: "Базовый радиус скругления, `--radius`.", type: "string" },
+    "colors.light": { description: "Цветовые токены светлой схемы.", type: "Record<string, string>", default: "{}" },
+    "colors.dark": { description: "Цветовые токены тёмной схемы.", type: "Record<string, string>", default: "{}" },
+    "fonts.sans": { description: "`font-family` для текста.", type: "string", default: "Geist" },
+    "fonts.mono": { description: "`font-family` для кода.", type: "string", default: "Geist Mono" },
+  }}
+/>
+
+## head
+
+Теги для `<head>` каждой страницы. Объект или функция от языка, которая его возвращает. См. [Head и скрипты](/docs/v0/configuration/head).
+
+<TypeTable
+  type={{
+    meta: { description: "`{ name | property | httpEquiv, content }[]`", type: "object[]", default: "[]" },
+    links: { description: "`{ rel, href, as?, type?, media?, sizes?, hrefLang?, crossOrigin? }[]`", type: "object[]", default: "[]" },
+    scripts: { description: "`{ src? | inline?, async?, defer?, type?, integrity?, crossOrigin?, data? }[]`", type: "object[]", default: "[]" },
+  }}
+/>
+
+## banner
+
+Объявление над шапкой, которое читатель может закрыть. См. [Баннер](/docs/v0/configuration/banner).
+
+<TypeTable
+  type={{
+    text: { description: "Текст или текст для каждого языка.", type: "string | Record<string, string>", required: true },
+    href: { description: "Идентификатор места, которое предлагает раздел, или адрес.", type: "string" },
+    id: { description: "Буквы, цифры, `_` и `-`. Закрытый баннер остаётся закрытым, пока не изменится id. Без него идентичностью служит текст.", type: "string" },
+    variant: { description: "Вид баннера.", type: '"info" | "warning"', default: '"info"' },
+  }}
+/>
+
+## features
+
+Разделы сайта в порядке их ссылок в шапке: `docs()` из `@consify/docs` ([опции](/docs/v0/configuration/docs)), `blog()` из `@consify/blog` ([опции](/docs/v0/configuration/blog)), `apiReference()` из `@consify/api-reference` ([опции](/docs/v0/configuration/api-reference)) или ваши собственные, созданные через [`defineFeature`](/docs/v0/features). По умолчанию `[]`. У двух фич не может быть одинакового `id` или адреса.
+
+```ts title="docs.config.ts"
+features: [docs(), blog(), apiReference({ input: "./openapi.json" }), status],
+```
+
+Поиск включён у каждой фичи с контентом; переключателя для него нет.
+
+## header
+
+<TypeTable
+  type={{
+    links: { description: "[Элементы ссылок](/docs/v0/configuration/navigation) шапки: id из каталога (`consify links`), свои адреса, выпадающие меню. По умолчанию главное место каждой фичи.", type: "LinkItem[]" },
+  }}
+/>
+
+## footer
+
+`{ description?, columns?, social?, legal? }` или `false`, чтобы убрать подвал. `columns` — это `{ title, links[] }[]` с [элементами ссылок](/docs/v0/configuration/navigation). Без `columns` подвал перечисляет главные места фич.
+
+## slots
+
+`{ header?, headerEnd?, footer? }`: React-компоненты, которые заменяют части сайта. `custom/header.tsx` и `custom/footer.tsx` делают то же самое; если есть оба варианта, побеждает конфигурация. См. [Слоты](/docs/v0/customizing/slots).
+
+## deploy
+
+<TypeTable
+  type={{
+    mode: { description: "`server`: Node-сервер. `static`: обычные файлы для любого статического хостинга. См. [Режимы рендеринга](/docs/v0/concepts/rendering-modes).", type: '"server" | "static"', default: '"server"' },
+    basePath: { description: "Подпуть, по которому отдаётся сайт, например `/docs`. Начинается с `/` и не заканчивается им.", type: "string" },
+  }}
+/>
+
+## mdx
+
+Всё, что касается файлов `.mdx`.
+
+<TypeTable
+  type={{
+    math: { description: "Формулы `$…$` и `$$…$$` (KaTeX). Выключение ещё и убирает их из сборки.", type: "boolean", default: "true" },
+    twoslash: { description: "Блоки кода `twoslash` с проверкой типов и подсказками: `true`, `false` или `{ compilerOptions, cache }`.", type: "boolean | object", default: "true" },
+    "twoslash.compilerOptions": { description: "Опции `compilerOptions` из tsconfig для каждого блока `twoslash`.", type: "object" },
+    "twoslash.cache": { description: "Сохранять результаты между сборками.", type: "boolean", default: "true" },
+    components: { description: "MDX-компоненты по имени тега (с заглавной буквы). `custom/components/*.tsx` добавляет ещё. См. [Свои компоненты](/docs/v0/customizing/custom-components).", type: "Record<string, Component>", default: "{}" },
+    plugins: { description: "[Плагины](/docs/v0/reference/plugins) remark, rehype и Shiki, применяются по порядку после встроенных. См. [Плагины](/docs/v0/customizing/plugins).", type: "DocsPlugin[]", default: "[]" },
+  }}
+/>
+
+## Опции docs
+
+Передаются в `docs()` из `@consify/docs`, в `features`. Все необязательны. См. [Документация](/docs/v0/configuration/docs).
+
+```ts title="docs.config.ts"
+import { docs } from "@consify/docs";
+```
+
+<TypeTable
+  type={{
+    id: { description: "Адрес (`/{lang}/<id>`), папка контента и id ссылки. Задайте его для второго раздела документации.", type: "string", default: '"docs"' },
+    title: { description: "Текст ссылки в шапке. Текст или текст для каждого языка.", type: "string | Record<string, string>", default: "Documentation, в переводе" },
+    versions: { description: "`{ list: { id, label?, status?: 'latest' | 'stable' | 'deprecated' }[], default? }`. См. [Версии](/docs/v0/configuration/versions).", type: "object" },
+    toc: { description: "Оглавление справа на странице.", type: "boolean", default: "true" },
+    breadcrumbs: { description: "Путь над заголовком страницы.", type: "boolean", default: "true" },
+    pagination: { description: "Ссылки на предыдущую и следующую страницы внизу.", type: "boolean", default: "true" },
+    llmsTxt: { description: "`/{lang}/docs/llms.txt` и `llms-full.txt`.", type: "boolean", default: "true" },
+    og: { description: "Сгенерированная картинка для соцсетей у каждой страницы.", type: "boolean", default: "true" },
+    editOnGithub: { description: "Ссылка «Редактировать эту страницу». `{ contentDir }` — папка с языковыми папками в репозитории (по умолчанию `content`).", type: "boolean | { contentDir?: string }", default: "true" },
+  }}
+/>

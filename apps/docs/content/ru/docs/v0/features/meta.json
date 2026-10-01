@@ -1,0 +1,17 @@
+{
+  "title": "Фичи",
+  "icon": "Blocks",
+  "pages": [
+    "index",
+    "pages",
+    "data",
+    "files",
+    "strings",
+    "content",
+    "content-services",
+    "tutorial",
+    "packages",
+    "testing",
+    "reference"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "title": "v2 (актуальная)",
+  "pages": [
+    "index",
+    "installation",
+    "quickstart",
+    "---Изучение---",
+    "concepts",
+    "guides",
+    "---Справочник---",
+    "api",
+    "---Как писать документацию---",
+    "writing",
+    "---Ещё---",
+    "deployment",
+    "migration",
+    "changelog"
+  ]
+}

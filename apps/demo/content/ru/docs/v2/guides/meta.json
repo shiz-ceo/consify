@@ -1,0 +1,5 @@
+{
+  "title": "Руководства",
+  "icon": "Compass",
+  "pages": ["scheduling", "retries", "testing", "advanced"]
+}

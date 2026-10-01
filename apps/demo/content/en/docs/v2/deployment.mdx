@@ -1,0 +1,32 @@
+---
+title: Deployment
+description: Run Lattice in production
+icon: Cloud
+---
+
+## Checklist
+
+<Steps>
+<Step>Use a **persistent** backend (Redis or Postgres).</Step>
+<Step>Run workers as a separate process from your web server.</Step>
+<Step>Handle `SIGTERM` by calling `worker.close()`.</Step>
+<Step>Alert on queue age and dead-letter size.</Step>
+</Steps>
+
+## Docker
+
+```dockerfile title="Dockerfile"
+FROM oven/bun:1
+WORKDIR /app
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --production
+COPY . .
+CMD ["bun", "run", "worker.ts"]
+```
+
+## Scaling
+
+Add worker processes until the queue age stays low. Each worker adds `concurrency` slots, so with $w$ workers of concurrency $c$ you can process $w \times c$ jobs at once.
+
+> [!NOTE]
+> More workers only help if the backend and the systems your jobs call can take the load.

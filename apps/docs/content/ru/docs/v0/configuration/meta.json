@@ -1,0 +1,20 @@
+{
+  "title": "Настройка",
+  "icon": "Settings",
+  "pages": [
+    "index",
+    "site",
+    "languages",
+    "docs",
+    "versions",
+    "mdx",
+    "theme",
+    "themes",
+    "layout",
+    "navigation",
+    "head",
+    "banner",
+    "blog",
+    "api-reference"
+  ]
+}

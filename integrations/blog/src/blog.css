@@ -1,0 +1,4 @@
+/* Headings of a blog post stop below the header when reached from the table of contents. */
+[data-blog-post] :is(h2, h3, h4) {
+  scroll-margin-top: 6rem;
+}

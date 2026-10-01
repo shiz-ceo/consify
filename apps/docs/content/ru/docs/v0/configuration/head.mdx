@@ -1,0 +1,116 @@
+---
+title: Head и скрипты
+description: Мета-теги, ссылки и скрипты в head каждой страницы, рецепты аналитики
+---
+
+`head` добавляет теги в `<head>` каждой страницы: серверных, статических и страницы 404. Это объект с тремя списками, все они необязательны.
+
+```ts title="docs.config.ts"
+head: {
+  meta: [
+    { name: "theme-color", content: "#0ea5e9" },
+    { property: "og:locale", content: "en" },
+  ],
+  links: [
+    { rel: "preconnect", href: "https://fonts.googleapis.com", crossOrigin: "anonymous" },
+  ],
+  scripts: [
+    { src: "https://plausible.io/js/script.js", defer: true, data: { domain: "lattice.dev" } },
+    { inline: "window.dataLayer = window.dataLayer || [];" },
+  ],
+},
+```
+
+| Список | Поля |
+| --- | --- |
+| `meta` | `content` и одно из `name`, `property` или `httpEquiv` (одно из трёх обязательно) |
+| `links` | `rel`, `href`, `as`, `type`, `media`, `sizes`, `hrefLang`, `crossOrigin` |
+| `scripts` | `src` или `inline`, а также `async`, `defer`, `type`, `integrity`, `crossOrigin` и `data` |
+
+`data` — объект атрибутов `data-*`, записанных без префикса: `data: { domain: "lattice.dev" }` превращается в `data-domain="lattice.dev"`. Неизвестные поля считаются ошибками.
+
+## Для каждого языка
+
+Передайте в `head` функцию от языка, чтобы вернуть свои теги для каждого языка:
+
+```ts title="docs.config.ts"
+head: (lang) => ({
+  meta: [{ property: "og:locale", content: lang }],
+}),
+```
+
+## Скрипты и Content-Security-Policy
+
+`inline` — текст вашего собственного скрипта. Если сайт отправляет заголовок `Content-Security-Policy`, встроенные скрипты и скрипты с других хостов нужно в нём разрешить (`nonce` или хеш для встроенного текста, хост каждого `src`). consify этот заголовок не выставляет: это задача вашего сервера или хостинга.
+
+## Рецепты аналитики
+
+Готовых опций для аналитики нет: любой сервис — это скрипт, и его место в `head.scripts`. Фрагменты ниже следуют публичным инструкциям сервисов. Актуальный фрагмент для вашего сайта всегда показан в кабинете сервиса, поэтому при расхождении копируйте его оттуда.
+
+### Plausible
+
+```ts title="docs.config.ts"
+head: {
+  scripts: [
+    { src: "https://plausible.io/js/script.js", defer: true, data: { domain: "example.com" } },
+  ],
+},
+```
+
+### Umami
+
+```ts title="docs.config.ts"
+head: {
+  scripts: [
+    {
+      src: "https://cloud.umami.is/script.js",
+      defer: true,
+      data: { "website-id": "your-website-id" },
+    },
+  ],
+},
+```
+
+Для собственного сервера Umami укажите в `src` его адрес.
+
+### Google Analytics (gtag)
+
+```ts title="docs.config.ts"
+head: {
+  scripts: [
+    { src: "https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX", async: true },
+    {
+      inline: `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-XXXXXXXXXX');`,
+    },
+  ],
+},
+```
+
+### Cloudflare Web Analytics
+
+```ts title="docs.config.ts"
+head: {
+  scripts: [
+    {
+      src: "https://static.cloudflareinsights.com/beacon.min.js",
+      defer: true,
+      data: { "cf-beacon": '{"token": "your-token"}' },
+    },
+  ],
+},
+```
+
+### Яндекс Метрика
+
+Яндекс Метрика выдаёт более длинный фрагмент с номером вашего счётчика. Скопируйте его в настройках счётчика и положите текст скрипта в `inline`:
+
+```ts title="docs.config.ts"
+head: {
+  scripts: [{ inline: "/* the snippet from the Metrika counter settings */" }],
+},
+```
+
+Сервис также показывает пиксель в `<noscript>`: он нужен только читателям без JavaScript, для работы счётчика он не требуется.

@@ -1,0 +1,49 @@
+---
+title: API reference
+description: An interactive API page from an OpenAPI schema
+---
+
+The API reference is a feature: it is on when `apiReference()` is in the `features` list of the config. This documentation site does not use it.
+
+## Install
+
+```bash
+bun add @consify/api-reference
+```
+
+Update it together with the core (see [Updating](/docs/v0/concepts/updating)).
+
+## Options
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { apiReference } from "@consify/api-reference";
+
+export default defineConfig({
+  site: { name: "My docs" },
+  features: [apiReference({ input: "./openapi.json", title: "API" })],
+});
+```
+
+<TypeTable
+  type={{
+    input: { description: "The OpenAPI schema: a file relative to the project root, or a URL.", type: "string", required: true },
+    title: { description: "The title of the page and the text of its link in the header.", type: "string | Record<language, string>", default: '"API"' },
+    id: { description: "The address (`/{lang}/<id>`) and the link id. Set it for a second API reference.", type: "string", default: '"api"' },
+  }}
+/>
+
+The page lives at `/{lang}/api` (link id `api`) and is rendered with [Scalar](https://scalar.com): operations, models, examples in several languages and a client to try requests. It follows the theme of the site (light or dark), and its search is a field at the top of its sidebar, drawn like the docs one.
+
+Nothing of it is loaded unless the reader opens the page.
+
+## Several APIs
+
+Each call with its own `id` is a separate page with its own link:
+
+```ts title="docs.config.ts"
+features: [
+  apiReference({ input: "./openapi/public.json", title: "API" }),
+  apiReference({ input: "./openapi/admin.json", title: "Admin API", id: "admin-api" }),
+],
+```

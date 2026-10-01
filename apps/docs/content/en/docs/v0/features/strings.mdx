@@ -1,0 +1,318 @@
+---
+title: Strings and languages
+description: messages, t, placeholders, overrides, and languages in addresses
+---
+
+Every page of a feature exists in every language of the site. The text you write in components (headings, buttons, labels) is translated through strings: you give each text a key, write it once per language in `messages`, and show it with `t("key")`.
+
+## messages
+
+`messages` has one object per language. Each object maps a key to the text in that language.
+
+```tsx title="custom/features/status.tsx"
+import { defineFeature } from "@consify/core";
+
+export const status = defineFeature({
+  id: "status",
+  messages: {
+    en: { status: "Status", operational: "Operational", degraded: "Degraded" },
+    ru: { status: "Статус", operational: "Работает", degraded: "Сбои" },
+  },
+  pages: {
+    "/": ({ t }) => (
+      <main className="mx-auto w-full max-w-2xl px-4 py-12">
+        <h1>{t("status")}</h1>
+        <p>{t("operational")}</p>
+      </main>
+    ),
+  },
+});
+```
+
+`/en/status` shows "Status", `/ru/status` shows "Статус".
+
+- Keys are any names you like: `status`, `backToList`, `emptyState`. Use the same keys in every language.
+- The language codes are the codes of `i18n.languages`: `en`, `ru`, `pt-BR`.
+- A language the site does not have is ignored. A language the feature has no strings for shows English.
+
+### English is the reference
+
+Write the English strings first, and completely. For every other language, a key that is missing shows its English text. So a feature can ship with a partial translation, and the page still has every text.
+
+A key that is missing in English too is shown as the key itself: `t("stauts")` shows `stauts`. A typo is easy to see on the page.
+
+For a language you do not know, leave it out of `messages`: the site shows English, and the site owner can translate it (see "Changing the strings of a feature" below).
+
+## t
+
+`t` is in every place a page is described: the component, `load`, `title`, `description` and `meta` all get it. It always speaks the language of the address.
+
+```tsx
+"/:service": page({
+  load: ({ params, t }) => ({ id: params.service, heading: t("status") }),
+  title: ({ t }) => t("status"),
+  component: ({ data, t }) => (
+    <main>
+      <h1>{data.heading}</h1>
+      <p>{t("operational")}</p>
+    </main>
+  ),
+}),
+```
+
+### Placeholders
+
+A string can have placeholders in braces. The second argument of `t` fills them:
+
+```tsx
+messages: {
+  en: { updated: "Updated {time} ago", minutes: "{n} min" },
+  ru: { updated: "Обновлено {time} назад", minutes: "{n} мин" },
+},
+
+// in a component
+t("updated", { time: "5 min" }); // "Updated 5 min ago"
+t("minutes", { n: String(12) }); // "12 min"
+```
+
+- The values are strings. Turn numbers into text with `String(n)`, or with `n.toLocaleString(lang)` to get the separators of the language.
+- A placeholder with no value stays as it is: `t("updated")` shows `Updated {time} ago`.
+- The name of a placeholder is letters, digits and `_`.
+- Each language can put the placeholder where its grammar needs it.
+
+There are no plural rules. When the word changes with the number, use two keys and choose in the code:
+
+```tsx
+messages: {
+  en: { incidentOne: "{n} incident", incidentMany: "{n} incidents" },
+  ru: { incidentOne: "{n} инцидент", incidentMany: "{n} инцидентов" },
+},
+
+// in a component
+t(count === 1 ? "incidentOne" : "incidentMany", { n: String(count) });
+```
+
+For languages with more forms, `new Intl.PluralRules(lang).select(count)` returns `"one"`, `"few"`, `"many"` or `"other"`, which you can use as a part of the key.
+
+### Typed keys
+
+TypeScript knows the keys of `messages`. A key that does not exist is an error in the editor:
+
+```tsx
+defineFeature({
+  id: "status",
+  messages: {
+    en: { status: "Status", beta: "Beta" },
+    ru: { status: "Статус" },
+  },
+  pages: {
+    "/": ({ t }) => (
+      <main>
+        {t("status")}
+        {t("stauts")}
+        {t("beta")}
+      </main>
+    ),
+  },
+});
+// t("stauts"): error, no such key
+// t("beta"): error too, because ru has no "beta"
+```
+
+<Callout type="warn">
+  The keys that `t` accepts are the keys **every** language of `messages` has. A key added to `en` only is a type error until the other languages have it too. That is on purpose: TypeScript tells you what is not translated yet.
+</Callout>
+
+Where the keys are checked:
+
+| Where | Keys checked |
+| --- | --- |
+| A page that is a component: `"/": ({ t }) => …` | Yes |
+| The object form: `"/": { component, title }` | Yes |
+| Inside `page({ … })` | No, `t` takes any string |
+| A component in its own function with `PageProps` | No, unless you name the keys: `PageProps<Data, "status" \| "back">` |
+| `title` and `description` of the feature | Yes |
+
+## Which string wins
+
+The same key can come from several places. For `t` of a feature, from the weakest to the strongest:
+
+1. The English strings of consify and of every feature of the site.
+2. The strings of the language of the page, from consify and every feature.
+3. The strings of MDX plugins.
+4. **The strings of this feature**, English first, then the language of the page.
+5. The language pack of the project: `custom/locales/<language>.ts`.
+6. `i18n.messages` in `docs.config.ts`.
+
+Two things follow:
+
+- **A feature's own strings win for its `t`.** If the blog and your feature both have a key `title`, your pages show your text, and the blog shows its own. You do not have to invent unique key names.
+- **The site owner always has the last word.** A pack or `i18n.messages` changes a string of any feature without touching its code.
+
+## Changing the strings of a feature
+
+The owner of a site can change or translate any string of a feature, including a feature from a package, in two ways.
+
+### i18n.messages
+
+For one or two strings, in `docs.config.ts`:
+
+```ts title="docs.config.ts"
+i18n: {
+  defaultLanguage: "en",
+  languages: ["en", "ru"],
+  messages: {
+    en: { degraded: "Partial outage" },
+    ru: { degraded: "Частичный сбой" },
+  },
+},
+```
+
+The keys are checked: a key that neither consify nor any feature has stops the start with `unknown message "…"`. So a typo cannot hide.
+
+### A language pack
+
+For a whole language, a file in `custom/locales/`. `consify locale de` writes it with every string of consify and of the features of the site, ready to translate:
+
+```ts title="custom/locales/de.ts"
+import { defineLocale } from "@consify/core";
+
+export default defineLocale({
+  label: "Deutsch",
+  messages: {
+    status: "Status",
+    operational: "In Betrieb",
+    degraded: "Gestört",
+  },
+});
+```
+
+Add `"de"` to `i18n.languages`, and the feature speaks German, although its own `messages` has no `de`. See [Languages](/docs/v0/configuration/languages) for packs in detail.
+
+## Title and description of the feature
+
+`title` and `description` of the feature (the link in the header, the title of its pages, the text in drop-down menus) take three forms:
+
+```ts
+// one text for every language
+title: "Status",
+
+// a text per language; a missing language gets the default language's text
+title: { en: "Status", ru: "Статус" },
+
+// from the strings of the feature
+title: ({ t }) => t("status"),
+```
+
+The function form gets `lang` and `t`. It is the best one: the text lives with the other strings, and the site can change it with `i18n.messages` or a pack like any other string.
+
+`title` and `description` of a page are a string or a function of `data`, `lang`, `params` and `t` (see [Pages](/docs/v0/features/pages)). A page has no form with an object per language: use `t`.
+
+## The language in the address
+
+The language is the first segment of every address: `/en/status`, `/ru/status`. You never write it in a key. Core makes each page once per language of `i18n.languages`, and answers 404 for a language the site does not have.
+
+The language reaches your code as `lang`, in the component, `load`, `paths`, `title`, `description`, `meta` and the function of a file. Use it:
+
+- in links: ``<Link to={`/${lang}/status`}>``,
+- to format dates and numbers: `date.toLocaleDateString(lang)`, `new Intl.NumberFormat(lang).format(n)`,
+- to choose data in that language: `content` reads the folder of that language by itself.
+
+```tsx
+"/": page({
+  load: ({ lang }) => ({
+    today: new Intl.DateTimeFormat(lang, { dateStyle: "full", timeZone: "UTC" }).format(
+      new Date("2026-09-29"),
+    ),
+  }),
+  component: ({ data }) => <p>{data.today}</p>,
+}),
+// /en/status: "Tuesday, September 29, 2026"
+// /ru/status: "вторник, 29 сентября 2026 г."
+```
+
+### Links to other languages
+
+The language switcher of the header opens the same address in another language, because every page of a feature has the same address in every language. You need nothing for it.
+
+To draw links to the other languages yourself, take the list from `config` in `load`:
+
+```tsx
+"/": page({
+  load: ({ config, lang }) => ({
+    others: config.i18n.languages.filter((code) => code !== lang),
+  }),
+  component: ({ data }) => (
+    <nav>
+      {data.others.map((code) => (
+        <Link key={code} to={`/${code}/status`}>
+          {code}
+        </Link>
+      ))}
+    </nav>
+  ),
+}),
+```
+
+For search engines, list the translations in `meta` as `alternates` (see [Pages](/docs/v0/features/pages)).
+
+## Strings in nested components
+
+A page gets `t`, but a component deep inside it does not. Two ways to get strings there.
+
+**Pass `t` down.** The simplest, and the feature's own strings win, as on the page:
+
+```tsx
+import type { Translate } from "@consify/core";
+
+function StateBadge({ state, t }: { state: string; t: Translate }) {
+  return <span className="rounded border border-fd-border px-2 text-xs">{t(state)}</span>;
+}
+
+// in the page: <StateBadge state="degraded" t={t} />
+```
+
+**`useMessages()`** from `@consify/core/ui` reads the language from the address and returns every string as an object. Name your keys in its type parameter:
+
+```tsx
+import { useMessages } from "@consify/core/ui";
+
+function EmptyState() {
+  const strings = useMessages<{ nothing: string }>();
+  return <p className="text-fd-muted-foreground">{strings.nothing}</p>;
+}
+```
+
+<Callout type="warn">
+  `useMessages()` does not know which feature it is in, so its strings have no feature first. If two features have the same key, the feature listed later in `features` wins. Use `t` for such keys, or give the keys of nested components names no other feature uses.
+</Callout>
+
+`useMessages` returns an object, not a function: `strings.nothing`, not `strings("nothing")`. It does not fill placeholders; use `format(text, values)` from `@consify/core` for that:
+
+```tsx
+import { format } from "@consify/core";
+import { useMessages } from "@consify/core/ui";
+
+function Updated({ time }: { time: string }) {
+  const strings = useMessages<{ updated: string }>();
+  return <p>{format(strings.updated, { time })}</p>;
+}
+```
+
+## Common mistakes
+
+<Callout type="warn">
+  **The page shows `stauts` instead of a text.** The key does not exist. TypeScript tells you on a component page; inside `page()` it cannot.
+</Callout>
+
+<Callout type="warn">
+  **`t("key")` is a type error, but the key is in `en`.** One of the other languages of `messages` does not have it.
+</Callout>
+
+<Callout type="warn">
+  **`t("n", { n: 5 })` is a type error.** Values are strings: `{ n: String(5) }`.
+</Callout>
+
+<Callout type="warn">
+  **The text is in English on `/ru/...`.** The key is missing in `ru` of `messages`, and no pack or `i18n.messages` translates it.
+</Callout>

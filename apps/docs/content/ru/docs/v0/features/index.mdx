@@ -1,0 +1,265 @@
+---
+title: Фичи
+description: Разделы сайта, сделанные одной функцией defineFeature
+---
+
+Фича — это раздел сайта: страницы, файлы и строки, которые живут под одним адресом. Документация, блог и справочник API — тоже фичи. Свою фичу можно написать одной функцией, `defineFeature`, в одном файле.
+
+Фича нужна, когда страницы — не MDX-файлы: страница статуса, список изменений из API, галерея, таблица тарифов, песочница. Для одного блока внутри MDX-страницы хватит [компонента](/docs/v0/customizing/custom-components).
+
+## Самая маленькая фича
+
+Это целая фича. У неё одна страница.
+
+```tsx title="custom/features/hello.tsx"
+import { defineFeature } from "@consify/core";
+
+export const hello = defineFeature({
+  id: "hello",
+  title: "Hello",
+  pages: {
+    "/": () => <main className="mx-auto w-full max-w-2xl px-4 py-12">Hello, world</main>,
+  },
+});
+```
+
+Что делает каждая строка:
+
+- `id: "hello"` — имя фичи. Из него же получаются её адрес (`/en/hello`), id её ссылки и имя папки с её контентом.
+- `title: "Hello"` — текст ссылки в шапке и заголовок её страниц.
+- `pages` — список страниц. Ключ `"/"` — главная страница фичи. Значение — React-компонент.
+
+## Подключение
+
+Пока сайт не перечислил фичу, она ничего не делает. Импортируйте её в `docs.config.ts` и добавьте в `features`:
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { docs } from "@consify/docs";
+import { hello } from "./custom/features/hello.tsx";
+
+export default defineConfig({
+  site: { name: "Acme" },
+  i18n: { defaultLanguage: "en", languages: ["en", "ru"] },
+  features: [docs(), hello],
+});
+```
+
+Запустите `consify dev` и откройте `/en/hello`. Та же страница есть и по адресу `/ru/hello`, потому что у сайта два языка. В шапке появилась ссылка «Hello», а во вкладке браузера написано `Hello | Acme`.
+
+Порядок в `features` — это порядок ссылок в шапке (если сайт не выбирает ссылки сам, см. ниже «Ссылка в шапке»).
+
+## Где лежит файл
+
+Каждую фичу кладите в отдельный файл в `custom/features/`:
+
+<Files>
+  <Folder name="custom" defaultOpen>
+    <Folder name="features" defaultOpen>
+      <File name="hello.tsx" />
+      <File name="status.tsx" />
+    </Folder>
+  </Folder>
+  <File name="docs.config.ts" />
+</Files>
+
+- Расширение `.tsx`: страницы пишутся на JSX.
+- Одного файла на фичу достаточно. Когда он разрастётся, вынесите части (компоненты, данные) в соседние файлы и импортируйте их как обычно. Экспортировать фичу должен только тот файл, который импортирует `docs.config.ts`.
+- Имя файла для consify ничего не значит. Значение имеет `id`.
+
+Фича, которую хочется использовать в нескольких проектах или опубликовать, оформляется пакетом. См. [Пакеты фич](/docs/v0/features/packages).
+
+## Что пишете вы, что делает ядро
+
+Вы описываете, что есть в разделе. Остальное делает ядро.
+
+| Вы пишете | Ядро делает за вас |
+| --- | --- |
+| `id: "hello"` | Адрес `/{lang}/hello` на каждом языке сайта, id ссылки `hello`, папку контента `content/<язык>/hello/` |
+| Страницу `"/"` | Маршрут для каждого языка. Адрес с языком, которого у сайта нет (`/xx/hello`), отвечает 404 |
+| Страницу `"/:service"` с `paths` | Адреса из списка отрисовываются при сборке на каждом языке и попадают в `sitemap.xml` |
+| `title` | Ссылку в шапке и `<title>` каждой страницы: `Hello \| Acme` |
+| Ничего | Шапку и подвал сайта вокруг каждой страницы. `<head>`: заголовок, описание, канонический адрес, теги Open Graph |
+| `messages` | `t("key")` на языке страницы, английский текст для непереведённой строки и способ для сайта поменять любую строку |
+| `load` | Запускает его на сервере и отдаёт результат странице как `data` |
+| `files` | Адрес, который отвечает JSON, текстом или байтами, с типом содержимого по расширению |
+| `content` | Читает, проверяет, переводит и компилирует MDX-файлы, добавляет поиск, `llms.txt`, картинки для соцсетей и ленту |
+
+`consify check` тоже перебирает все адреса всех фич: функция `paths`, которая падает, или неверный front matter найдутся там, ещё до сборки.
+
+## Как запрос доходит до вашей страницы
+
+<Steps>
+<Step>
+
+### Сборка
+
+consify читает `features` и делает маршрут для каждой страницы и каждого файла: ключ `"/:service"` фичи `status` превращается в маршрут `:lang/status/:service`.
+
+</Step>
+<Step>
+
+### Запрос
+
+Читатель открывает `/ru/status/api`. Ядро проверяет, что `ru` — язык сайта (иначе 404), и находит страницу `"/:service"` с `params.service = "api"`.
+
+</Step>
+<Step>
+
+### Загрузка
+
+Если у страницы есть `load`, он выполняется на сервере. Его результат становится `data`. Он может и ответить 404, и перенаправить.
+
+</Step>
+<Step>
+
+### Отрисовка
+
+Ядро заполняет `<head>` (заголовок, описание, ссылки), рисует шапку и подвал и ставит между ними ваш компонент с `data`, `lang`, `params` и `t`.
+
+</Step>
+</Steps>
+
+На статическом сайте шаги 2–4 происходят при сборке, по разу для каждого адреса. См. [Загрузка данных](/docs/v0/features/data).
+
+## Что может быть у фичи
+
+Все поля, кроме `id`, необязательны.
+
+| Поле | Что это | Подробнее |
+| --- | --- | --- |
+| `id` | Имя: строчные латинские буквы, цифры и `-`, начинается с буквы | Эта страница |
+| `path` | Адрес, отличный от `id`; `""` — главная страница сайта | [Страницы](/docs/v0/features/pages) |
+| `folder` | Папка контента, отличная от `id` | [Контент](/docs/v0/features/content) |
+| `title` | Ссылка в шапке и заголовок страниц | [Строки](/docs/v0/features/strings) |
+| `description` | Несколько слов для выпадающих меню | [Строки](/docs/v0/features/strings) |
+| `messages` | Строки для каждого языка, для `t` | [Строки](/docs/v0/features/strings) |
+| `pages` | Страницы по адресам | [Страницы](/docs/v0/features/pages) |
+| `files` | Файлы по адресам: JSON, текст, картинки | [Файлы](/docs/v0/features/files) |
+| `content` | MDX-файлы, которые показывает фича | [Контент](/docs/v0/features/content) |
+| `links` | Места для ссылок помимо главной страницы | [Справочник](/docs/v0/features/reference) |
+| `components` | MDX-компоненты для всех `.mdx` сайта | [Справочник](/docs/v0/features/reference) |
+| `search` | Собственный поиск | [Справочник](/docs/v0/features/reference) |
+
+## Настоящая фича
+
+Вот целая фича из демо-сайта: список сервисов, страница для каждого сервиса и JSON-файл, на двух языках. Каждая её часть разобрана на следующих страницах.
+
+```tsx title="custom/features/status.tsx"
+import { defineFeature, page } from "@consify/core";
+import { Link } from "react-router";
+
+// A real site would read these from an API or a file of `content/`.
+const services = [
+  { id: "scheduler", name: "Scheduler", state: "operational" },
+  { id: "workers", name: "Workers", state: "operational" },
+  { id: "dashboard", name: "Dashboard", state: "degraded" },
+] as const;
+
+export const status = defineFeature({
+  id: "status",
+  title: ({ t }) => t("status"),
+  description: ({ t }) => t("hint"),
+  messages: {
+    en: {
+      status: "Status",
+      hint: "Live state of the services",
+      operational: "Operational",
+      degraded: "Degraded",
+      back: "All services",
+    },
+    ru: {
+      status: "Статус",
+      hint: "Состояние сервисов сейчас",
+      operational: "Работает",
+      degraded: "Сбои",
+      back: "Все сервисы",
+    },
+  },
+  pages: {
+    // /en/status: the list
+    "/": ({ lang, t }) => (
+      <main className="mx-auto w-full max-w-2xl px-4 py-12">
+        <h1 className="mb-8 text-3xl font-semibold">{t("status")}</h1>
+        <ul>
+          {services.map((service) => (
+            <li key={service.id}>
+              <Link to={`/${lang}/status/${service.id}`}>
+                {service.name}: {t(service.state)}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </main>
+    ),
+    // /en/status/scheduler, /en/status/workers, /en/status/dashboard
+    "/:service": page({
+      paths: () => services.map((service) => ({ service: service.id })),
+      load: ({ params, notFound }) =>
+        services.find((service) => service.id === params.service) ?? notFound(),
+      title: ({ data }) => data.name,
+      component: ({ data, lang, t }) => (
+        <main className="mx-auto w-full max-w-2xl px-4 py-12">
+          <Link to={`/${lang}/status`}>← {t("back")}</Link>
+          <h1 className="mt-4 text-3xl font-semibold">{data.name}</h1>
+          <p>{t(data.state)}</p>
+        </main>
+      ),
+    }),
+  },
+  files: {
+    // /en/status/status.json
+    "/status.json": () => ({ services }),
+  },
+});
+```
+
+## Ссылка в шапке
+
+Фича с `title` предлагает ссылку на свою главную страницу. id этой ссылки — id фичи.
+
+- Если в `docs.config.ts` нет `header.links`, шапка показывает ссылки всех фич с заголовком, в порядке `features`.
+- Если сайт выбирает ссылки сам в `header.links`, он перечисляет id, и ваша фича появится, только если её id есть в списке:
+
+```ts title="docs.config.ts"
+header: {
+  links: ["docs", "blog", "status"],
+},
+```
+
+`consify links` выводит все id, которые предлагают фичи. У фичи без `title` ссылки нет: её страницы работают, но привести читателя туда придётся вашей собственной ссылкой.
+
+## Правила для id
+
+- Строчные латинские буквы, цифры и `-`, в начале буква: `status`, `api-v2`. С `Status` или `2fa` запуск остановится с ошибкой, в которой будет этот id.
+- У двух фич не может быть одинакового `id` и одинакового адреса (`path`). Ошибка назовёт обе и предложит задать `path`.
+- id `docs`, `blog` и `api` заняты, если эти фичи есть на сайте. `home` — встроенная главная страница.
+
+## Частые ошибки
+
+<Callout type="warn">
+  **Страница отвечает 404.** Фичи нет в `features` файла `docs.config.ts`, или в адресе нет языка: страница находится по `/en/hello`, а не по `/hello`.
+</Callout>
+
+<Callout type="warn">
+  **В шапке нет ссылки.** У фичи нет `title`, или сайт задаёт `header.links` и не перечисляет в нём id фичи.
+</Callout>
+
+<Callout type="warn">
+  **Сайт падает в браузере с ошибкой про `node:fs` или `path`.** Файл фичи импортирует модуль Node в самом верху. Этот файл загружается и в браузере. Читайте файлы через `readFile` и `content` в `load`, см. [Загрузка данных](/docs/v0/features/data).
+</Callout>
+
+## Этот раздел
+
+| Страница | О чём она |
+| --- | --- |
+| [Страницы](/docs/v0/features/pages) | Адреса и параметры, компоненты, заголовки и `<head>`, макеты, перенаправления, ссылки |
+| [Загрузка данных](/docs/v0/features/data) | `load` и всё, что он получает, `page()`, `paths`, серверный и статический сайт, ошибки |
+| [Файлы](/docs/v0/features/files) | JSON, текст, XML и картинки по адресу фичи |
+| [Строки и языки](/docs/v0/features/strings) | `messages`, `t`, подстановки, переопределения, язык в адресе |
+| [Контент](/docs/v0/features/content) | MDX-файлы фичи: front matter, записи, страница на каждый файл |
+| [Сервисы контента](/docs/v0/features/content-services) | Поиск, `llms.txt`, картинки для соцсетей, ленты и сайдбары из контента |
+| [Пошаговый пример](/docs/v0/features/tutorial) | Целая фича, шаг за шагом |
+| [Пакеты фич](/docs/v0/features/packages) | Фича как пакет для нескольких проектов |
+| [Тестирование](/docs/v0/features/testing) | Как тестировать `load`, `paths` и страницы |
+| [Справочник](/docs/v0/features/reference) | Все опции и типы |

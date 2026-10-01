@@ -1,0 +1,44 @@
+---
+title: Scheduling
+description: Delayed jobs, cron and rate limits
+---
+
+## Delayed jobs
+
+Set `delay` to postpone a job:
+
+```ts twoslash
+import { createQueue } from "lattice";
+
+const reminders = createQueue<{ userId: string }>("reminders");
+
+await reminders.add({ userId: "u_1" }, { delay: 60 * 60 * 1000 }); // in one hour
+```
+
+## Recurring jobs
+
+<Since version="2.1" /> Register a schedule once, at startup. Lattice makes sure only **one** worker in the cluster enqueues each tick.
+
+```ts title="schedule.ts" {4-7}
+import { schedule } from "lattice/cron";
+
+schedule("nightly-report", {
+  cron: "0 3 * * *",
+  timezone: "Europe/Berlin",
+  queue: "reports",
+});
+```
+
+## Rate limits
+
+Limit how many jobs start per window:
+
+<TypeTable
+  type={{
+    max: { description: "Jobs allowed per window.", type: "number" },
+    per: { description: "Window length in milliseconds.", type: "number" },
+  }}
+/>
+
+> [!TIP]
+> Rate limits apply per queue. If two queues call the same external API, give them a shared limit group instead.

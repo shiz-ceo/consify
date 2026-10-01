@@ -1,0 +1,432 @@
+---
+title: Загрузка данных
+description: load, контекст загрузки, page(), paths, серверный и статический сайт, ошибки
+---
+
+Большинство страниц показывают то, чего нет в коде: список из файла, запись из API, MDX-файл. Страница читает это в `load`. Компонент получает результат как `data`.
+
+## load
+
+```tsx title="custom/features/team.tsx"
+import { defineFeature, page } from "@consify/core";
+
+export const team = defineFeature({
+  id: "team",
+  pages: {
+    "/": page({
+      load: async () => {
+        const response = await fetch("https://api.example.com/team");
+        return (await response.json()) as { name: string; role: string }[];
+      },
+      component: ({ data }) => (
+        <main className="mx-auto w-full max-w-2xl px-4 py-12">
+          <ul>
+            {data.map((person) => (
+              <li key={person.name}>
+                {person.name}, {person.role}
+              </li>
+            ))}
+          </ul>
+        </main>
+      ),
+    }),
+  },
+});
+```
+
+### Когда выполняется load
+
+`load` выполняется **только на сервере**, в браузере — никогда:
+
+- при сборке, для каждого адреса, который отрисовывается заранее (см. `paths` ниже),
+- на серверном сайте ещё и тогда, когда читатель открывает адрес, который заранее не отрисован.
+
+Когда читатель переходит между страницами в браузере, браузер запрашивает результат `load` (у сервера или, на статическом сайте, из файла, созданного при сборке). Сам код `load` там не выполняется.
+
+Для одного адреса порядок всегда одинаковый:
+
+1. Ядро проверяет язык адреса (404, если у сайта такого нет).
+2. `load` выполняется и возвращает `data`, отвечает 404 или перенаправляет.
+3. `title`, `description` и `meta` выполняются с `data`.
+4. Компонент рисует страницу с `data`.
+
+`load` может быть `async`, а может вернуть значение сразу. Что бы он ни вернул, компонент получит это как `data`.
+
+## Контекст загрузки
+
+`load` получает один объект со всем, что может понадобиться странице. Берите только нужное: `load: ({ params, notFound }) => …`.
+
+| Поле | Что это |
+| --- | --- |
+| `lang` | Язык адреса: `"en"` |
+| `params` | Параметры адреса: `{ service: "api" }` |
+| `t` | Строки фичи на этом языке |
+| `content` | MDX-файлы и файлы данных фичи на этом языке |
+| `readFile` | Читает файл проекта как текст |
+| `config` | Конфиг сайта с заполненными значениями по умолчанию |
+| `request` | Запрос, на который сейчас отвечают |
+| `url` | Превращает путь сайта в абсолютный адрес |
+| `notFound` | Отвечает страницей 404 |
+| `redirect` | Отправляет читателя на другой адрес |
+| `entry` | Запись страницы с `entry: true` |
+
+### lang
+
+Язык адреса. По нему выбирают данные на этом языке и форматируют даты и числа:
+
+```tsx
+load: ({ lang }) => ({
+  updated: new Date("2026-09-01").toLocaleDateString(lang, { dateStyle: "long", timeZone: "UTC" }),
+}),
+```
+
+### params
+
+Параметры адреса, строками. `"/:service/:day"` по адресу `/en/status/api/2026-09-01` даёт `{ service: "api", day: "2026-09-01" }`.
+
+```tsx
+load: ({ params }) => ({ service: params.service, day: params.day }),
+```
+
+### t
+
+Те же строки, что и `t` компонента. Пригодится, когда в `data` должен быть переведённый текст, например подписи графика:
+
+```tsx
+load: ({ t }) => ({
+  columns: [t("service"), t("state"), t("uptime")],
+}),
+```
+
+### content
+
+Файлы из `content/<язык>/<папка фичи>/` на языке страницы. Непереведённый файл читается с языка по умолчанию.
+
+```tsx
+// content/en/status/services.json, content/ru/status/services.json
+load: ({ content }) => content.json<{ id: string; name: string }[]>("services.json"),
+```
+
+`content.read(path)` отдаёт текст любого файла, `content.mdx(path)` компилирует MDX-файл для `<Mdx />`, `content.entries()` перечисляет MDX-страницы фичи. Для файла, которого нет, любой метод возвращает `undefined`. См. [Контент](/docs/v0/features/content).
+
+### readFile
+
+Читает любой текстовый файл проекта по пути от папки проекта:
+
+```tsx
+load: async ({ readFile }) => {
+  const text = await readFile("./data/services.json");
+  return JSON.parse(text) as { id: string; name: string }[];
+},
+```
+
+- Путь за пределами папки проекта (`../secret.txt`) приводит к ошибке.
+- Файл читается как текст (UTF-8). Картинки и другие двоичные файлы кладите в `public/`.
+- Если файла нет, будет ошибка, и читатель увидит страницу ошибки. Если файл необязательный, перехватите её.
+
+<Callout type="warn">
+  На серверном сайте `readFile` читает диск в момент отрисовки страницы. Странице, которая рисуется по запросу, файл нужен рядом с сервером в продакшене, а не только на вашей машине. Файл из `content/`, прочитанный через `content`, попадает в серверную сборку, поэтому для данных, которые поставляются с сайтом, лучше `content`.
+</Callout>
+
+### config
+
+Конфиг сайта из `docs.config.ts` со всеми значениями по умолчанию. Только для чтения.
+
+```tsx
+load: ({ config }) => ({
+  siteName: config.site.name,
+  languages: config.i18n.languages,
+  isStatic: config.deploy.mode === "static",
+}),
+```
+
+### request
+
+Стандартный `Request`, на который отвечают: его URL и заголовки.
+
+```tsx
+load: ({ request }) => ({
+  path: new URL(request.url).pathname,
+}),
+```
+
+<Callout type="warn">
+  Страница, отрисованная при сборке, рисуется один раз, для запроса, который сделала сборка. В нём нет строки запроса (`?tag=cron`) и нет заголовков читателя. Строку запроса читайте в компоненте через `useSearchParams()` из `react-router` — это работает на любой странице.
+</Callout>
+
+### url
+
+Превращает путь сайта в абсолютный адрес с `site.url` и `deploy.basePath`. Без `site.url` возвращает путь как есть. Нужен там, где требуется полный адрес: в ленте, в JSON API, в ссылке для другого сайта.
+
+```tsx
+load: ({ url, lang }) => ({
+  // "https://acme.dev/en/status" when site.url is "https://acme.dev"
+  shareLink: url(`/${lang}/status`),
+}),
+```
+
+### notFound
+
+Останавливает `load` и отвечает страницей 404 сайта. Он никогда не возвращает значение (его тип — `never`), поэтому удобно ставить его после `??`:
+
+```tsx
+load: ({ params, notFound }) =>
+  services.find((service) => service.id === params.service) ?? notFound(),
+```
+
+TypeScript понимает, что результат — сервис, а не `undefined`.
+
+### redirect
+
+Останавливает `load` и отправляет читателя на другой адрес. Как и `notFound`, никогда не возвращает значение:
+
+```tsx
+load: ({ params, lang, redirect }) => {
+  // an old id of a service that was renamed
+  if (params.service === "cron") redirect(`/${lang}/status/scheduler`);
+  return services.find((service) => service.id === params.service);
+},
+```
+
+На сервере это HTTP-перенаправление. На статическом сайте получается маленькая страница, которая сразу перенаправляет. Перенаправление, которое не зависит от данных, проще сделать страницей-перенаправлением, см. [Страницы](/docs/v0/features/pages).
+
+### entry
+
+Только на странице с `entry: true`: запись контента, которую называет адрес, уже прочитанная и скомпилированная. `load` может добавить к ней что-то своё:
+
+```tsx
+"/:slug": page({
+  entry: true,
+  load: async ({ entry, content }) => ({
+    entry: entry!,
+    related: (await content.entries()).slice(0, 3),
+  }),
+  component: ({ data }) => <h1>{String(data.entry.data.title)}</h1>,
+}),
+```
+
+Без `load` такая страница получает саму запись как `data`. См. [Контент](/docs/v0/features/content).
+
+## page() и типизированные данные
+
+Страница с `load` может быть обычным объектом. Это работает, но тогда `data` имеет тип `any`: TypeScript его не проверяет, а редактор не подсказывает.
+
+```tsx
+"/:service": {
+  load: ({ params }) => services.find((s) => s.id === params.service),
+  component: ({ data }) => <h1>{data.nmae}</h1>, // a typo, and no error
+},
+```
+
+`page()` — функция, которая возвращает страницу без изменений. Она нужна ради типов: связывает то, что возвращает `load`, с `data` компонента, `title`, `description` и `meta`.
+
+```tsx
+import { page } from "@consify/core";
+
+"/:service": page({
+  load: ({ params }) => services.find((s) => s.id === params.service),
+  component: ({ data }) => <h1>{data.nmae}</h1>, // error: 'nmae' does not exist
+}),
+```
+
+Здесь `data` имеет тип `Service | undefined`, потому что `find` может ничего не найти. С `?? notFound()` он становится `Service`.
+
+Оборачивайте в `page()` каждую страницу с `load`.
+
+### Компонент в отдельной функции
+
+Если компонент — отдельная функция, типизируйте его пропсы через `PageProps<Data>`. Проще всего получить `Data` из функции загрузки:
+
+```tsx
+import { defineFeature, type LoadContext, type PageProps, page } from "@consify/core";
+
+async function loadService({ params, content, notFound }: LoadContext) {
+  const services = (await content.json<{ id: string; name: string }[]>("services.json")) ?? [];
+  return services.find((service) => service.id === params.service) ?? notFound();
+}
+
+type Service = Awaited<ReturnType<typeof loadService>>;
+
+function ServicePage({ data }: PageProps<Service>) {
+  return <h1>{data.name}</h1>;
+}
+
+export const status = defineFeature({
+  id: "status",
+  pages: {
+    "/:service": page({ load: loadService, component: ServicePage }),
+  },
+});
+```
+
+## paths: адреса, которые рисуются заранее
+
+У страницы без параметров один адрес на язык, и ядро его знает. У страницы с параметрами (`"/:service"`) столько адресов, сколько значений, и угадать их ядро не может. Их перечисляет `paths`:
+
+```tsx
+"/:service": page({
+  paths: () => [{ service: "scheduler" }, { service: "workers" }],
+  load: ({ params, notFound }) =>
+    services.find((service) => service.id === params.service) ?? notFound(),
+  component: ({ data }) => <h1>{data.name}</h1>,
+}),
+```
+
+`paths` возвращает список объектов `params`, по одному на адрес. Он выполняется при сборке, по разу для каждого языка.
+
+### Что зависит от paths
+
+- **Отрисовка заранее.** Каждый адрес из `paths` рисуется при сборке на каждом языке, и HTML готов ещё до первого запроса.
+- **Sitemap.** Эти адреса попадают в `sitemap.xml` (если задан `site.url`).
+- **Статический сайт.** У статического сайта нет сервера, чтобы нарисовать адрес позже. Адреса, которого нет в `paths`, там просто нет: читатель увидит страницу 404.
+- **`consify check`.** Он запускает каждый `paths` и сообщает о тех, что падают.
+
+### С paths и без
+
+| Страница | Сервер | Статический сайт |
+| --- | --- | --- |
+| Без параметров (`"/"`, `"/about"`) | Рисуется при сборке | Рисуется при сборке |
+| С параметрами и `paths` | Перечисленные адреса — при сборке, остальные — по запросу | Только перечисленные адреса |
+| С параметрами, без `paths` | Любой адрес по запросу, в sitemap ничего | Страницы нет |
+| С параметрами, `paths` возвращает `[]` | Любой адрес по запросу | Страницы нет |
+
+На статическом сайте страница, у которой `paths` возвращает пустой список, целиком исключается из сайта.
+
+### Что получает paths
+
+| Поле | Что это |
+| --- | --- |
+| `lang` | Язык, для которого нужен список |
+| `content` | Контент фичи на этом языке |
+| `config` | Конфиг сайта |
+
+У `paths` нет `params`, `request` и `readFile`. Данные, нужные `paths`, читайте из `content` — и в `load` читайте их так же, чтобы они совпадали:
+
+```tsx
+type Service = { id: string; name: string };
+
+"/:service": page({
+  // content/<language>/status/services.json
+  paths: async ({ content }) =>
+    ((await content.json<Service[]>("services.json")) ?? []).map((s) => ({ service: s.id })),
+  load: async ({ content, params, notFound }) =>
+    ((await content.json<Service[]>("services.json")) ?? []).find((s) => s.id === params.service) ??
+    notFound(),
+  component: ({ data }) => <h1>{data.name}</h1>,
+}),
+```
+
+### Другие формы
+
+```tsx
+// an optional parameter: {} is the address without it
+"/:tab?": page({
+  paths: () => [{}, { tab: "uptime" }, { tab: "incidents" }],
+  component: ({ params }) => <h1>{params.tab ?? "overview"}</h1>,
+}),
+
+// * with several segments
+"/*": page({
+  paths: () => [{ "*": "guides/setup" }, { "*": "guides/deploy" }],
+  component: ({ params }) => <h1>{params["*"]}</h1>,
+}),
+
+// a different list per language
+"/:region": page({
+  paths: ({ lang }) => (lang === "ru" ? [{ region: "moscow" }] : [{ region: "us-east" }, { region: "eu-west" }]),
+  component: ({ params }) => <h1>{params.region}</h1>,
+}),
+```
+
+<Callout type="warn">
+  Каждый адрес из `paths` должен рисоваться. Если `load` отвечает 404 или падает хотя бы для одного из них, сборка останавливается с ошибкой, в которой назван адрес (`Received a 404 status code … while prerendering`). Читайте `paths` и `load` из одного источника.
+</Callout>
+
+Страница с `entry: true` перечисляет свои адреса сама, по одному на запись контента. `paths` ей не нужен.
+
+## Серверный и статический сайт
+
+`deploy.mode` в `docs.config.ts` решает, будет ли в продакшене сервер. От этого зависит, когда выполняется `load`:
+
+| | Сервер (`"server"`) | Статический сайт (`"static"`) |
+| --- | --- | --- |
+| `load` адреса, нарисованного заранее | При сборке | При сборке |
+| `load` любого другого адреса | Когда читатель его открывает | Никогда: адреса нет |
+| Данные страницы, нарисованной заранее | Какими были при сборке | Какими были при сборке |
+| `request` | Запрос читателя для адресов, которые рисуются по запросу | Всегда запрос сборки |
+| `redirect()` | HTTP-перенаправление | Страница, которая перенаправляет |
+| `notFound()` | Страница 404 со статусом 404 | При сборке: сборка останавливается |
+
+<Callout type="warn">
+  Страница, нарисованная при сборке, показывает данные сборки — и на сервере тоже: сервер отдаёт готовый HTML. Данные, которые меняются каждую минуту, загружайте в компоненте (в `useEffect`) или пересобирайте сайт, когда данные меняются.
+</Callout>
+
+## Ошибки
+
+Если `load` бросает ошибку, читатель видит страницу ошибки сайта («Something went wrong») с текстом ошибки. На сервере статус ответа — 500. При сборке сборка останавливается с этой ошибкой.
+
+```tsx
+load: async () => {
+  const response = await fetch("https://api.example.com/team");
+  if (!response.ok) throw new Error(`The team API answered ${response.status}`);
+  return (await response.json()) as { name: string }[];
+},
+```
+
+- Для «этого не существует» используйте `notFound()`, а не ошибку: читатель увидит страницу 404 сайта на нужном языке.
+- Чтобы вместо страницы ошибки показать запасной вариант, перехватите ошибку в `load` и верните то, что компонент сможет нарисовать: `return { team: [], failed: true }`.
+
+## Данные должны сериализоваться
+
+`data` передаётся с сервера в браузер. Возвращайте простые данные: объекты, массивы, строки, числа, логические значения, `null`. `Date`, `Map` и `Set` тоже переживают передачу.
+
+Функции, экземпляры классов с методами и JSX — нет. Возвращайте данные, а остальное стройте в компоненте:
+
+```tsx
+// wrong: JSX in data
+load: () => ({ badge: <span>Up</span> }),
+
+// right: data in data, JSX in the component
+load: () => ({ state: "up" }),
+```
+
+Возвращайте только то, что показывает страница. `data` отправляется вместе с каждой страницей, и большой объект утяжеляет каждую из них.
+
+## Никаких модулей Node в начале файла
+
+Файл фичи загружает Node вместе с `docs.config.ts` — **и** браузер, вместе с остальным сайтом. Код `load` тоже попадает в браузерную сборку, просто никогда там не выполняется.
+
+Поэтому модуль Node, импортированный в начале файла, ломает сайт в браузере:
+
+```tsx
+// wrong: node:fs does not exist in the browser
+import { readFileSync } from "node:fs";
+
+// right: the context has what a page needs
+load: async ({ readFile, content }) => ({
+  services: JSON.parse(await readFile("./data/services.json")),
+  intro: await content.mdx("intro.mdx"),
+}),
+```
+
+То же с секретами: не пишите ключ API в файле фичи — он окажется в браузерной сборке. Читайте его внутри `load` из окружения (`process.env.STATUS_API_KEY`), тогда значение останется на сервере.
+
+Библиотекой, которая работает только на сервере, пользоваться всё же можно: импортируйте её внутри `load` через `await import("…")` под проверкой `import.meta.env.SSR`, как описано в [Пакетах фич](/docs/v0/features/packages).
+
+## Частые ошибки
+
+<Callout type="warn">
+  **`data` имеет тип `any`.** Страница — обычный объект. Оберните её в `page()`.
+</Callout>
+
+<Callout type="warn">
+  **Страница с параметром отвечает 404 на статическом сайте, а в `consify dev` работает.** У неё нет `paths`, или `paths` не перечисляет это значение.
+</Callout>
+
+<Callout type="warn">
+  **На сервере страница показывает старые данные.** Она нарисована при сборке. Пересоберите сайт или загружайте свежую часть в компоненте.
+</Callout>
+
+<Callout type="warn">
+  **`?tag=` в `load` не виден.** Страница нарисована при сборке без строки запроса. Читайте его в компоненте через `useSearchParams()`.
+</Callout>

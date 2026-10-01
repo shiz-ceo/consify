@@ -1,0 +1,432 @@
+---
+title: Loading data
+description: load, the load context, page(), paths, server and static sites, errors
+---
+
+Most pages show something that is not in the code: a list read from a file, a record from an API, an MDX file. A page reads it in `load`. The component gets the result as `data`.
+
+## load
+
+```tsx title="custom/features/team.tsx"
+import { defineFeature, page } from "@consify/core";
+
+export const team = defineFeature({
+  id: "team",
+  pages: {
+    "/": page({
+      load: async () => {
+        const response = await fetch("https://api.example.com/team");
+        return (await response.json()) as { name: string; role: string }[];
+      },
+      component: ({ data }) => (
+        <main className="mx-auto w-full max-w-2xl px-4 py-12">
+          <ul>
+            {data.map((person) => (
+              <li key={person.name}>
+                {person.name}, {person.role}
+              </li>
+            ))}
+          </ul>
+        </main>
+      ),
+    }),
+  },
+});
+```
+
+### When load runs
+
+`load` runs **on the server only**, never in the browser:
+
+- at build time, for every address that is rendered in advance (see `paths` below),
+- on a server site, also when a reader opens an address that was not rendered in advance.
+
+When a reader moves between pages in the browser, the browser asks for the result of `load` (from the server, or from a file made at build time on a static site). The code of `load` itself does not run there.
+
+The order for one address is always the same:
+
+1. Core checks the language of the address (404 if the site does not have it).
+2. `load` runs and returns `data`, or answers 404, or redirects.
+3. `title`, `description` and `meta` run with `data`.
+4. The component draws the page with `data`.
+
+`load` can be `async`, or return a value directly. Whatever it returns, the component gets as `data`.
+
+## The load context
+
+`load` gets one object with everything a page may need. Take only what you use: `load: ({ params, notFound }) => …`.
+
+| Field | What it is |
+| --- | --- |
+| `lang` | The language of the address: `"en"` |
+| `params` | The parameters of the address: `{ service: "api" }` |
+| `t` | The strings of the feature in that language |
+| `content` | The MDX and data files of the feature in that language |
+| `readFile` | Reads a file of the project as text |
+| `config` | The config of the site, with defaults filled in |
+| `request` | The request that is being answered |
+| `url` | Turns a path of the site into an absolute address |
+| `notFound` | Answers with the 404 page |
+| `redirect` | Sends the reader to another address |
+| `entry` | The entry of a page with `entry: true` |
+
+### lang
+
+The language of the address. Use it to pick data in that language, or to format dates and numbers:
+
+```tsx
+load: ({ lang }) => ({
+  updated: new Date("2026-09-01").toLocaleDateString(lang, { dateStyle: "long", timeZone: "UTC" }),
+}),
+```
+
+### params
+
+The parameters of the address, as strings. `"/:service/:day"` at `/en/status/api/2026-09-01` gives `{ service: "api", day: "2026-09-01" }`.
+
+```tsx
+load: ({ params }) => ({ service: params.service, day: params.day }),
+```
+
+### t
+
+The same strings as `t` of the component. Useful when `data` has to contain translated text, for example the labels of a chart:
+
+```tsx
+load: ({ t }) => ({
+  columns: [t("service"), t("state"), t("uptime")],
+}),
+```
+
+### content
+
+The files of `content/<language>/<folder of the feature>/`, in the language of the page. A file that is not translated is read from the default language.
+
+```tsx
+// content/en/status/services.json, content/ru/status/services.json
+load: ({ content }) => content.json<{ id: string; name: string }[]>("services.json"),
+```
+
+`content.read(path)` gives the text of any file, `content.mdx(path)` compiles an MDX file for `<Mdx />`, `content.entries()` lists the MDX pages of the feature. Every method returns `undefined` for a file that is not there. See [Content](/docs/v0/features/content).
+
+### readFile
+
+Reads any text file of the project, by its path from the project folder:
+
+```tsx
+load: async ({ readFile }) => {
+  const text = await readFile("./data/services.json");
+  return JSON.parse(text) as { id: string; name: string }[];
+},
+```
+
+- A path outside the project folder (`../secret.txt`) throws.
+- It reads text (UTF-8). For images and other binary files, put them in `public/`.
+- A file that is not there throws, which shows the error page. Catch it if the file is optional.
+
+<Callout type="warn">
+  On a server site, `readFile` reads the disk when the page is rendered. A page rendered on demand needs the file next to the server in production, not only on your machine. A file under `content/` read with `content` is bundled with the server build, so prefer `content` for data that ships with the site.
+</Callout>
+
+### config
+
+The config of the site from `docs.config.ts`, with every default filled in. Read-only.
+
+```tsx
+load: ({ config }) => ({
+  siteName: config.site.name,
+  languages: config.i18n.languages,
+  isStatic: config.deploy.mode === "static",
+}),
+```
+
+### request
+
+The standard `Request` being answered: its URL and headers.
+
+```tsx
+load: ({ request }) => ({
+  path: new URL(request.url).pathname,
+}),
+```
+
+<Callout type="warn">
+  A page rendered at build time is rendered once, for a request made by the build. It has no query string (`?tag=cron`) and no headers of a reader. Read the query string in the component with `useSearchParams()` from `react-router`, which works on every page.
+</Callout>
+
+### url
+
+Turns a path of the site into an absolute address, with `site.url` and `deploy.basePath`. Without `site.url` it returns the path unchanged. Use it where a full address is required: a feed, a JSON API, a link for another site.
+
+```tsx
+load: ({ url, lang }) => ({
+  // "https://acme.dev/en/status" when site.url is "https://acme.dev"
+  shareLink: url(`/${lang}/status`),
+}),
+```
+
+### notFound
+
+Stops `load` and answers with the 404 page of the site. It never returns (its type is `never`), so it fits after `??`:
+
+```tsx
+load: ({ params, notFound }) =>
+  services.find((service) => service.id === params.service) ?? notFound(),
+```
+
+TypeScript knows the result is a service, not `undefined`.
+
+### redirect
+
+Stops `load` and sends the reader to another address. Like `notFound`, it never returns:
+
+```tsx
+load: ({ params, lang, redirect }) => {
+  // an old id of a service that was renamed
+  if (params.service === "cron") redirect(`/${lang}/status/scheduler`);
+  return services.find((service) => service.id === params.service);
+},
+```
+
+On a server it is an HTTP redirect. On a static site the page is a small page that redirects at once. A redirect that never depends on data is simpler as a redirect page, see [Pages](/docs/v0/features/pages).
+
+### entry
+
+Only on a page with `entry: true`: the entry of the content that the address names, already read and compiled. `load` can add more to it:
+
+```tsx
+"/:slug": page({
+  entry: true,
+  load: async ({ entry, content }) => ({
+    entry: entry!,
+    related: (await content.entries()).slice(0, 3),
+  }),
+  component: ({ data }) => <h1>{String(data.entry.data.title)}</h1>,
+}),
+```
+
+Without `load`, such a page gets the entry itself as `data`. See [Content](/docs/v0/features/content).
+
+## page() and typed data
+
+A page with `load` can be a plain object. It works, but `data` is then `any`: TypeScript does not check it and your editor does not complete it.
+
+```tsx
+"/:service": {
+  load: ({ params }) => services.find((s) => s.id === params.service),
+  component: ({ data }) => <h1>{data.nmae}</h1>, // a typo, and no error
+},
+```
+
+`page()` is a function that returns the page unchanged. It is there for the types: it connects what `load` returns with `data` of the component, `title`, `description` and `meta`.
+
+```tsx
+import { page } from "@consify/core";
+
+"/:service": page({
+  load: ({ params }) => services.find((s) => s.id === params.service),
+  component: ({ data }) => <h1>{data.nmae}</h1>, // error: 'nmae' does not exist
+}),
+```
+
+Here `data` is `Service | undefined`, because `find` may find nothing. With `?? notFound()` it becomes `Service`.
+
+Use `page()` for every page that has `load`.
+
+### A component in its own function
+
+When the component is a separate function, type its props with `PageProps<Data>`. The simplest way to get `Data` is from the load function:
+
+```tsx
+import { defineFeature, type LoadContext, type PageProps, page } from "@consify/core";
+
+async function loadService({ params, content, notFound }: LoadContext) {
+  const services = (await content.json<{ id: string; name: string }[]>("services.json")) ?? [];
+  return services.find((service) => service.id === params.service) ?? notFound();
+}
+
+type Service = Awaited<ReturnType<typeof loadService>>;
+
+function ServicePage({ data }: PageProps<Service>) {
+  return <h1>{data.name}</h1>;
+}
+
+export const status = defineFeature({
+  id: "status",
+  pages: {
+    "/:service": page({ load: loadService, component: ServicePage }),
+  },
+});
+```
+
+## paths: addresses to render in advance
+
+A page without parameters has one address per language. Core knows it. A page with parameters (`"/:service"`) has as many addresses as there are values, and core cannot guess them. `paths` lists them:
+
+```tsx
+"/:service": page({
+  paths: () => [{ service: "scheduler" }, { service: "workers" }],
+  load: ({ params, notFound }) =>
+    services.find((service) => service.id === params.service) ?? notFound(),
+  component: ({ data }) => <h1>{data.name}</h1>,
+}),
+```
+
+`paths` returns a list of `params` objects, one per address. It runs at build time, once for every language.
+
+### What depends on paths
+
+- **Rendering in advance.** Every address `paths` lists is rendered at build time in every language, so the HTML is ready before anyone asks.
+- **The sitemap.** Those addresses are listed in `sitemap.xml` (when `site.url` is set).
+- **A static site.** A static site has no server to render an address later. An address that `paths` does not list does not exist there: the reader gets the 404 page.
+- **`consify check`.** It runs every `paths` and reports one that throws.
+
+### With and without paths
+
+| Page | Server | Static site |
+| --- | --- | --- |
+| No parameters (`"/"`, `"/about"`) | Rendered at build time | Rendered at build time |
+| Parameters, with `paths` | The listed addresses at build time; others on demand | Only the listed addresses |
+| Parameters, no `paths` | Every address on demand; none in the sitemap | The page does not exist |
+| Parameters, `paths` returns `[]` | Every address on demand | The page does not exist |
+
+On a static site, a page whose `paths` returns an empty list is left out of the site entirely.
+
+### What paths gets
+
+| Field | What it is |
+| --- | --- |
+| `lang` | The language the list is for |
+| `content` | The content of the feature in that language |
+| `config` | The config of the site |
+
+`paths` has no `params`, `request` or `readFile`. Read data that `paths` needs from `content`, and read it in `load` the same way, so the two agree:
+
+```tsx
+type Service = { id: string; name: string };
+
+"/:service": page({
+  // content/<language>/status/services.json
+  paths: async ({ content }) =>
+    ((await content.json<Service[]>("services.json")) ?? []).map((s) => ({ service: s.id })),
+  load: async ({ content, params, notFound }) =>
+    ((await content.json<Service[]>("services.json")) ?? []).find((s) => s.id === params.service) ??
+    notFound(),
+  component: ({ data }) => <h1>{data.name}</h1>,
+}),
+```
+
+### Other forms
+
+```tsx
+// an optional parameter: {} is the address without it
+"/:tab?": page({
+  paths: () => [{}, { tab: "uptime" }, { tab: "incidents" }],
+  component: ({ params }) => <h1>{params.tab ?? "overview"}</h1>,
+}),
+
+// * with several segments
+"/*": page({
+  paths: () => [{ "*": "guides/setup" }, { "*": "guides/deploy" }],
+  component: ({ params }) => <h1>{params["*"]}</h1>,
+}),
+
+// a different list per language
+"/:region": page({
+  paths: ({ lang }) => (lang === "ru" ? [{ region: "moscow" }] : [{ region: "us-east" }, { region: "eu-west" }]),
+  component: ({ params }) => <h1>{params.region}</h1>,
+}),
+```
+
+<Callout type="warn">
+  Every address `paths` lists must render. If `load` answers 404 or throws for one of them, the build stops with an error that names the address (`Received a 404 status code … while prerendering`). Read `paths` and `load` from the same source.
+</Callout>
+
+A page with `entry: true` lists its addresses by itself, one per entry of the content. It needs no `paths`.
+
+## Server and static sites
+
+`deploy.mode` in `docs.config.ts` decides whether there is a server in production. It changes when `load` runs:
+
+| | Server (`"server"`) | Static site (`"static"`) |
+| --- | --- | --- |
+| `load` of an address rendered in advance | At build time | At build time |
+| `load` of any other address | When a reader opens it | Never: the address does not exist |
+| Data of a page rendered in advance | As it was at build time | As it was at build time |
+| `request` | The reader's request for addresses rendered on demand | Always the build's request |
+| `redirect()` | An HTTP redirect | A page that redirects |
+| `notFound()` | The 404 page with the status 404 | At build time: the build stops |
+
+<Callout type="warn">
+  A page rendered at build time shows the data of the build, on a server too: the server sends the ready HTML. For data that changes every minute, fetch it in the component (in `useEffect`), or build the site again when the data changes.
+</Callout>
+
+## Errors
+
+When `load` throws, the reader gets the error page of the site ("Something went wrong") with the message of the error. On a server the status is 500. At build time, the build stops with the error.
+
+```tsx
+load: async () => {
+  const response = await fetch("https://api.example.com/team");
+  if (!response.ok) throw new Error(`The team API answered ${response.status}`);
+  return (await response.json()) as { name: string }[];
+},
+```
+
+- For "this does not exist", use `notFound()`, not an error: the reader gets the 404 page of the site, in the right language.
+- To show a fallback instead of the error page, catch the error in `load` and return something the component can draw: `return { team: [], failed: true }`.
+
+## Data must be serializable
+
+`data` travels from the server to the browser. Return plain data: objects, arrays, strings, numbers, booleans, `null`. `Date`, `Map` and `Set` survive the trip too.
+
+Functions, class instances with methods and JSX do not. Return the data, and build the rest in the component:
+
+```tsx
+// wrong: JSX in data
+load: () => ({ badge: <span>Up</span> }),
+
+// right: data in data, JSX in the component
+load: () => ({ state: "up" }),
+```
+
+Return only what the page shows. `data` is sent with every page, so a large object makes every page heavier.
+
+## No Node modules at the top of the file
+
+A feature file is loaded by Node with `docs.config.ts` **and** in the browser, with the rest of the site. The code of `load` is in the browser bundle too; it just never runs there.
+
+So a Node module imported at the top of the file breaks the site in the browser:
+
+```tsx
+// wrong: node:fs does not exist in the browser
+import { readFileSync } from "node:fs";
+
+// right: the context has what a page needs
+load: async ({ readFile, content }) => ({
+  services: JSON.parse(await readFile("./data/services.json")),
+  intro: await content.mdx("intro.mdx"),
+}),
+```
+
+The same goes for secrets: do not write an API key in the feature file, it would be in the browser bundle. Read it inside `load` from the environment (`process.env.STATUS_API_KEY`); the value then stays on the server.
+
+A library that only works on the server can still be used: import it inside `load` with `await import("…")`, guarded by `import.meta.env.SSR`, as described in [Feature packages](/docs/v0/features/packages).
+
+## Common mistakes
+
+<Callout type="warn">
+  **`data` is `any`.** The page is a plain object. Wrap it in `page()`.
+</Callout>
+
+<Callout type="warn">
+  **A page with a parameter is 404 on the static site but works in `consify dev`.** It has no `paths`, or `paths` does not list that value.
+</Callout>
+
+<Callout type="warn">
+  **The page shows old data on a server.** It was rendered at build time. Build again, or fetch the fresh part in the component.
+</Callout>
+
+<Callout type="warn">
+  **`?tag=` is ignored in `load`.** The page was rendered at build time without a query string. Read it in the component with `useSearchParams()`.
+</Callout>

@@ -1,0 +1,27 @@
+---
+title: Updating the core
+description: How a project stays current
+---
+
+```bash
+bun update @consify/core @consify/docs @consify/blog @consify/api-reference
+```
+
+Update the core and the features you use together (leave out the ones you do not have). This keeps their versions in step. That is the whole procedure. Your `docs.config.ts`, `content/` and `custom/` are yours; the package never writes into them. The files in `.consify/` are regenerated at every start.
+
+## What can break
+
+- **A renamed or removed option.** An unknown key is an error, so the start stops and names the option instead of ignoring it. The version notes say what it became.
+- **A new required setting.** New settings have defaults, so an update does not make an existing config invalid.
+- **Your own features and components.** They use `defineFeature`, React and the tokens of the theme. The version notes list every change to `defineFeature`.
+
+See [Upgrading](/docs/v0/upgrading) for the version notes.
+
+## Checking that it works
+
+```bash
+bun run typecheck
+bun run build
+```
+
+The typecheck covers your config, your features and your components. The build fails on an invalid config, an unknown category in a blog post (with `@consify/blog`) or a broken front matter. `consify check` checks the content without a build: the addresses of every feature, the front matter, the translations and `meta.json`.

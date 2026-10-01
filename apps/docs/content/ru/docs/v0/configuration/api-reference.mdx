@@ -1,0 +1,49 @@
+---
+title: Справочник API
+description: Интерактивная страница API из схемы OpenAPI
+---
+
+Справочник API является фичей: он включён, если `apiReference()` есть в списке `features` конфигурации. В этой документации он не используется.
+
+## Установка
+
+```bash
+bun add @consify/api-reference
+```
+
+Обновляйте его вместе с ядром (см. [Обновление](/docs/v0/concepts/updating)).
+
+## Опции
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { apiReference } from "@consify/api-reference";
+
+export default defineConfig({
+  site: { name: "My docs" },
+  features: [apiReference({ input: "./openapi.json", title: "API" })],
+});
+```
+
+<TypeTable
+  type={{
+    input: { description: "Схема OpenAPI: файл относительно корня проекта или URL.", type: "string", required: true },
+    title: { description: "Заголовок страницы и текст её ссылки в шапке.", type: "string | Record<language, string>", default: '"API"' },
+    id: { description: "Адрес (`/{lang}/<id>`) и id ссылки. Задайте его для второго справочника API.", type: "string", default: '"api"' },
+  }}
+/>
+
+Страница находится по адресу `/{lang}/api` (id ссылки `api`) и отображается через [Scalar](https://scalar.com): операции, модели, примеры на нескольких языках и клиент для пробных запросов. Она следует теме сайта (светлой или тёмной), а её поиск это поле вверху боковой панели, оформленное как в документации.
+
+Ничего из этого не загружается, пока читатель не откроет страницу.
+
+## Несколько API
+
+Каждый вызов со своим `id` — отдельная страница со своей ссылкой:
+
+```ts title="docs.config.ts"
+features: [
+  apiReference({ input: "./openapi/public.json", title: "API" }),
+  apiReference({ input: "./openapi/admin.json", title: "Admin API", id: "admin-api" }),
+],
+```

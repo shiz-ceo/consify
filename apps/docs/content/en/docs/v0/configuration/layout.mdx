@@ -1,0 +1,111 @@
+---
+title: Home, header and footer
+description: The frame around every page
+---
+
+The home page, the header and the footer are described **once**, and every page uses them: the sections of the features (the docs, the blog, the API reference, your own) and the home page itself. That keeps the site consistent. A custom home page is drawn inside the same header and footer as everything else.
+
+Each part has three levels. Use the lowest one that does the job.
+
+| Level | Home | Header | Footer |
+| --- | --- | --- | --- |
+| Configure | `content/<language>/home.mdx` | `header.links` | `footer` block |
+| Switch off | leave it out (redirects to the first section) | (always there) | `footer: false` |
+| Replace | a feature with `path: ""` | `custom/header.tsx` | `custom/footer.tsx` |
+
+Replacing the header and the footer is covered in [Slots](/docs/v0/customizing/slots). This page is about configuring.
+
+## Home page
+
+The page at `/{lang}` is `content/<language>/home.mdx`, one file per language. It is an ordinary MDX file with two components for a front page, `<Hero />` and `<Features />`:
+
+```mdx title="content/en/home.mdx"
+---
+title: Lattice
+description: A typed job queue for TypeScript.
+---
+
+<Hero
+  title="Background jobs without the guesswork"
+  description="A typed job queue for TypeScript."
+  actions={[
+    { label: "Get started", href: "/docs" },
+    { label: "Why?", href: "/docs/v0/concepts", variant: "secondary" },
+  ]}
+/>
+
+<Features
+  items={[
+    { icon: "ShieldCheck", title: "Typed", description: "One type for the whole flow.", href: "/docs/v0" },
+  ]}
+/>
+```
+
+Below them the file can hold anything a page can: text, code blocks, your own components. `title` and `description` of the front matter go to the `<head>` of the page.
+
+A language without its own `home.mdx` shows the one of the default language, like any page without a translation. Links that start with `/` get the language; `/docs` opens the default version of the docs. `href` can also be the id of a [link](/docs/v0/configuration/navigation), for example `"blog"`. `icon` is the name of a [Lucide](https://lucide.dev/icons) icon.
+
+Without `home.mdx` the reader is sent to the first section that has a link (for a site with `docs()` that is usually the documentation).
+
+### A React front page
+
+For a front page that is a React component, write a feature whose `path` is `""` and list it in `features`. It takes `/{lang}` instead of `home.mdx`:
+
+```tsx title="custom/features/landing.tsx"
+import { defineFeature } from "@consify/core";
+
+export const landing = defineFeature({
+  id: "landing",
+  path: "",
+  pages: {
+    "/": ({ lang }) => <main>Welcome ({lang})</main>,
+  },
+});
+```
+
+See [Features](/docs/v0/features) for what a feature can do.
+
+## Header
+
+The header has the name of the site on the left, the links in the middle, and the language and theme controls on the right. Which links it shows is set with `header.links`: see [Header and footer links](/docs/v0/configuration/navigation). Without it the header lists the main place of every section that has a title (Documentation, Blog, API), in the order of `features`.
+
+`slots.header` replaces the links in the middle, `slots.headerEnd` adds to the right side, `slots.footer` replaces the footer. They are React components, and the files `custom/header.tsx` and `custom/footer.tsx` do the same (see [Slots](/docs/v0/customizing/slots)).
+
+## Search
+
+Every section with content has its own search: the docs search their pages, the blog its posts. All of them look and work the same. The search is a field at the top of the sidebar (in the docs, and in the sidebar of the API reference, where it opens the search of Scalar). On small screens the sidebar opens from the sidebar button, and the field is in it. Cmd/Ctrl+K opens the search of the section the reader is on.
+
+Pages without a sidebar (the home page, the blog, the 404 page) have no search field. The blog list has its own search box that filters the posts. A section without content (a custom one that brings no search) has no search.
+
+## Footer
+
+Without settings the footer has one column with the main place of every section that is on and a link to GitHub, with the site description and a copyright line. Configure it (the columns take the same link items as the header, see [Header and footer links](/docs/v0/configuration/navigation)):
+
+```ts title="docs.config.ts"
+footer: {
+  description: { en: "A typed job queue.", ru: "Типизированная очередь задач." },
+  columns: [
+    {
+      title: "Product",
+      links: [
+        "docs",
+        "blog:rss",
+        { title: "GitHub", url: "https://github.com/example/lattice" },
+      ],
+    },
+  ],
+  social: [{ type: "github", url: "https://github.com/example/lattice" }],
+  legal: "© 2026 Lattice",
+},
+```
+
+<TypeTable
+  type={{
+    description: { description: "Text under the name of the site.", type: "string | Record<language, string>", default: "site.description" },
+    columns: { description: "Columns of links. Titles can be strings or one string per language. Links are [link items](/docs/v0/configuration/navigation) (no drop-down menus).", type: "{ title, links[] }[]", default: "one column with the main places and GitHub" },
+    social: { description: "Icons: `github`, `x`, `bluesky`, `linkedin`, `discord`, `youtube`, `rss`.", type: "{ type, url }[]", default: "[]" },
+    legal: { description: "The bottom line.", type: "string | Record<language, string>", default: "© {year} {name}. All rights reserved." },
+  }}
+/>
+
+Pages without a sidebar (home, blog) show the full footer. The docs and the API reference show a compact one, lined up with the content. `footer: false` removes both.

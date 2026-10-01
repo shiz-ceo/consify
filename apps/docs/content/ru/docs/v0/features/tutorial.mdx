@@ -1,0 +1,669 @@
+---
+title: "Руководство: фича с контентом шаг за шагом"
+description: Соберите раздел примеров демо-сайта с нуля, шаг за шагом, и разберитесь в каждой строке
+---
+
+В этом руководстве вы соберёте раздел рецептов для библиотеки очередей задач Lattice. Это фича `examples` демо-сайта consify (`apps/demo/custom/features/examples.tsx`), собранная заново из пустого файла.
+
+В конце у сайта будет:
+
+- `/en/examples`: список примеров карточками, новые сверху, с фильтром по тегу;
+- `/en/examples/cron-schedule`: страница для каждого примера, его текст MDX скомпилирован на сервере;
+- то же по-русски на `/ru/examples`, где непереведённые примеры показаны на английском, с пометкой на странице;
+- поиск, лента RSS и картинка для соцсетей к каждому примеру — без единой строки для них.
+
+Нужен работающий сайт на consify (см. [Начало работы](/docs/v0/getting-started)) с двумя языками, `en` и `ru`, в `i18n.languages`. Когда захотите узнать подробности шага, читайте [Контент и записи](/docs/v0/features/content).
+
+## Шаги
+
+<Steps>
+<Step>
+
+### Напишите файлы в content/
+
+Пример — это MDX-файл. Создайте три таких в `content/en/examples/`:
+
+<Files>
+  <Folder name="content" defaultOpen>
+    <Folder name="en" defaultOpen>
+      <Folder name="examples" defaultOpen>
+        <File name="cron-schedule.mdx" />
+        <File name="priority-lanes.mdx" />
+        <File name="retry-with-backoff.mdx" />
+      </Folder>
+    </Folder>
+  </Folder>
+  <Folder name="custom" defaultOpen>
+    <Folder name="features" defaultOpen>
+      <File name="examples.tsx" />
+    </Folder>
+  </Folder>
+  <File name="docs.config.ts" />
+</Files>
+
+````mdx title="content/en/examples/retry-with-backoff.mdx"
+---
+title: Retry with backoff
+description: Retry a failing job with exponential delays.
+level: beginner
+tags: [retries, jobs]
+date: 2026-08-01
+---
+
+A job that fails is retried. Give it a number of attempts and a backoff:
+
+```ts
+await payments.add({ orderId: "o_1" }, { retries: 5, backoff: "exponential" });
+```
+
+The delay doubles with every attempt, with some jitter so retries do not arrive together.
+````
+
+````mdx title="content/en/examples/cron-schedule.mdx"
+---
+title: A job on a schedule
+description: Run a job every night with a cron expression.
+level: beginner
+tags: [cron, jobs]
+date: 2026-08-10
+---
+
+```ts
+await reports.schedule("nightly", { cron: "0 3 * * *" });
+```
+
+The scheduler keeps one job per name, so a restart does not add a second one.
+````
+
+````mdx title="content/en/examples/priority-lanes.mdx"
+---
+title: Priority lanes
+description: Keep urgent jobs ahead of the bulk with separate lanes.
+level: advanced
+tags: [queues, priority]
+date: 2026-08-20
+---
+
+Give a queue several lanes and a weight for each:
+
+```ts
+const emails = createQueue("emails", { lanes: { urgent: 5, bulk: 1 } });
+await emails.add({ to: "a@b.c" }, { lane: "urgent" });
+```
+
+Workers take five urgent jobs for every bulk one, so the bulk never starves.
+````
+
+Блок между двумя строками `---` — это front matter (заголовок файла). Это данные о примере, а не текст для читателя:
+
+- `title` и `description` идут в карточку, в `<head>`, в поиск, ленту и картинку для соцсетей. Эти два имени core знает.
+- `level` — наше: `beginner` или `advanced`. Мы показываем его на карточке.
+- `tags` — наше: список для фильтра. Ещё core кладёт теги в ленту.
+- `date` — для порядка, новые сверху. Ещё core кладёт её в ленту.
+
+Всё после front matter — текст: Markdown с блоками кода. В нём можно использовать любой MDX-компонент сайта (`<Callout>`, `<Tabs>`) без импорта.
+
+Имя файла — это адрес: `retry-with-backoff.mdx` будет по адресу `/en/examples/retry-with-backoff`. Каждый файл — это **запись**.
+
+</Step>
+<Step>
+
+### Создайте пустую фичу и подключите её
+
+Фича — это один вызов `defineFeature`. Начните с самой маленькой, которая показывает страницу:
+
+```tsx title="custom/features/examples.tsx"
+import { defineFeature } from "@consify/core";
+
+export const examples = defineFeature({
+  id: "examples",
+  title: "Examples",
+  pages: {
+    "/": () => <main className="mx-auto w-full max-w-3xl px-4 py-12">Examples</main>,
+  },
+});
+```
+
+- `id: "examples"` — это сразу три вещи: адрес (`/en/examples`), папка контента (`content/<language>/examples/`) и id ссылки на раздел.
+- `title` — текст этой ссылки. С заголовком фича предлагает ссылку в шапке.
+- `pages` сопоставляет адреса **внутри** фичи с компонентами. `"/"` — главная страница фичи: `/en/examples`, `/ru/examples`.
+- Компонент — обычный компонент React. Классы — Tailwind; на сайте он уже есть.
+
+Добавьте фичу в `features` в `docs.config.ts`:
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { docs } from "@consify/docs";
+import { examples } from "./custom/features/examples.tsx";
+
+export default defineConfig({
+  // site, i18n, ...
+  features: [docs(), examples],
+});
+```
+
+Запустите `consify dev` и откройте `/en/examples`. На странице написано «Examples», вокруг шапка и подвал сайта. В шапке есть ссылка «Examples». (Если в вашем конфиге задан `header.links`, добавьте туда `"examples"`: сайт, который сам выбирает ссылки, показывает только их.)
+
+</Step>
+<Step>
+
+### Опишите front matter схемой
+
+Расскажите core, как выглядит правильный пример. Тогда core проверит каждый файл:
+
+```tsx title="custom/features/examples.tsx"
+import { defineFeature, z } from "@consify/core";
+
+/** The front matter of an example: `content/<language>/examples/<slug>.mdx`. */
+const example = z.object({
+  title: z.string(),
+  description: z.string(),
+  level: z.enum(["beginner", "advanced"]),
+  tags: z.array(z.string()).default([]),
+  date: z.coerce.date(),
+});
+
+type Example = z.output<typeof example>;
+
+export const examples = defineFeature({
+  id: "examples",
+  title: "Examples",
+  content: {
+    schema: example,
+  },
+  pages: {
+    "/": () => <main className="mx-auto w-full max-w-3xl px-4 py-12">Examples</main>,
+  },
+});
+```
+
+- `z` — это Zod, его экспортирует `@consify/core`. Ставить его не нужно.
+- `z.object({...})` перечисляет поля. Поле без `.optional()` или `.default()` обязательно.
+- `z.enum(["beginner", "advanced"])` принимает только эти два текста.
+- `z.array(z.string()).default([])`: файл без `tags` получает пустой список, и странице не нужно проверять `undefined`.
+- `z.coerce.date()`: YAML отдаёт `2026-08-01` текстом, а это превращает его в `Date`. `z.date()` отверг бы каждый файл.
+- `type Example = z.output<typeof example>` — тип проверенного front matter: `{ title: string; ...; tags: string[]; date: Date }`. Он нужен для страниц.
+- `content: { schema: example }` даёт фиче контент. С этого момента core читает `content/<language>/examples/`.
+
+Попробуйте: поменяйте `level: beginner` на `level: expert` в `cron-schedule.mdx`. Следующий шаг читает записи, и тогда страница покажет:
+
+```text
+Invalid content of "examples":
+  - content/en/examples/cron-schedule.mdx: level: Invalid option: expected one of "beginner"|"advanced"
+```
+
+Названы файл и поле. Верните `beginner`.
+
+</Step>
+<Step>
+
+### Выведите список записей
+
+Главная страница загружает записи и рисует карточку для каждой:
+
+```tsx title="custom/features/examples.tsx"
+import { defineFeature, type Entry, type PageProps, page, z } from "@consify/core";
+import { Link } from "react-router";
+
+// const example = z.object({ ... }), type Example: as in the previous step
+
+function ExampleList({ data }: PageProps<Entry<Example>[]>) {
+  return (
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
+      <h1 className="text-3xl font-semibold">Examples</h1>
+      <ul className="mt-8 space-y-4">
+        {data.map((entry) => (
+          <li key={entry.slug} className="rounded-lg border border-fd-border p-4">
+            <Link to={entry.url} className="font-medium underline">
+              {entry.data.title}
+            </Link>
+            <p className="mt-1 text-sm text-fd-muted-foreground">{entry.data.description}</p>
+            <p className="mt-2 text-xs text-fd-muted-foreground">
+              {entry.data.level} · {entry.readingTime} min
+            </p>
+          </li>
+        ))}
+      </ul>
+    </main>
+  );
+}
+
+export const examples = defineFeature({
+  id: "examples",
+  title: "Examples",
+  content: {
+    schema: example,
+  },
+  pages: {
+    "/": page({
+      load: ({ content }) => content.entries<Example>(),
+      component: ExampleList,
+    }),
+  },
+});
+```
+
+Часть страницы:
+
+- `load` выполняется на сервере до того, как страница нарисована. Он получает `content`: контент этой фичи на языке адреса.
+- `content.entries<Example>()` возвращает все записи, проверенные схемой. `<Example>` лишь сообщает TypeScript тип `data`.
+- То, что вернул `load`, становится `data` компонента. `page()` связывает эти два типа; во время работы он ничего не делает.
+
+Часть компонента:
+
+- `PageProps<Entry<Example>[]>`: `data` — список записей, у которых front matter — это `Example`.
+- `entry.slug` — стабильный ключ: `retry-with-backoff`.
+- `entry.url` — полный адрес с языком: `/en/examples/retry-with-backoff`. Адреса записей вы никогда не собираете сами.
+- `entry.data` — проверенный front matter: `entry.data.title`, `entry.data.level`.
+- `entry.readingTime` считает core: слова / 200, минимум 1.
+- `Link` из `react-router` открывает страницу без перезагрузки сайта.
+- `border-fd-border`, `text-fd-muted-foreground` — цвета темы сайта, правильные и в светлой, и в тёмной теме.
+
+Откройте `/en/examples`: три карточки в порядке имён файлов. Ссылки пока ведут на 404: страницы записи ещё нет.
+
+</Step>
+<Step>
+
+### Фильтр по тегу через параметры адреса
+
+Добавьте над списком ряд тегов. Щелчок добавляет к адресу `?tag=jobs`, и список показывает только примеры с этим тегом:
+
+```tsx title="custom/features/examples.tsx"
+import { defineFeature, type Entry, type PageProps, page, z } from "@consify/core";
+import { Link, useSearchParams } from "react-router";
+
+function ExampleList({ data }: PageProps<Entry<Example>[]>) {
+  const tag = useSearchParams()[0].get("tag");
+  const shown = tag ? data.filter((entry) => entry.data.tags.includes(tag)) : data;
+  const tags = [...new Set(data.flatMap((entry) => entry.data.tags))].sort();
+  return (
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
+      <h1 className="text-3xl font-semibold">Examples</h1>
+      <nav className="mt-6 flex flex-wrap gap-2 text-sm">
+        {tags.map((name) => (
+          <Link
+            key={name}
+            to={tag === name ? "." : `?tag=${encodeURIComponent(name)}`}
+            className={tag === name ? "font-medium" : "text-fd-muted-foreground"}
+          >
+            #{name}
+          </Link>
+        ))}
+      </nav>
+      <ul className="mt-8 space-y-4">
+        {shown.map((entry) => (
+          <li key={entry.slug} className="rounded-lg border border-fd-border p-4">
+            <Link to={entry.url} className="font-medium underline">
+              {entry.data.title}
+            </Link>
+            <p className="mt-1 text-sm text-fd-muted-foreground">{entry.data.description}</p>
+            <p className="mt-2 text-xs text-fd-muted-foreground">
+              {entry.data.level} · {entry.readingTime} min
+            </p>
+          </li>
+        ))}
+      </ul>
+    </main>
+  );
+}
+```
+
+- `useSearchParams()` читает параметры адреса. `search.get("tag")` равен `"jobs"` для `?tag=jobs` и `null` без него.
+- `shown` — список, который рисуем: отфильтрованный, если тег есть, иначе целиком.
+- `tags` собирает все теги всех записей: `flatMap` делает один список, `new Set` убирает повторы, `sort` упорядочивает. Ряд строится из контента, поэтому новый тег в файле появится сам.
+- ``to={`?tag=${encodeURIComponent(name)}`}`` оставляет адрес и меняет только параметры. `encodeURIComponent` не даёт тегу с пробелом или `&` сломать адрес.
+- Ссылка выбранного тега ведёт на `"."`, ту же страницу без параметров: второй щелчок снимает фильтр.
+- Ссылка выбранного тега жирная (`font-medium`), остальные приглушённые.
+- Список теперь перебирает `shown`, а не `data`.
+
+Почему фильтр в компоненте, а не в `load`? Статический сайт рисует `/en/examples` один раз, при сборке, без параметров. Фильтр в компоненте работает и в браузере, поэтому он работает и на статическом сайте, и на сервере. Список маленький (только front matter), так что отправить его целиком дёшево.
+
+</Step>
+<Step>
+
+### Добавьте страницу для каждой записи
+
+Ещё одна страница, с `entry: true`:
+
+```tsx title="custom/features/examples.tsx"
+import { defineFeature, type Entry, type EntryPage, Mdx, type PageProps, page, z } from "@consify/core";
+
+function ExamplePage({ data }: PageProps<EntryPage<Example>>) {
+  return (
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
+      <h1 className="text-3xl font-semibold">{data.data.title}</h1>
+      <Mdx code={data.code} className="prose mt-8" />
+    </main>
+  );
+}
+```
+
+```tsx
+  pages: {
+    "/": page({
+      load: ({ content }) => content.entries<Example>(),
+      component: ExampleList,
+    }),
+    "/:slug": { entry: true, component: ExamplePage },
+  },
+```
+
+- `"/:slug"` — адрес с одним параметром: `/en/examples/cron-schedule`. Все наши файлы лежат прямо в папке, так что одного сегмента хватает. С вложенными папками или `index.mdx` было бы `"/*"`.
+- `entry: true` говорит core: это страница записи. Core берёт slug из адреса, находит запись, отвечает 404, если её нет, перечисляет адреса всех записей для сборки и карты сайта и заполняет `<head>` заголовком и описанием записи.
+- `load` нет: компонент получает саму запись как `data`.
+- `PageProps<EntryPage<Example>>`: `EntryPage` — это запись плюс её скомпилированный текст (`code`), заголовки (`toc`), переводы (`alternates`) и адрес оригинала (`original`).
+- `data.data.title`: `data` — то, что получила страница, `data.data` — front matter записи.
+- `<Mdx code={data.code} />` рисует текст. MDX скомпилирован на сервере, с подсветкой кода сайта. `className="prose mt-8"` сохраняет типографику сайта (`prose`, значение по умолчанию) и добавляет отступ.
+
+Откройте карточку: на странице заголовок и текст с подсвеченным блоком кода. Во вкладке браузера — заголовок примера. Откройте `/en/examples/nothing`: 404.
+
+</Step>
+<Step>
+
+### Переведите строки интерфейса
+
+«Examples» и «min» — это текст интерфейса, а не контента. Он идёт в `messages`, по набору на язык, а страница получает его через `t`:
+
+```tsx title="custom/features/examples.tsx"
+export const examples = defineFeature({
+  id: "examples",
+  title: ({ t }) => t("examples"),
+  messages: {
+    en: {
+      examples: "Examples",
+      beginner: "Beginner",
+      advanced: "Advanced",
+      minutes: "{n} min",
+    },
+    ru: {
+      examples: "Примеры",
+      beginner: "Для начала",
+      advanced: "Продвинутый",
+      minutes: "{n} мин",
+    },
+  },
+  // content, pages: as before
+});
+```
+
+Затем замените текст в компонентах:
+
+```tsx
+<h1 className="text-3xl font-semibold">{t("examples")}</h1>
+```
+
+```tsx
+{t(entry.data.level)} · {t("minutes", { n: String(entry.readingTime) })}
+```
+
+Возьмите `t` из свойств списка: `function ExampleList({ data, t }: ...)`.
+
+- `title: ({ t }) => t("examples")`: заголовок теперь функция, поэтому на русских страницах шапка пишет «Примеры».
+- `messages.en` — образец. Ключ, которого нет в `ru`, показывает английскую строку.
+- `t(entry.data.level)`: значения `level` (`beginner`, `advanced`) — это ещё и ключи строк. Схема разрешает только эти два, поэтому строка есть для каждого значения.
+- В `"{n} min"` есть подстановка; `t("minutes", { n: "3" })` её заполняет. Значения — строки, отсюда `String(...)`.
+
+Подробнее о строках: [Строки](/docs/v0/features/strings).
+
+</Step>
+<Step>
+
+### Сортировка, картинки, лента и поиск
+
+Четыре строки в `content`:
+
+```ts
+  content: {
+    schema: example,
+    sort: (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+    og: true,
+    rss: true,
+  },
+```
+
+- `sort` — функция сравнения записей. `b` перед `a` значит «новые сверху»: приоритетные дорожки (20 августа), расписание (10 августа), повторы (1 августа). `date` — это `Date` благодаря `z.coerce.date()`, поэтому `getTime()` работает. Этот порядок используют `content.entries()` и лента.
+- `og: true`: PNG с заголовком, описанием и названием сайта для каждого примера по адресу `/en/examples/og/cron-schedule.png` и `og:image` в `<head>` его страницы.
+- `rss: true`: лента по адресу `/en/examples/rss.xml` с заголовком, описанием, датой и тегами каждого примера; `<link rel="alternate">` на неё на каждой странице фичи; и id ссылки `examples:rss` для шапки или подвала.
+- Для поиска строка не нужна: он включён у любой фичи с контентом. Поле поиска на страницах раздела ищет по заголовкам, описаниям, подзаголовкам и тексту примеров.
+
+Внутри `content` у `a` и `b` тип `any`. Для проверки типов пишите `(a: Entry<Example>, b: Entry<Example>)`; в демо оставлена короткая форма.
+
+Подробно о каждом: [Боковое меню, поиск, llms.txt, картинки, RSS](/docs/v0/features/content-services).
+
+</Step>
+<Step>
+
+### Переведите запись и посмотрите на непереведённую
+
+Перевод — это файл с тем же именем в папке языка:
+
+````mdx title="content/ru/examples/retry-with-backoff.mdx"
+---
+title: Повторы с backoff
+description: Повторить упавшую задачу с растущей задержкой.
+level: beginner
+tags: [retries, jobs]
+date: 2026-08-01
+---
+
+Упавшая задача повторяется. Задайте число попыток и задержку:
+
+```ts
+await payments.add({ orderId: "o_1" }, { retries: 5, backoff: "exponential" });
+```
+
+Задержка удваивается с каждой попыткой, со случайным разбросом, чтобы повторы не приходили разом.
+````
+
+- `title`, `description` и текст переведены.
+- `level`, `tags` и `date` — нет: их сравнивает код. `level: beginner` остаётся `beginner`, а `t()` покажет его как «Для начала».
+- Блок кода такой же, как в оригинале. `consify check` их сравнивает.
+
+Список менять не нужно. Откройте `/ru/examples`. Карточек три, а не одна:
+
+- «Повторы с backoff» — русский файл.
+- «A job on a schedule» и «Priority lanes» русского файла не имеют. Core взял английские и поставил `entry.fallback` в `true`; на их карточках английские заголовок и текст.
+
+Откройте `/ru/examples/cron-schedule`. Там английский текст. А ещё core:
+
+- направляет канонический адрес на `/en/examples/cron-schedule`, чтобы поисковики не видели копию;
+- ставит `<html lang="en">`, язык текста;
+- не включает адрес в карту сайта.
+
+Но читатель страницы всё ещё не знает, почему текст на английском. Скажите ему об этом пометкой сайта. Добавьте `FallbackNotice` в импорт:
+
+```tsx
+import {
+  defineFeature,
+  type Entry,
+  type EntryPage,
+  FallbackNotice,
+  Mdx,
+  type PageProps,
+  page,
+  z,
+} from "@consify/core";
+```
+
+и нарисуйте его в `ExamplePage`, между заголовком и текстом:
+
+```tsx
+      <h1 className="text-3xl font-semibold">{data.data.title}</h1>
+      {data.fallback ? <FallbackNotice original={data.original} className="mt-6" /> : null}
+      <Mdx code={data.code} className="prose mt-8" />
+```
+
+- `data.fallback` равен `true` только у непереведённой копии, поэтому на русской странице `retry-with-backoff` пометки нет.
+- `FallbackNotice` пишет на языке страницы «Эту страницу ещё не перевели. Показана версия: English.» и даёт ссылку на `data.original`, английский адрес.
+- `className="mt-6"` добавляет отступ сверху.
+- Он загружается, когда его рисуют в первый раз, поэтому может жить в этом файле рядом с `defineFeature`: Node по-прежнему загружает файл вместе с `docs.config.ts`.
+
+Это `i18n.fallback: "notice"`, режим по умолчанию. С `"hide"` эти две карточки пропадут с `/ru/examples`, а их русские страницы будут отвечать 404. С `"show"` они выглядят переведёнными: ни пометки на карточке, ни пометки на странице, `fallback` равен `false`. Подробнее в [Переводах](/docs/v0/features/content).
+
+</Step>
+<Step>
+
+### Проверьте
+
+Запустите проверку контента:
+
+```bash
+consify check
+```
+
+Она строит список всех адресов всех фич (для этого читает и проверяет каждую запись), проверяет front matter каждого файла, сравнивает каждый перевод с оригиналом и проверяет файлы `meta.json`. Для наших файлов она предупреждает:
+
+```text
+warning: content/en/examples/cron-schedule.mdx: no "ru" version
+warning: content/en/examples/priority-lanes.mdx: no "ru" version
+```
+
+Это предупреждения: непереведённые записи разрешены. С `consify check --strict` они становятся ошибками — для сайта, который должен быть переведён полностью. Сломанный front matter или перевод с другим блоком кода — всегда ошибка, и команда выходит с кодом 1, так что её можно запускать в CI.
+
+Потом посмотрите в `consify dev`:
+
+| Адрес | Что должно быть |
+| --- | --- |
+| `/en/examples` | Три карточки, новые сверху, ряд тегов |
+| `/en/examples?tag=jobs` | Две карточки |
+| `/en/examples/cron-schedule` | Текст с подсвеченным блоком кода |
+| `/ru/examples` | Три карточки, две из них на английском |
+| `/ru/examples/cron-schedule` | Пометка «ещё не перевели», затем английский текст |
+| `/en/examples/rss.xml` | Лента |
+| `/en/examples/og/cron-schedule.png` | Картинка для соцсетей |
+
+Поменяйте файл в `content/` и сохраните: открытая страница перезагрузится с изменением. В `consify dev` ничего не кешируется.
+
+Автоматические тесты фичи: [Тестирование](/docs/v0/features/testing).
+
+</Step>
+<Step>
+
+### Готовый файл
+
+Вот фича целиком, такая же, как `apps/demo/custom/features/examples.tsx`:
+
+```tsx title="custom/features/examples.tsx"
+import {
+  defineFeature,
+  type Entry,
+  type EntryPage,
+  FallbackNotice,
+  Mdx,
+  type PageProps,
+  page,
+  z,
+} from "@consify/core";
+import { Link, useSearchParams } from "react-router";
+
+/** The front matter of an example: `content/<language>/examples/<slug>.mdx`. */
+const example = z.object({
+  title: z.string(),
+  description: z.string(),
+  level: z.enum(["beginner", "advanced"]),
+  tags: z.array(z.string()).default([]),
+  date: z.coerce.date(),
+});
+
+type Example = z.output<typeof example>;
+
+/** The list: every example as a card, filtered by a tag from the address (`?tag=cron`). */
+function ExampleList({ data, t }: PageProps<Entry<Example>[]>) {
+  const tag = useSearchParams()[0].get("tag");
+  const shown = tag ? data.filter((entry) => entry.data.tags.includes(tag)) : data;
+  const tags = [...new Set(data.flatMap((entry) => entry.data.tags))].sort();
+  return (
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
+      <h1 className="text-3xl font-semibold">{t("examples")}</h1>
+      <nav className="mt-6 flex flex-wrap gap-2 text-sm">
+        {tags.map((name) => (
+          <Link
+            key={name}
+            to={tag === name ? "." : `?tag=${encodeURIComponent(name)}`}
+            className={tag === name ? "font-medium" : "text-fd-muted-foreground"}
+          >
+            #{name}
+          </Link>
+        ))}
+      </nav>
+      <ul className="mt-8 space-y-4">
+        {shown.map((entry) => (
+          <li key={entry.slug} className="rounded-lg border border-fd-border p-4">
+            <Link to={entry.url} className="font-medium underline">
+              {entry.data.title}
+            </Link>
+            <p className="mt-1 text-sm text-fd-muted-foreground">{entry.data.description}</p>
+            <p className="mt-2 text-xs text-fd-muted-foreground">
+              {t(entry.data.level)} · {t("minutes", { n: String(entry.readingTime) })}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </main>
+  );
+}
+
+/** One example: its text, compiled from MDX by core. */
+function ExamplePage({ data }: PageProps<EntryPage<Example>>) {
+  return (
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
+      <h1 className="text-3xl font-semibold">{data.data.title}</h1>
+      {data.fallback ? <FallbackNotice original={data.original} className="mt-6" /> : null}
+      <Mdx code={data.code} className="prose mt-8" />
+    </main>
+  );
+}
+
+/** Examples of Lattice: MDX files with a checked front matter and tags, a page per file. */
+export const examples = defineFeature({
+  id: "examples",
+  title: ({ t }) => t("examples"),
+  messages: {
+    en: {
+      examples: "Examples",
+      beginner: "Beginner",
+      advanced: "Advanced",
+      minutes: "{n} min",
+    },
+    ru: {
+      examples: "Примеры",
+      beginner: "Для начала",
+      advanced: "Продвинутый",
+      minutes: "{n} мин",
+    },
+  },
+  content: {
+    schema: example,
+    sort: (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+    og: true,
+    rss: true,
+  },
+  pages: {
+    "/": page({ load: ({ content }) => content.entries<Example>(), component: ExampleList }),
+    "/:slug": { entry: true, component: ExamplePage },
+  },
+});
+```
+
+| Строки | Что это | Шаг |
+| --- | --- | --- |
+| 1–11 | Импорты: всё из `@consify/core`, ссылки и параметры адреса из `react-router` | 4, 6, 9 |
+| 13–22 | Схема front matter и её тип | 3 |
+| 24–58 | Список с фильтром по тегу | 4, 5, 9 |
+| 60–69 | Страница одного примера, с пометкой для непереведённого | 6, 9 |
+| 72–74 | id и заголовок из строк | 2, 7 |
+| 75–88 | Строки на двух языках | 7 |
+| 89–94 | Контент: схема, порядок, картинки для соцсетей, лента | 3, 8 |
+| 95–98 | Страницы: список и страница записи | 4, 6 |
+
+Около 100 строк, и ни одна из них не читает файл, не разбирает YAML, не компилирует MDX, не собирает адрес, не обрабатывает отсутствующий перевод и не пишет XML. Это делает core.
+
+</Step>
+</Steps>
+
+## Что дальше
+
+- Боковое меню для записей в папках, как в документации: [боковое меню](/docs/v0/features/content-services).
+- Больше данных на странице записи (похожие примеры, авторы): [страница записи с load](/docs/v0/features/content).
+- Опубликовать фичу пакетом для других сайтов: [Пакеты](/docs/v0/features/packages).
+- Все опции в одном месте: [Справочник](/docs/v0/features/reference).

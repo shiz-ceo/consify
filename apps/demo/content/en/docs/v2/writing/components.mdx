@@ -1,0 +1,76 @@
+---
+title: Built-in components
+description: Everything available in .mdx without imports
+---
+
+## Callouts
+
+<Callout type="info" title="Info">Neutral information.</Callout>
+<Callout type="warn" title="Warning">Something to be careful about.</Callout>
+<Callout type="error" title="Error">Something that will break.</Callout>
+<Callout type="idea" title="Idea">A suggestion.</Callout>
+
+## Tabs
+
+<Tabs items={["TypeScript", "JavaScript"]}>
+  <Tab value="TypeScript">
+```ts
+const total: number = items.length;
+```
+  </Tab>
+  <Tab value="JavaScript">
+```js
+const total = items.length;
+```
+  </Tab>
+</Tabs>
+
+## Badges
+
+<Badge>default</Badge> <Badge variant="new">new</Badge> <Badge variant="beta">beta</Badge> <Badge variant="deprecated">deprecated</Badge> <Badge variant="danger">breaking</Badge>
+
+## Steps
+
+<Steps>
+<Step>Install the package.</Step>
+<Step>Create `docs.config.ts`.</Step>
+<Step>Write your first page.</Step>
+</Steps>
+
+## Accordion
+
+<Accordions>
+  <Accordion title="Is this open source?">This is a demo, so the answer is up to you.</Accordion>
+  <Accordion title="Can I nest components?">Yes: an accordion can contain tabs, code, even another accordion.</Accordion>
+</Accordions>
+
+## File tree
+
+<Files>
+  <Folder name="app" defaultOpen>
+    <File name="layout.tsx" />
+    <File name="page.tsx" />
+  </Folder>
+  <File name="docs.config.ts" />
+</Files>
+
+## Type table
+
+<TypeTable
+  type={{
+    title: { description: "Text shown in the sidebar and page header.", type: "string", required: true },
+    icon: { description: "Lucide icon name.", type: "string" },
+    full: { description: "Use the full page width.", type: "boolean", default: "false" },
+  }}
+/>
+
+## Cards
+
+<Cards>
+  <Card title="Code blocks" description="Titles, highlights, diffs and type hovers." />
+  <Card title="Math and diagrams" description="KaTeX formulas and Mermaid diagrams." />
+</Cards>
+
+## Video
+
+<Video src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" title="Demo clip" />

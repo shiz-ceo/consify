@@ -1,0 +1,342 @@
+---
+title: Sidebar, search, llms.txt, images, RSS
+description: What core makes from the entries of a feature when you turn it on, at which address, and how to use it in your pages
+---
+
+Once a feature has [entries](/docs/v0/features/content), core can make more from them: a sidebar, a search, text for AI agents, a social image per entry, and a feed. Each is one switch in `content`:
+
+```ts
+content: {
+  schema: example,
+  tree: true,    // a sidebar from the folders and meta.json
+  search: true,  // on by default
+  llms: true,    // llms.txt and llms-full.txt
+  og: true,      // a social image for every entry
+  rss: true,     // an RSS feed
+},
+```
+
+| Option | Default | What it makes | Address |
+| --- | --- | --- | --- |
+| `tree` | off | The sidebar, in `data.tree` of entry pages | none, it is data |
+| `search` | on | The search index; the search field of the site searches the entries | `/{lang}/<id>/search.json` |
+| `llms` | off | An index and the full text of the entries for AI agents | `/{lang}/<id>/llms.txt`, `/{lang}/<id>/llms-full.txt` |
+| `og` | off | A PNG image for every entry | `/{lang}/<id>/og/<slug>.png` |
+| `rss` | off | An RSS 2.0 feed | `/{lang}/<id>/rss.xml` |
+
+`<id>` in the addresses is the address of the feature: its `id`, or its `path` when you set one. Every service uses the same entries as `content.entries()`: checked by the schema, without the filtered ones, with the untranslated ones as `i18n.fallback` says.
+
+## The sidebar: tree
+
+With `tree: true`, every entry page gets `data.tree`: the sidebar of the whole feature in the language of the page. It is made from the folders of `content/<language>/<folder>/` and the `meta.json` files in them. This is exactly how the sidebar of the docs is made.
+
+### What goes into the sidebar
+
+- Every folder is a group; its `index.mdx` is the page of the group.
+- Every entry is a link. Its text is `title` of the front matter, else the file name.
+- `icon: Rocket` in the front matter puts a [Lucide](https://lucide.dev/icons) icon before it.
+- Without a `meta.json`, pages come in alphabetical order.
+- With `i18n.fallback: "notice"`, a page that is not translated has a small `EN` mark in the sidebar of other languages. With `hide`, it is not there.
+
+### meta.json
+
+A `meta.json` in a folder sets the title of the group, its icon, and the order of its pages:
+
+```json title="content/en/notes/meta.json"
+{
+  "title": "Notes",
+  "icon": "NotebookPen",
+  "pages": ["index", "---Basics---", "setup", "queues", "---More---", "..."]
+}
+```
+
+| Key | What it does |
+| --- | --- |
+| `title` | The name of the group in the sidebar |
+| `icon` | A Lucide icon name |
+| `pages` | The order. Items are listed below |
+| `defaultOpen` | `true` opens the group when the page loads |
+| `collapsible` | `false` keeps the group always open |
+| `root` | The folder is a sidebar of its own, with a switcher between such folders on top. The docs use it for versions: `"root": "version"` |
+
+Items of `pages`:
+
+| Item | Means |
+| --- | --- |
+| `"setup"` | The page `setup.mdx`, or the folder `setup/` |
+| `"---Basics---"` | A separator with the label "Basics" |
+| `"..."` | Every page and folder you did not list, in alphabetical order |
+| `"z...a"` | The same, in reverse order |
+| `"!draft"` | Leave `draft` out of the `"..."` |
+| `"...queues"` | The pages of the folder `queues/` in its place, without a group around them |
+| `"[GitHub](https://github.com/example/lattice)"` | A link |
+| `"external:[GitHub](https://github.com/example/lattice)"` | A link marked as leading out of the site |
+
+<Callout type="warn">
+Without `"..."`, a page you forget to list is missing from the sidebar. `consify check` warns about every page and folder that exists but is not in `pages`, and fails on a name in `pages` that has no file. Separators, `"..."`, `"z...a"` and links are not names of files, so it skips them.
+</Callout>
+
+### A translated meta.json
+
+The `meta.json` of another language translates the titles:
+
+```json title="content/ru/notes/meta.json"
+{
+  "title": "Заметки",
+  "pages": ["index", "---Основы---", "setup", "queues", "---Ещё---", "..."]
+}
+```
+
+- `root`, `icon`, `defaultOpen` and `collapsible` are taken from the `meta.json` of the default language. The translation only has to translate.
+- `pages` must list the same pages in the same order; only separators may differ. `consify check` fails otherwise.
+- A page the translated list forgets is added at its end, with a warning in the console, so it never disappears.
+- Without a translated `meta.json`, the folder has the title of the default language.
+
+### Using the tree in a page
+
+The tree is serialized to travel from the server to the browser. `useFumadocsLoader` from Fumadocs turns it back into a tree, and `DocsLayout` draws the sidebar with it. Here is a small "notes" feature, a copy of what `@consify/docs` does in `page.tsx`.
+
+The feature file:
+
+```ts title="custom/features/notes.ts"
+import { defineFeature } from "@consify/core";
+import { lazy } from "react";
+
+// the page imports @consify/core/ui, which only the bundles of the site can load
+const NotePage = lazy(() => import("./note-page.tsx"));
+
+export const notes = defineFeature({
+  id: "notes",
+  title: { en: "Notes", ru: "Заметки" },
+  content: { tree: true },
+  pages: {
+    "/*": { entry: true, layout: "none", component: NotePage },
+  },
+});
+```
+
+The page file:
+
+```tsx title="custom/features/note-page.tsx"
+import { type EntryPage, Mdx, type PageProps } from "@consify/core";
+import { consify, docsLayoutOptions, FallbackNotice, Footer } from "@consify/core/ui";
+import { useFumadocsLoader } from "fumadocs-core/source/client";
+import { DocsLayout } from "fumadocs-ui/layouts/notebook";
+import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/notebook/page";
+
+type Note = { title: string; description?: string };
+
+export default function NotePage({ data, lang }: PageProps<EntryPage<Note>>) {
+  const { pageTree } = useFumadocsLoader({ pageTree: data.tree } as never) as { pageTree: never };
+  return (
+    <>
+      <DocsLayout {...docsLayoutOptions(consify, lang, "notes", true)} tree={pageTree}>
+        <DocsPage toc={data.toc}>
+          {data.fallback ? <FallbackNotice original={data.original} /> : null}
+          <DocsTitle>{data.data.title}</DocsTitle>
+          <DocsDescription>{data.data.description}</DocsDescription>
+          <DocsBody>
+            <Mdx code={data.code} className="" />
+          </DocsBody>
+        </DocsPage>
+      </DocsLayout>
+      <Footer consify={consify} lang={lang} />
+    </>
+  );
+}
+```
+
+Line by line:
+
+- `"/*"` takes nested addresses (`/en/notes/queues/lanes`) and `index.mdx` (`/en/notes`). A sidebar almost always means folders, so it is almost always `"/*"`.
+- `layout: "none"`: `DocsLayout` draws the header of the site itself, so core must not draw another one around the page.
+- `lazy(() => import(...))`: Node loads the feature with `docs.config.ts`, and `@consify/core/ui` cannot be loaded there. The page is loaded only when it is shown.
+- `useFumadocsLoader({ pageTree: data.tree })` turns the serialized tree back into one Fumadocs can draw, with its icons and marks. The casts are there because the tree is typed `unknown` in `EntryPage`.
+- `docsLayoutOptions(consify, lang, "notes", true)` gives the layout the name of the site and the header links of the site. `"notes"` is the id of the feature and `true` asks for a sidebar: together they put the search field on top of the sidebar when the feature has a search.
+- `DocsPage toc={data.toc}` draws the table of contents on the right.
+- `className=""` on `<Mdx>`: `DocsBody` already styles the text.
+- `Footer` is the footer of the site; with `layout: "none"` you draw it yourself.
+
+<Callout type="info">
+This page imports `fumadocs-core` and `fumadocs-ui` directly. Add them to the dependencies of the project, at the versions `@consify/core` uses (see its `package.json`), so there is one copy of each.
+</Callout>
+
+<Callout type="warn">
+Only entry pages get `tree`. A `"/"` page with its own `load` has no sidebar data. With a sidebar, write an `index.mdx` and let `"/*"` show it as the front page of the feature.
+</Callout>
+
+## Search
+
+Search is on for every feature with `content`. You do nothing: the search field of the site searches the entries of the section the reader is on. On a page of the docs it searches the docs; on a page of your feature, your entries.
+
+What is indexed, per language: the `title` and `description` of every entry, and its headings and paragraphs.
+
+| Site | How it searches |
+| --- | --- |
+| A server (`deploy.mode: "server"`) | The browser asks `/{lang}/<id>/search.json?query=...` for every query, and the server answers with the results |
+| A static site (`deploy.mode: "static"`) | `consify build` writes `/{lang}/<id>/search.json` once, with the index of every language. The browser downloads it the first time the reader searches, and searches it itself |
+
+On a static site the index is a file the browser downloads, so a very large feature makes a large file. On a server nothing is downloaded.
+
+### Turning search off
+
+```ts
+content: { schema: example, search: false },
+```
+
+There is no `search.json`, and the pages of the feature have no search field.
+
+### A search of your own
+
+A feature can bring its own search instead: `search` of `defineFeature`. The site keeps one dialog for every search; your feature says what it finds.
+
+`useSearch` is a React hook. It gets `{ lang, isStatic }` and returns what the dialog shows:
+
+```tsx title="custom/features/glossary.tsx"
+import { defineFeature, type SearchContext, type SearchState } from "@consify/core";
+import { useMemo, useState } from "react";
+
+const terms = [
+  { id: "queue", term: "Queue", text: "A list of jobs waiting for a worker." },
+  { id: "lane", term: "Lane", text: "A part of a queue with its own weight." },
+];
+
+function useGlossarySearch({ lang }: SearchContext): SearchState {
+  const [search, setSearch] = useState("");
+  const items = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    // null: nothing to show yet (the input is empty)
+    if (!query) return null;
+    return terms
+      .filter((item) => item.term.toLowerCase().includes(query))
+      .map((item) => ({
+        id: item.id,
+        url: `/${lang}/glossary#${item.id}`,
+        type: "page" as const,
+        content: item.term,
+      }));
+  }, [search, lang]);
+  return { search, setSearch, isLoading: false, items };
+}
+
+export const glossary = defineFeature({
+  id: "glossary",
+  title: "Glossary",
+  search: { useSearch: useGlossarySearch },
+  pages: {
+    "/": () => (
+      <dl className="mx-auto w-full max-w-3xl px-4 py-12">
+        {terms.map((item) => (
+          <div key={item.id} id={item.id}>
+            <dt className="font-medium">{item.term}</dt>
+            <dd>{item.text}</dd>
+          </div>
+        ))}
+      </dl>
+    ),
+  },
+});
+```
+
+| Field of `SearchState` | What it is |
+| --- | --- |
+| `search`, `setSearch` | The text of the input, and how the dialog changes it |
+| `isLoading` | `true` while results are on the way (a spinner) |
+| `items` | `null` while there is nothing to show; else results: `{ id, url, type: "page" \| "heading" \| "text", content, breadcrumbs? }` |
+
+The other choice is `open`: a page that already has a search (Scalar in `apiReference()`) opens it when the reader clicks the search field of the site. `open` returns `false` when it cannot open it yet:
+
+```ts
+search: {
+  open: () => {
+    const button = document.querySelector<HTMLButtonElement>("#my-search-button");
+    button?.click();
+    return button !== null;
+  },
+},
+```
+
+`search` of the feature wins over the search of its content: with it, no `search.json` is used by the dialog.
+
+## Text for AI agents: llms
+
+`llms: true` adds two files per language:
+
+| Address | What is in it |
+| --- | --- |
+| `/{lang}/<id>/llms.txt` | An index: the title, address and description of every entry |
+| `/{lang}/<id>/llms-full.txt` | Every entry: `# Title (address)`, then its Markdown text without the front matter |
+
+An AI agent (or a person) gets the whole feature as text in one request. The docs have it on by default (`llmsTxt` of `docs()`).
+
+It also offers a link with the id `<id>:llms`, which you can put in the header or the footer:
+
+```ts title="docs.config.ts"
+header: {
+  links: ["docs", "notes", "notes:llms"],
+},
+```
+
+`consify links` prints every link id the features of the site offer.
+
+## Social images: og
+
+`og: true` makes a PNG for every entry, with its `title`, its `description` and the name of the site. It is what a chat or a social network shows when someone shares the link.
+
+| Entry | Image |
+| --- | --- |
+| `cron-schedule.mdx` | `/en/examples/og/cron-schedule.png` |
+| `queues/lanes.mdx` | `/en/examples/og/queues/lanes.png` |
+| `index.mdx` | `/en/examples/og/index.png` |
+
+The entry page gets `og:image` and `twitter:card` in its `<head>` by itself. A static site renders every image at build time.
+
+<Callout type="warn">
+Set `site.url` in `docs.config.ts`. Social networks need an absolute address for the image; without `site.url` the address has no host and the image does not show.
+</Callout>
+
+For a page that is not an entry page, set the image yourself with `meta`:
+
+```ts
+"/": page({
+  load: ({ content }) => content.entries<Example>(),
+  meta: () => ({ image: "/examples/cover.png" }),
+  component: ExampleList,
+}),
+```
+
+## A feed: rss
+
+`rss: true` makes an RSS 2.0 feed per language at `/{lang}/<id>/rss.xml`. Its items are the entries, in the order of `sort`, so sort by date for a feed.
+
+| In the feed | Comes from |
+| --- | --- |
+| Title of the feed | `site.name`, then the title of the feature: `Lattice: Examples` |
+| Description of the feed | `site.description` |
+| `<title>` of an item | `title` of the front matter, else the slug |
+| `<link>`, `<guid>` | The address of the entry, absolute with `site.url` |
+| `<pubDate>` | `date` of the front matter (a `Date` or a text), when there is one |
+| `<description>` | `description` of the front matter |
+| `<category>` | Every value of `categories` and `tags` |
+
+Besides the feed itself:
+
+- every page of the feature has `<link rel="alternate" type="application/rss+xml">` in its `<head>`, so feed readers find it from any page;
+- the feature offers the link id `<id>:rss` for `header.links` and `footer.columns`.
+
+Entries that are not translated are in the feed of every language (in their original language), unless `i18n.fallback` is `hide`. Filtered entries are never in it.
+
+## On a static site
+
+A static site has no server, so every address is a file written by `consify build`:
+
+| File | Written |
+| --- | --- |
+| `search.json` | Once per feature and language, with the whole index |
+| `llms.txt`, `llms-full.txt` | Once per language |
+| `og/<slug>.png` | Once per entry and language |
+| `rss.xml` | Once per language |
+
+On a server, each of them is made when it is asked for; the entries behind it are read once and kept while the server runs.
+
+Next: build a feature with all of this in the [tutorial](/docs/v0/features/tutorial), or see every option in the [reference](/docs/v0/features/reference).

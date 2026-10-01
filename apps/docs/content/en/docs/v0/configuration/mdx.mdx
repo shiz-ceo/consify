@@ -1,0 +1,54 @@
+---
+title: MDX
+description: Math, twoslash, components and plugins of every .mdx file
+---
+
+`mdx` holds everything about `.mdx` files: the docs, the blog posts, the front page and the content of your own features. It applies to the whole site.
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { Chart } from "./custom/chart.tsx";
+import { externalLinks } from "./custom/plugins/external-links.ts";
+
+export default defineConfig({
+  site: { name: "My docs" },
+  mdx: {
+    math: true,
+    twoslash: { compilerOptions: { strict: true } },
+    components: { Chart },
+    plugins: [externalLinks],
+  },
+});
+```
+
+Every option is optional.
+
+<TypeTable
+  type={{
+    math: { description: "KaTeX formulas with `$...$` and `$$...$$`.", type: "boolean", default: "true" },
+    twoslash: { description: "Type-checked `twoslash` code blocks with hovers. `false` turns them off, an object sets their options.", type: "boolean | { compilerOptions?, cache? }", default: "true" },
+    components: { description: "Components for every `.mdx` file, by the name used in it. The name starts with a capital letter. `custom/components/*.tsx` adds more.", type: "Record<string, Component>", default: "{}" },
+    plugins: { description: "Remark, rehype and Shiki plugins made with `definePlugin`, applied after the built-in ones. See [Plugins](/docs/v0/customizing/plugins).", type: "DocsPlugin[]", default: "[]" },
+  }}
+/>
+
+Turning `math` or `twoslash` off also removes them from the compilation of the pages, which makes it a little faster.
+
+## twoslash
+
+<TypeTable
+  type={{
+    compilerOptions: { description: "`compilerOptions` of a tsconfig, applied to every `twoslash` code block.", type: "object" },
+    cache: { description: "Keep the results of the type check between builds.", type: "boolean", default: "true" },
+  }}
+/>
+
+See [Code blocks](/docs/v0/writing/code-blocks) for how a `twoslash` block is written.
+
+## Components
+
+A file in `custom/components/` is a component by its file name: `custom/components/Chart.tsx` is `<Chart />` in every `.mdx` file. Use `mdx.components` for a component that lives elsewhere, or under another name. See [Custom components](/docs/v0/customizing/custom-components).
+
+## Search
+
+Search has no switch here. Every section with content (the docs, the blog, your own) has its own search, see [Home, header and footer](/docs/v0/configuration/layout).

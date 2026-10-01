@@ -1,0 +1,95 @@
+---
+title: Скиллы для Claude
+description: Скиллы пакетов consify и вашего проекта, собранные в .claude/skills/
+icon: Bot
+---
+
+consify поставляется больше чем с одним скиллом для Claude Code: оркестратор (`consify`) плюс по
+одному на всё, чему есть что научить отдельно, — писать страницы доки, писать посты блога,
+следить за справочником API, менять тему, переводить, обновляться на новую версию, проверять доки на
+устаревание и собирать целый пакет-фичу. `consify skill sync` собирает скиллы пакетов, которые
+использует ваш проект, и скиллы самого проекта в `.claude/skills/`.
+
+```bash
+consify skill sync    # writes .claude/skills/ from the consify packages and custom/skills/
+consify skill list    # see what would sync, without writing anything
+```
+
+## Что синхронизируется
+
+- Шесть **базовых скиллов** из `@consify/core`, всегда: **оркестратор** (`consify`), **тема**
+  (`consify-theme`), **перевод** (`consify-translate`, с глоссарием, который сохраняется между
+  запросами), **обновление** (`consify-upgrade`, сверяет changelog с вашим реальным проектом при
+  переходе на новую версию), **аудит контента** (`consify-content-audit`, ищет доки, возможно
+  устаревшие относительно кода, — только по запросу) и **разработка пакетов-фич**
+  (`consify-extension-engineering`, для сборки целого пакета-фичи, а не маленького раздела).
+- Скиллы всех остальных пакетов `@consify/*`, от которых зависит проект: `@consify/docs` приносит
+  `consify-docs-authoring`, `@consify/blog` — `consify-blog-authoring`,
+  `@consify/api-reference` — `consify-api-reference-authoring`.
+- Скиллы вашего проекта в `custom/skills/<name>/`. Они побеждают скилл пакета с тем же именем.
+
+Пакет хранит свои скиллы в `skills/<name>/SKILL.md` в своём корне. Запускайте `consify skill sync`
+заново после добавления или обновления пакета `@consify/*`: скилл может измениться между версиями
+точно так же, как и всё остальное, что поставляет пакет. Скилл удалённого пакета тоже удаляется из
+`.claude/skills/`.
+
+Существующая папка в `.claude/skills/`, которую `consify skill sync` туда не клала, остаётся
+нетронутой, пока вы не передадите `--force`: команда никогда не перезаписывает написанное вами
+вручную без спроса.
+
+## Скилл вашего проекта
+
+Положите папку в `custom/skills/`. В конфигурации ничего объявлять не нужно:
+
+```
+custom/skills/
+└─ consify-changelog-authoring/
+   ├─ SKILL.md
+   └─ references/          (optional, for anything long enough to split out)
+```
+
+```md title="custom/skills/consify-changelog-authoring/SKILL.md"
+---
+name: consify-changelog-authoring
+description: Write a changelog entry — one line, why it matters, a link to the release. Use when asked to add a changelog entry.
+---
+
+# consify-changelog-authoring
+
+...
+```
+
+`name` во фронтматтере — это имя папки, которое `consify skill sync` даст ей в `.claude/skills/`:
+строчные латинские буквы, цифры и `-`. Всё остальное в файле — обычный [скилл Claude
+Code](https://docs.claude.com/en/docs/claude-code/skills): короткий `SKILL.md`, `references/` для
+всего, что лучше подгружать только по необходимости.
+
+Скилл, установленный из реестра через `consify add`, тоже попадает в `custom/skills/<name>/` — см.
+[Реестр](/docs/v0/customizing/registry).
+
+## Скилл пакета-фичи
+
+[Фича](/docs/v0/features), опубликованная пакетом, поставляет скилл так же, как пакеты
+`@consify/*`, — в `skills/<name>/` в корне пакета:
+
+```
+package.json
+src/index.ts
+skills/
+└─ consify-changelog-authoring/
+   └─ SKILL.md
+```
+
+Маленькому разделу, который живёт в одном проекте, пакет не нужен: его скилл кладётся в
+`custom/skills/`. Собрать целый пакет-фичу для переиспользования или публикации — то же самое, что
+`@consify/blog`, — задача побольше, и под неё есть свой скилл: **consify-extension-engineering**.
+
+## Как написать хороший скилл
+
+- Скажите, когда его использовать, а когда нет, прямо в `description` — именно это решает, обратится
+  ли к нему Claude.
+- Держите его о том, что *специфично* для вашей фичи: ваши поля фронтматтера, расположение файлов,
+  ваши правила проверки. Скилл **consify** уже покрывает интервью, перевод и верификацию, общие для
+  любого контента, — ссылайтесь на него вместо того, чтобы повторять это же.
+- Если для какого-то контента сначала нужно согласие пользователя (добавить компонент, новую
+  категорию, новый раздел) — скажите об этом явно, так же, как это делают встроенные скиллы.

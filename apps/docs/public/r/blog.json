@@ -1,0 +1,7 @@
+{
+  "name": "blog",
+  "type": "feature",
+  "description": "A blog for your consify site: posts in MDX, categories, authors, search, an RSS feed and social images",
+  "packageName": "@consify/blog",
+  "exportName": "blog"
+}

@@ -1,0 +1,60 @@
+---
+title: API слотов
+description: Props шапки и подвала и части главной страницы
+---
+
+```ts
+import type { ComponentType } from "react";
+import type { Consify } from "@consify/core/runtime";
+
+interface LayoutLink {
+  text: string;
+  url: string; // with the language; for a menu, the url of its first item
+  external: boolean;
+  description?: string;
+  /** Set for a drop-down menu. */
+  items?: LayoutLink[];
+}
+
+interface HeaderSlotProps {
+  consify: Consify; // the site: config, features, slots
+  lang: string;
+  /** The links the header shows by default. */
+  links: LayoutLink[];
+}
+
+interface FooterSlotProps {
+  consify: Consify;
+  lang: string;
+}
+
+interface Slots {
+  Header?: ComponentType<HeaderSlotProps>;
+  HeaderEnd?: ComponentType<HeaderSlotProps>;
+  Footer?: ComponentType<FooterSlotProps>;
+}
+```
+
+Импортируйте типы из `@consify/core`, а `SiteFooter`, подвал по умолчанию, — из `@consify/core/components`. Подвал это один и тот же компонент везде: у него нет `variant` и нет `editUrl` — то, что нужно странице (например «Edit on GitHub» у доков), она добавляет в свой собственный контент, а не в подвал.
+
+Слоты задаются файлами `custom/header.tsx`, `custom/footer.tsx` или через `slots: { header, headerEnd, footer }` в конфигурации. См. [Слоты](/docs/v0/customizing/slots).
+
+## Hero
+
+<TypeTable
+  type={{
+    title: { description: "Заголовок.", type: "string", required: true },
+    description: { description: "Текст под заголовком.", type: "string" },
+    actions: { description: "Кнопки. `variant` — `primary` или `secondary`. Ссылки получают язык.", type: "{ label, href, variant? }[]" },
+  }}
+/>
+
+## Features
+
+<TypeTable
+  type={{
+    items: { description: "Карточки. `icon` — название иконки Lucide; `href` превращает карточку в ссылку.", type: "{ title, description, icon?, href? }[]", required: true },
+  }}
+/>
+
+`Hero` и `Features` — части главной страницы, `content/<язык>/home.mdx`. Импортировать их там не нужно.

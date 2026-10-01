@@ -1,0 +1,439 @@
+---
+title: Страницы
+description: Адреса, компоненты, заголовки, макеты и перенаправления фичи
+---
+
+`pages` — это объект. Каждый ключ — адрес относительно фичи, каждое значение — страница. Здесь разобраны обе половины: как устроены адреса и чем может быть страница.
+
+```tsx title="custom/features/status.tsx"
+import { defineFeature } from "@consify/core";
+
+export const status = defineFeature({
+  id: "status",
+  pages: {
+    "/": () => <main>All services</main>, // /en/status
+    "/about": () => <main>About this page</main>, // /en/status/about
+  },
+});
+```
+
+## Адреса
+
+### Какими бывают ключи
+
+Ключ всегда начинается с `/`. Дальше в нём могут быть постоянные сегменты, параметры и одна `*` в конце.
+
+| Ключ | Адреса (фича `status`) | `params` |
+| --- | --- | --- |
+| `"/"` | `/en/status` | `{}` |
+| `"/about"` | `/en/status/about` | `{}` |
+| `"/:service"` | `/en/status/api`, `/en/status/workers` | `{ service: "api" }` |
+| `"/:service/history"` | `/en/status/api/history` | `{ service: "api" }` |
+| `"/:service/:day"` | `/en/status/api/2026-09-01` | `{ service: "api", day: "2026-09-01" }` |
+| `"/:tab?"` | `/en/status` и `/en/status/uptime` | `{}` или `{ tab: "uptime" }` |
+| `"/*"` | `/en/status/a`, `/en/status/a/b/c` | `{ "*": "a/b/c" }` |
+
+- `:name` — параметр: один сегмент адреса, любой текст. Страница читает его как `params.name`.
+- `:name?` — необязательный параметр. Страница существует и с этим сегментом, и без него. Если сегмента нет, в `params` нет и `name`.
+- `*` забирает весь остаток адреса вместе со слешами, в `params["*"]`. Слешей в начале и в конце у него нет.
+
+Ключ должен начинаться с `/`, не должен заканчиваться на `/` (кроме самого `"/"`) и не должен содержать `//`. С неверным ключом запуск остановится с ошибкой:
+
+```text
+defineFeature("status"): the address "status/" of a page must start with "/" and not end with one
+```
+
+### Как ключ превращается в адрес
+
+Адрес страницы складывается из трёх частей: язык, `path` фичи (по умолчанию её `id`) и ключ.
+
+```text
+/{lang} + /{feature path} + {key}
+
+/en     + /status         + /:service   →  /en/status/:service  →  /en/status/api
+/ru     + /status         + /           →  /ru/status
+```
+
+Каждая страница есть на каждом языке сайта (`i18n.languages`). Язык в ключе никогда не пишется. Адрес с языком, которого у сайта нет, например `/xx/status`, отвечает 404 ещё до того, как дело дойдёт до вашей страницы.
+
+### Какая страница побеждает
+
+Если адрес подходит под два ключа, побеждает более точный:
+
+1. Постоянный сегмент сильнее параметра: для `/en/status/about` `"/about"` побеждает `"/:service"`.
+2. Параметр сильнее `*`: для `/en/status/api` `"/:service"` побеждает `"/*"`.
+3. Для `/en/status` `"/"` побеждает `"/*"`.
+
+Если у фичи нет страницы `"/"`, `"/*"` отвечает и на главный адрес фичи (`/en/status`, `params["*"]` пустой).
+
+### Параметр — это текст, причём любой
+
+Параметр всегда `string`. Число из него делайте сами: `Number(params.page)`.
+
+Ядро не знает, какие значения существуют. `/en/status/anything` попадёт на страницу `"/:service"` с `params.service = "anything"`. Для неизвестного значения ваша страница должна сама ответить 404 — вызовом `notFound()` в `load`:
+
+```tsx
+"/:service": page({
+  load: ({ params, notFound }) =>
+    services.find((service) => service.id === params.service) ?? notFound(),
+  component: ({ data }) => <h1>{data.name}</h1>,
+}),
+```
+
+Значения, которые нужно отрисовать при сборке, перечисляет `paths`. И то и другое разобрано в [Загрузке данных](/docs/v0/features/data).
+
+## path: адрес фичи
+
+По умолчанию фича живёт по адресу `/{lang}/<id>`. `path` даёт ей другой адрес и сохраняет `id` (id ссылки и папка контента не меняются):
+
+```ts
+defineFeature({
+  id: "status",
+  path: "health", // /en/health, /en/health/api
+  pages: {
+    /* … */
+  },
+});
+```
+
+В `path` может быть несколько сегментов: `path: "tools/status"` даёт `/en/tools/status`. У двух фич не может быть одного `path`.
+
+### Главная страница сайта: path ""
+
+`path: ""` делает фичу главной страницей сайта. Её страница `"/"` открывается по `/{lang}` (`/en`, `/ru`) и заменяет встроенную главную (`content/<язык>/home.mdx`).
+
+```tsx title="custom/features/landing.tsx"
+import { defineFeature } from "@consify/core";
+import { Link } from "react-router";
+
+export const landing = defineFeature({
+  id: "landing",
+  path: "",
+  pages: {
+    // /en, /ru
+    "/": ({ lang }) => (
+      <main className="mx-auto w-full max-w-4xl px-4 py-24 text-center">
+        <h1 className="text-5xl font-bold">Acme</h1>
+        <Link to={`/${lang}/docs`} className="mt-8 inline-block underline">
+          Read the docs
+        </Link>
+      </main>
+    ),
+    // /en/pricing, /ru/pricing
+    "/pricing": () => <main className="mx-auto w-full max-w-4xl px-4 py-12">Pricing</main>,
+  },
+});
+```
+
+Главной странице `title` не нужен: ссылка в шапке ей ни к чему, а во вкладке браузера будет название сайта.
+
+Если такой фичи нет и нет `home.mdx`, `/{lang}` отправляет читателя в первую фичу с заголовком.
+
+## Компонент — это страница
+
+Самая простая страница — React-компонент. Он получает четыре пропа:
+
+| Проп | Тип | Что это |
+| --- | --- | --- |
+| `data` | здесь `undefined` | То, что вернул `load`. У простого компонента `load` нет |
+| `lang` | `string` | Язык адреса: `"en"`, `"ru"` |
+| `params` | `Record<string, string>` | Параметры адреса, без языка |
+| `t` | `(key, values?) => string` | Строки фичи на языке страницы |
+
+```tsx
+"/:tab?": ({ lang, params, t }) => (
+  <main className="mx-auto w-full max-w-2xl px-4 py-12">
+    <h1>{t("status")}</h1>
+    <p>Language: {lang}</p>
+    <p>Tab: {params.tab ?? "overview"}</p>
+  </main>
+),
+```
+
+Страница — обычный React-компонент. Сначала он рисуется на сервере (чтобы HTML был полным), потом работает в браузере. Хуки, состояние и эффекты работают:
+
+```tsx
+import { useState } from "react";
+
+function Counter() {
+  const [count, setCount] = useState(0);
+  return (
+    <main className="mx-auto w-full max-w-2xl px-4 py-12">
+      <button type="button" onClick={() => setCount(count + 1)}>
+        Clicked {count} times
+      </button>
+    </main>
+  );
+}
+
+// in defineFeature: pages: { "/counter": Counter }
+```
+
+<Callout type="warn">
+  Код компонента выполняется и на сервере, где нет `window` и `localStorage`. Обращайтесь к ним внутри `useEffect` или обработчиков событий, но не прямо в теле компонента.
+</Callout>
+
+### Компонент в отдельной функции
+
+Для страницы побольше напишите компонент отдельной функцией и типизируйте пропсы через `PageProps`:
+
+```tsx
+import { defineFeature, type PageProps } from "@consify/core";
+
+function ServiceList({ lang, t }: PageProps) {
+  return <h1 lang={lang}>{t("status")}</h1>;
+}
+
+export const status = defineFeature({
+  id: "status",
+  messages: { en: { status: "Status" }, ru: { status: "Статус" } },
+  pages: { "/": ServiceList },
+});
+```
+
+`PageProps<Data>` типизирует и `data`. Страницы с данными описаны в [Загрузке данных](/docs/v0/features/data).
+
+### Основную область страница рисует сама
+
+Вокруг вашего компонента ядро ставит только шапку и подвал: ни ширины, ни отступов. Начинайте страницу с `<main>` и задавайте ей ширину, как в примерах на этой странице (`mx-auto w-full max-w-2xl px-4 py-12`). Используйте классы темы (`text-fd-muted-foreground`, `border-fd-border`, `bg-fd-card`), тогда страница будет выглядеть правильно и в светлой, и в тёмной теме.
+
+## Страница-объект
+
+Один компонент не умеет загружать данные, задавать заголовок и выбирать макет. Для этого страница записывается объектом, а компонент кладётся в `component`:
+
+```tsx
+"/": {
+  title: "All services",
+  description: "The state of every service, updated every minute",
+  layout: "site",
+  component: ({ t }) => <main>{t("status")}</main>,
+},
+```
+
+<TypeTable
+  type={{
+    component: { description: "React-компонент страницы. Получает `data`, `lang`, `params`, `t`.", type: "ComponentType<PageProps>", required: true },
+    load: { description: "Читает то, что показывает страница. Выполняется на сервере, результат становится `data`. См. [Загрузку данных](/docs/v0/features/data).", type: "(context: LoadContext) => Data | Promise<Data>" },
+    paths: { description: "Параметры, которые нужно отрисовать при сборке и внести в sitemap. См. [Загрузку данных](/docs/v0/features/data).", type: "(context: PathsContext) => Params[] | Promise<Params[]>" },
+    title: { description: "`<title>` страницы.", type: "string | (context: MetaContext) => string | undefined", default: "заголовок фичи, затем название сайта" },
+    description: { description: "`<meta name=\"description\">`.", type: "string | (context: MetaContext) => string | undefined", default: "`site.description`" },
+    meta: { description: "Весь `<head>` сразу. Его поля сильнее `title` и `description`.", type: "(context: MetaContext) => PageMeta" },
+    layout: { description: "Что рисуется вокруг компонента.", type: '"site" | "sidebar" | "none"', default: '"site"' },
+    entry: { description: "Страница для каждой записи контента. См. [Контент](/docs/v0/features/content).", type: "boolean" },
+  }}
+/>
+
+Если у объекта есть `load`, оберните его в `page()` — тогда `data` будет типизирован. Почему, объясняет [Загрузка данных](/docs/v0/features/data).
+
+## Заголовок и описание
+
+### Откуда берётся заголовок
+
+Ядро берёт первый найденный заголовок:
+
+1. `title`, который вернул `meta`,
+2. `title` страницы,
+3. `title` фичи,
+4. ничего: только название сайта.
+
+Потом добавляет название сайта: `<title>` получается `Заголовок | Сайт`, например `Scheduler | Acme`. Если заголовок совпадает с названием сайта, он не повторяется: во вкладке будет `Acme`, а не `Acme | Acme`.
+
+Описание ищется так же: `description` из `meta`, потом `description` страницы, потом `site.description` из конфига.
+
+### Строка или функция
+
+Постоянный текст — строка. Текст, который зависит от данных, языка или параметров, — функция. Она получает те же `data`, `lang`, `params` и `t`, что и компонент:
+
+```tsx
+"/:service": page({
+  load: ({ params, notFound }) =>
+    services.find((service) => service.id === params.service) ?? notFound(),
+  title: ({ data }) => data.name,
+  description: ({ data, t }) => t("serviceHint", { name: data.name }),
+  component: ({ data }) => <h1>{data.name}</h1>,
+}),
+```
+
+Заголовок страницы — строка или функция, но не объект с языками. Для заголовка на нескольких языках используйте строку фичи: `title: ({ t }) => t("status")`.
+
+## meta: весь head
+
+`meta` возвращает все поля `<head>` сразу. Он нужен, когда странице мало заголовка и описания: картинка для соцсетей, ссылки на переводы, дополнительные теги.
+
+| Поле | Во что превращается |
+| --- | --- |
+| `title` | `<title>` (с добавленным названием сайта) и `og:title` |
+| `description` | `<meta name="description">` и `og:description` |
+| `image` | `og:image` и большая карточка Twitter. Путь (`/og/api.png`) или URL |
+| `alternates` | `<link rel="alternate" hreflang>` для каждого языка: `{ en: "/en/status/api", ru: "/ru/status/api" }` |
+| `canonical` | Канонический адрес. По умолчанию — адрес страницы |
+| `head` | Дополнительные теги, каждый — объект атрибутов |
+
+```tsx
+import { type PageMeta, page } from "@consify/core";
+
+"/:service": page({
+  load: ({ params, config, notFound }) => {
+    const service = services.find((s) => s.id === params.service) ?? notFound();
+    // the same page in every language of the site
+    const alternates = Object.fromEntries(
+      config.i18n.languages.map((code) => [code, `/${code}/status/${service.id}`]),
+    );
+    return { ...service, alternates };
+  },
+  // the return type helps TypeScript with the mixed tags of `head`
+  meta: ({ data, lang }): PageMeta => ({
+    title: data.name,
+    description: `${data.name}: ${data.state}`,
+    image: `/images/status/${data.id}.png`,
+    alternates: data.alternates,
+    head: [
+      { property: "og:type", content: "article" },
+      { tagName: "link", rel: "alternate", type: "application/json", href: `/${lang}/status/status.json` },
+    ],
+  }),
+  component: ({ data }) => <h1>{data.name}</h1>,
+}),
+```
+
+Поле, которого нет в ответе `meta`, берётся из `title` и `description` страницы, как описано выше. `config` в `meta` не приходит: всё, что от него зависит, посчитайте в `load` и верните в `data`, как `alternates` здесь.
+
+Что ядро всегда кладёт в `<head>` страницы фичи:
+
+- `<title>`, `og:title`, `og:site_name`,
+- `<link rel="canonical">`: адрес страницы без слеша в конце, абсолютный, если задан `site.url`,
+- `description` и `og:description`, если есть описание,
+- ссылки `hreflang`, если есть `alternates`, и `og:image`, если есть картинка,
+- ссылку на ленту на каждой странице фичи, у контента которой `rss: true`,
+- теги из `head` в `docs.config.ts`, на каждой странице сайта.
+
+Пути в `image`, `alternates` и `canonical` становятся абсолютными адресами с `site.url`.
+
+## Макеты
+
+`layout` выбирает, что ядро рисует вокруг компонента.
+
+| Значение | Что рисуется |
+| --- | --- |
+| `"site"` (по умолчанию) | Шапка сайта (логотип, ссылки, поиск, переключатели языка и темы) над страницей и подвал под ней |
+| `"sidebar"` | То же, плюс кнопка в шапке, которая прячет панель. Панель страница рисует сама |
+| `"none"` | Ничего. Компонент рисует всю страницу, включая шапку и подвал, если они ему нужны |
+
+У страницы, записанной просто компонентом, макет всегда `"site"`. Чтобы выбрать другой, используйте страницу-объект.
+
+### sidebar
+
+Для страницы со своей боковой панелью (справочник API так показывает панель Scalar). В шапке появляется кнопка, а страница узнаёт, закрыл ли читатель панель, через `useSidebarCollapsed()`:
+
+```tsx
+import { useSidebarCollapsed } from "@consify/core/ui";
+
+function Explorer() {
+  const collapsed = useSidebarCollapsed();
+  return (
+    <div className="flex">
+      {collapsed ? null : <aside className="w-64 border-r border-fd-border p-4">Tree</aside>}
+      <main className="flex-1 p-4">Details</main>
+    </div>
+  );
+}
+
+// in defineFeature: pages: { "/": { layout: "sidebar", component: Explorer } }
+```
+
+В CSS то же состояние — атрибут `[data-consify-sidebar-collapsed="true"]` на обёртке страницы.
+
+### none
+
+Для страницы, которая не должна выглядеть как сайт: встраиваемый блок, версия для печати, полноэкранное демо. Части сайта из `@consify/core/ui` ей всё равно доступны:
+
+```tsx
+import { consify, SitePage } from "@consify/core/ui";
+
+function Print() {
+  return <article className="p-8 print:p-0">A page to print, without header and footer</article>;
+}
+
+function Wrapped({ lang }: { lang: string }) {
+  // the header and the footer of the site, drawn by the page itself
+  return (
+    <SitePage consify={consify} lang={lang}>
+      <main className="p-8">A page that draws the site layout itself</main>
+    </SitePage>
+  );
+}
+
+// in defineFeature:
+// pages: {
+//   "/print": { layout: "none", component: Print },
+//   "/custom": { layout: "none", component: Wrapped },
+// }
+```
+
+## Перенаправления
+
+Страница может только отправлять читателя в другое место. Её значение — объект с `redirect`: функцией, которая получает `lang` и `config` и возвращает адрес:
+
+```ts
+pages: {
+  // /en/status/old → /en/status
+  "/old": { redirect: ({ lang }) => `/${lang}/status` },
+  // to another feature
+  "/docs": { redirect: ({ lang }) => `/${lang}/docs/status-page` },
+  // outside the site
+  "/github": { redirect: () => "https://github.com/acme/status" },
+},
+```
+
+Как это работает, зависит от `deploy.mode`:
+
+| | Сервер | Статический сайт |
+| --- | --- | --- |
+| Что получает читатель | HTTP-перенаправление | Маленькую страницу, которая сразу перенаправляет (`<meta http-equiv="refresh">` и ссылка) |
+| Создаётся при сборке | Нет: сервер отвечает на каждый запрос | Да, на каждом языке |
+| В sitemap | Нет | Нет |
+
+Странице-перенаправлению `params` не приходят. На статическом сайте у ключа перенаправления с параметром (`"/old/:id"`) нет адресов для сборки, и он пропускается. Чтобы перенаправлять в зависимости от параметра или данных, вызывайте `redirect()` внутри `load` (см. [Загрузку данных](/docs/v0/features/data)).
+
+## Ссылки между страницами
+
+На другую страницу ссылайтесь через `Link` из `react-router`. В адресе есть язык: берите его из `lang`.
+
+```tsx
+import { Link } from "react-router";
+
+// in a page component that gets `lang`
+<Link to={`/${lang}/status/${service.id}`}>{service.name}</Link>
+<Link to={`/${lang}/docs`}>Documentation</Link>
+```
+
+- `Link` меняет страницу без перезагрузки и добавляет `deploy.basePath`, если сайт живёт во вложенной папке. Обычный `<a href="/en/status">` перезагружает страницу и `basePath` не добавляет.
+- Файл фичи (`status.json`) — не страница. Ссылайтесь на него с `reloadDocument`, чтобы браузер его загрузил: `` <Link reloadDocument to={`/${lang}/status/status.json`}>JSON</Link> ``.
+- Ссылки на ту же страницу на другом языке рисует переключатель языка в шапке: он оставляет адрес и меняет язык.
+
+`fillUrl` из `@consify/core` собирает адрес из ключа и параметров, если не хочется писать его вручную:
+
+```ts
+import { fillUrl } from "@consify/core";
+
+fillUrl({ path: "status" }, "/:service", "en", { service: "api" }); // "/en/status/api"
+fillUrl({ path: "status" }, "/:tab?", "ru"); // "/ru/status"
+```
+
+## Частые ошибки
+
+<Callout type="warn">
+  **Любое значение параметра показывает страницу.** `/en/status/typo` показывает страницу `"/:service"` с пустыми данными. Для неизвестного значения отвечайте 404 через `notFound()` в `load`.
+</Callout>
+
+<Callout type="warn">
+  **Ссылка ведёт на 404.** В адресе нет языка: `to="/status"` вместо ``to={`/${lang}/status`}``.
+</Callout>
+
+<Callout type="warn">
+  **`title: { en: "…", ru: "…" }` у страницы — ошибка типов.** Заголовок по языкам принимает только фича. У страницы используйте функцию: `title: ({ t }) => t("key")`.
+</Callout>
+
+<Callout type="warn">
+  **У страницы нет ширины и отступов.** Ядро их не добавляет. Оберните содержимое в `<main className="mx-auto w-full max-w-2xl px-4 py-12">`.
+</Callout>

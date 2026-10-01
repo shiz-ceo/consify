@@ -1,0 +1,71 @@
+---
+title: Slots
+description: Replace the header and the footer with your own components
+---
+
+A slot is a part of the site that a project can replace. There are three:
+
+| Slot | File | Config | What it is |
+| --- | --- | --- | --- |
+| Header | `custom/header.tsx` (default export) | `slots.header` | The middle of the header |
+| Header end | `custom/header.tsx` (export `End`) | `slots.headerEnd` | The right side of the header, before the controls |
+| Footer | `custom/footer.tsx` | `slots.footer` | The footer of every page |
+
+Slots are found automatically in `custom/`. The config also accepts them, and wins when both exist.
+
+<Callout type="info">
+  The header and the footer are described once and every page uses them, so they are the same on
+  the docs, the blog, the home page and every [feature](/docs/v0/features).
+</Callout>
+
+The home page is not a slot. Write it in `content/<language>/home.mdx` with `Hero` and `Features`, or make it a [feature](/docs/v0/features) with `path: ""` when it needs React.
+
+## Header
+
+The name of the site on the left and the controls on the right (search, language, theme, and the panel button of a page with `layout: "sidebar"`, such as the API reference) are always there. The slots fill the space between them and the right side:
+
+```tsx title="custom/header.tsx"
+import type { HeaderSlotProps } from "@consify/core";
+import { Link } from "react-router";
+
+// The middle of the header. `links` are the ones it shows by default.
+export default function Header({ links }: HeaderSlotProps) {
+  return (
+    <>
+      {links.map((link) => (
+        <Link key={link.url} to={link.url} className="text-sm">
+          {link.text}
+        </Link>
+      ))}
+      <a href="https://status.example.dev">Status</a>
+    </>
+  );
+}
+
+// Optional: items on the right, before the controls.
+export function End() {
+  return <a href="https://example.dev/signup">Sign up</a>;
+}
+```
+
+`links` are the ones set by [`header.links`](/docs/v0/configuration/navigation) (or the default ones). A drop-down menu is an item with `items` and an optional `description`. On a phone the menu keeps the default links, so navigation never disappears.
+
+## Footer
+
+It is the same component on every page, so a feature (the docs, the blog, your own) never renders its own footer or chooses how it looks. The default footer is available to reuse:
+
+```tsx title="custom/footer.tsx"
+import type { FooterSlotProps } from "@consify/core";
+import { SiteFooter } from "@consify/core/components";
+
+export default function Footer(props: FooterSlotProps) {
+  return (
+    <>
+      <SiteFooter {...props} />
+      <p>Made in Berlin</p>
+    </>
+  );
+}
+```
+
+The types of the props are in the [slots reference](/docs/v0/reference/slots).

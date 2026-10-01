@@ -1,0 +1,80 @@
+---
+title: Блог
+description: Настройки блога
+---
+
+Блог является фичей: он включён, если `blog()` есть в списке `features` конфигурации. О том, как писать посты, рассказано в разделе [Блог](/docs/v0/blog).
+
+## Установка
+
+```bash
+bun add @consify/blog
+```
+
+Обновляйте его вместе с ядром (см. [Обновление](/docs/v0/concepts/updating)).
+
+## Опции
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { blog } from "@consify/blog";
+
+export default defineConfig({
+  site: { name: "My docs" },
+  features: [
+    blog({
+      title: { en: "Blog", ru: "Блог" },
+      description: "News and how-tos.",
+      perPage: 12,
+      categories: [
+        { id: "releases", label: { en: "Releases", ru: "Релизы" } },
+        { id: "guides", label: "Guides" },
+      ],
+      authors: {
+        ada: { name: "Ada Novak", role: "Core maintainer", avatar: "/authors/ada.jpg", url: "https://github.com/ada" },
+      },
+      share: true,
+      rss: true,
+    }),
+  ],
+});
+```
+
+<TypeTable
+  type={{
+    id: { description: "Адрес (`/{lang}/<id>`), папка контента (`content/<язык>/<id>`) и id ссылки. Задайте его для второго блога.", type: "string", default: '"blog"' },
+    title: { description: "Заголовок страницы блога и его ссылка в шапке.", type: "string | Record<language, string>", default: 'the translated word "Blog"' },
+    description: { description: "Текст под заголовком.", type: "string | Record<language, string>" },
+    perPage: { description: "Количество постов на странице списка.", type: "number", default: "12" },
+    categories: { description: "Фильтр списка. Пост перечисляет `id` категорий, к которым относится. Id состоят из строчных букв, цифр и `-`.", type: "{ id, label }[]", default: "[]" },
+    authors: { description: "Люди по id. Пост перечисляет id своих авторов.", type: "Record<id, { name, role?, avatar?, url? }>", default: "{}" },
+    share: { description: "Кнопки «Поделиться» у поста (X, LinkedIn, Bluesky, копирование ссылки).", type: "boolean", default: "true" },
+    rss: { description: "Лента по адресу `/{lang}/blog/rss.xml` и ссылка `blog:rss`.", type: "boolean", default: "true" },
+  }}
+/>
+
+Опции проверяются в момент вызова `blog()`, поэтому опечатка в названии опции или неверный тип останавливают запуск с сообщением, где указаны `blog()` и опция. Неизвестная категория или автор в посте останавливают сборку с сообщением, в котором указан файл.
+
+Вместе с блогом приходят MDX-компоненты для постов (см. [Компоненты блога](/docs/v0/blog/components)). Его строки, например `backToBlog`, можно переопределить через [`i18n.messages`](/docs/v0/configuration/languages).
+
+## Адреса
+
+| Адрес | Что это |
+| --- | --- |
+| `/{lang}/blog` | Список постов с фильтрами и поиском |
+| `/{lang}/blog/<slug>` | Пост, по одному на каждый файл `.mdx` в `content/<язык>/blog/` |
+| `/{lang}/blog/rss.xml` | Лента (`rss`) |
+| `/{lang}/blog/og/<slug>.png` | Изображение поста для соцсетей |
+| `/{lang}/blog/search.json` | Поиск по постам |
+
+Черновики и посты с датой в будущем не публикуются. `CONSIFY_DRAFTS=1` показывает их, пока вы пишете (см. [Черновики и отложенные посты](/docs/v0/blog/drafts-and-scheduling)).
+
+## Второй блог
+
+Каждый вызов `blog()` со своим `id` — отдельный блог со своей папкой, списком, лентой и ссылкой в шапке:
+
+```ts title="docs.config.ts"
+features: [blog(), blog({ id: "news", title: { en: "News", ru: "Новости" } })],
+```
+
+Второй блог лежит в `content/<язык>/news/` и открывается по адресу `/{lang}/news`.

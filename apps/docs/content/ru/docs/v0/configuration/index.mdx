@@ -1,0 +1,48 @@
+---
+title: Конфигурация
+description: docs.config.ts с высоты птичьего полёта
+---
+
+Все настройки находятся в `docs.config.ts`. Оберните их в `defineConfig`, чтобы редактор давал подсказки:
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { docs } from "@consify/docs";
+
+export default defineConfig({
+  site: { name: "My docs" },
+  features: [docs()],
+});
+```
+
+Обязателен только `site.name`. У всего остального есть значения по умолчанию.
+
+Ядро (`@consify/core`) даёт рамку: конфиг, макет, тему, поиск и сборку. Разделы сайта называются *фичами* и перечисляются в `features`: документация (`@consify/docs`), блог (`@consify/blog`), справочник API (`@consify/api-reference`) и ваши собственные, сделанные через `defineFeature`. Опции фичи из пакета передаются в её функцию (`docs({...})`, `blog({...})`, `apiReference({...})`) и проверяются в момент вызова. Ключи `versions`, `blog` и `openapi` на верхнем уровне считаются неизвестными.
+
+## Валидация
+
+Конфигурация проверяется при запуске dev-сервера или сборки. Неизвестные ключи считаются ошибками (опечатка в названии опции будет замечена, а не проигнорирована), а в сообщениях указывается путь к ошибке:
+
+```text
+Invalid docs.config:
+✖ Unrecognized key: "blogg"
+✖ i18n.defaultLanguage: defaultLanguage "de" must be one of: en, ru
+```
+
+## Разделы
+
+| Ключ | Что настраивает |
+| --- | --- |
+| [`site`](/docs/v0/configuration/site) | Название, описание, URL, favicon, репозиторий на GitHub |
+| [`i18n`](/docs/v0/configuration/languages) | Языки, их названия, строки интерфейса |
+| [`theme`](/docs/v0/configuration/theme) | [Пресеты и фирменный цвет](/docs/v0/configuration/themes), цвета, скругления, шрифты |
+| [`head`](/docs/v0/configuration/head) | Мета-теги, ссылки и скрипты (аналитика) в `<head>` каждой страницы |
+| [`banner`](/docs/v0/configuration/banner) | Объявление над шапкой, которое можно закрыть |
+| [`header`, `footer`, `slots`](/docs/v0/configuration/layout) | Рамка вокруг каждой страницы. Ссылки шапки и подвала: [Ссылки шапки и подвала](/docs/v0/configuration/navigation) |
+| `features` | Разделы сайта: [документация](/docs/v0/configuration/docs) (с [версиями](/docs/v0/configuration/versions)), [блог](/docs/v0/configuration/blog), [справочник API](/docs/v0/configuration/api-reference) или [ваш собственный](/docs/v0/features) |
+| [`mdx`](/docs/v0/configuration/mdx) | Формулы, `twoslash`, MDX-компоненты и [плагины](/docs/v0/customizing/plugins) |
+| `deploy` | [Сервер или статика](/docs/v0/deployment), `basePath` |
+
+Главная страница задаётся не ключом, а файлом `content/<язык>/home.mdx` (см. [Главная, шапка и подвал](/docs/v0/configuration/layout)).
+
+Полный список с типами и значениями по умолчанию есть в [справочнике по конфигурации](/docs/v0/reference/config).

@@ -1,0 +1,52 @@
+name: Compatibility
+
+# The packed packages are installed the way a user gets them, with each package manager, on the
+# systems and Node versions that are supported. Slower than the main CI, so it runs every night
+# and on demand, not on every push.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  unit:
+    name: Tests on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: bun install --frozen-lockfile
+      - run: bun test packages integrations
+      - run: bun run docs:check
+
+  install:
+    name: ${{ matrix.manager }} on Node ${{ matrix.node }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [22, 24]
+        manager: [npm, pnpm]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: pnpm/action-setup@v4
+        if: matrix.manager == 'pnpm'
+        with:
+          version: 10
+      - run: bun install --frozen-lockfile
+      - name: Build and pack the packages, install them into a new project, build it
+        run: bun run scripts/check-package.ts
+        env:
+          CONSIFY_CHECK_MANAGER: ${{ matrix.manager }}

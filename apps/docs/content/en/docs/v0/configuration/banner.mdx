@@ -1,0 +1,24 @@
+---
+title: Banner
+description: An announcement above the header that a reader can close
+---
+
+`banner` shows an announcement above the header of every page. A reader can close it, and the choice is remembered in the browser (`localStorage`). There is one banner at a time.
+
+```ts title="docs.config.ts"
+banner: {
+  text: { en: "Lattice 2.0 is out: what changed", ru: "Вышел Lattice 2.0: что изменилось" },
+  href: "blog",
+  id: "lattice-2",
+  variant: "info",
+},
+```
+
+| Option | What it does |
+| --- | --- |
+| `text` | The text: a string, or an object with a text per language |
+| `href` | Optional. Makes the banner a link. An id of a place that a section offers (see [Header and footer links](/docs/v0/configuration/navigation)) or an address |
+| `id` | Optional. Letters, digits, `_` and `-`. A reader who closed the banner does not see it again until the `id` changes. Without an `id` the text is the identity |
+| `variant` | `"info"` (default) or `"warning"` |
+
+To show a new announcement to everyone, change the `id` (or the text, when there is no `id`).

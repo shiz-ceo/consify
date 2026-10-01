@@ -1,0 +1,15 @@
+---
+title: Retry with backoff
+description: Retry a failing job with exponential delays.
+level: beginner
+tags: [retries, jobs]
+date: 2026-08-01
+---
+
+A job that fails is retried. Give it a number of attempts and a backoff:
+
+```ts
+await payments.add({ orderId: "o_1" }, { retries: 5, backoff: "exponential" });
+```
+
+The delay doubles with every attempt, with some jitter so retries do not arrive together.

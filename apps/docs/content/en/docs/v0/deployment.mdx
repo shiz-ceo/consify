@@ -1,0 +1,150 @@
+---
+title: Deployment
+description: Build the site, then let consify write what your host needs
+icon: Cloud
+---
+
+Choose the mode in the config (see [Server and static modes](/docs/v0/concepts/rendering-modes)):
+
+```ts title="docs.config.ts"
+deploy: { mode: "static" },          // or "server" (default)
+```
+
+## Before you deploy
+
+```bash
+consify doctor        # Node version, matching @consify/* versions, a valid config
+consify deploy check  # obvious problems for the mode you picked (a missing site.url, ...)
+```
+
+Both are free to run before every deploy — `doctor` in particular catches the kind of drift that only shows up as a cryptic error later, like one `@consify/*` package left behind after an update.
+
+## Choose where it goes
+
+```bash
+consify deploy            # a real terminal: asks which target, then its options
+consify deploy list        # or just see what there is
+```
+
+Every target writes the files that one host needs, tells you what to do with them, and never overwrites an existing file without `--force`.
+
+### Ready-made hosts (static only)
+
+<Tabs items={["GitHub Pages", "Cloudflare Pages", "Netlify", "Vercel"]}>
+  <Tab value="GitHub Pages">
+```bash
+consify deploy github-pages
+```
+Writes `.github/workflows/deploy.yml`: build on push to `main`, deploy with `actions/deploy-pages`. In the repository settings, under Pages, set Source to "GitHub Actions". Without a custom domain the site is served from `/<repository>/` — set `deploy.basePath` to that path; with one, add a `public/CNAME` file.
+  </Tab>
+  <Tab value="Cloudflare Pages">
+```bash
+consify deploy cloudflare-pages
+```
+Writes `public/_redirects` (a real `/` → `/<language>/` redirect) and `public/_headers` (long-lived caching for `/assets/*`). Connect the repository from the Cloudflare dashboard; it reads these on its own.
+  </Tab>
+  <Tab value="Netlify">
+```bash
+consify deploy netlify
+```
+Writes `netlify.toml` (build command, publish directory, the same redirect and headers). Import the repository in the Netlify dashboard.
+  </Tab>
+  <Tab value="Vercel">
+```bash
+consify deploy vercel
+```
+Writes `vercel.json` with the same redirect and headers. Import the repository in the Vercel dashboard.
+  </Tab>
+</Tabs>
+
+All four only serve `static`; `consify deploy check` refuses them otherwise. None of them needs a server or a port — the redirect and the caching rules live in the file each one writes.
+
+<Callout type="info" title="Anything else that serves plain files">
+  A host with no target of its own (S3 behind CloudFront, for instance) still works: upload
+  `build/client` and serve `index.html` for a folder. It won't get the real `/` redirect the
+  targets above write, so readers land on the built-in redirect page instead — see [Server and
+  static modes](/docs/v0/concepts/rendering-modes).
+</Callout>
+
+## Self-hosting
+
+Built for the case a docs site is rarely the only thing on the machine: nothing here claims a host port or a whole `nginx.conf` for itself, so it sits next to whatever else you already run.
+
+### Docker
+
+```bash
+consify deploy docker --name mysite --domain docs.example.com
+```
+
+Static mode writes a `Dockerfile` that builds with Bun and serves the result from a plain `nginx:1.27-alpine` image — no Node in the final container, a few MB instead of a few hundred. Server mode writes one that builds and then runs `consify start` on `node:22-alpine`. Either way you also get:
+
+- `docker-compose.yml` — the container never publishes a port to the host. It only `expose`s one, on an external `web` Docker network, so your own front-facing nginx (in Docker or on the host) is the only thing that can reach it.
+- `deploy/nginx/mysite.conf` — a fragment for that front nginx: `include` it, get a certificate for the domain, reload nginx. HTTP/3 is on by default.
+
+```bash
+docker network create web   # once, if it doesn't exist yet
+docker compose up -d --build
+```
+
+Every consify instance (or anything else) on the machine joins the same `web` network and gets its own fragment — nothing to collide over.
+
+### Nginx, no Docker
+
+```bash
+consify deploy nginx --name mysite --domain docs.example.com
+```
+
+Writes `deploy/nginx/mysite.conf` — again a fragment meant for `include`, never a replacement for the rest of your `nginx.conf` — with HTTP/3 on by default (`listen 443 quic reuseport; http3 on;`; needs nginx built with the QUIC module, and UDP/443 open in the firewall). Static mode serves `/var/www/mysite/current` directly; a symlink swap (build into a new folder, then repoint `current`) makes updates atomic.
+
+Server mode also writes a ready systemd unit, `deploy/systemd/mysite.service`:
+
+```bash
+systemctl daemon-reload && systemctl enable --now mysite
+```
+
+It runs `consify start` on port 4000 by default (`--port <n>` to change it) — give every instance on the machine its own port. Or skip ports entirely:
+
+```bash
+consify deploy nginx --name mysite --domain docs.example.com --socket /run/mysite.sock
+```
+
+nginx then proxies straight to the socket. `consify start` itself only knows `PORT`/`HOST` normally; `--socket` (the systemd unit sets it via `SOCKET_PATH`) runs consify's own small server for that one case, since a socket path is not something a TCP port number can express.
+
+### Automate it: push, checks, deploy
+
+Add `--ci` to either self-host target to also write `.github/workflows/deploy.yml`:
+
+```bash
+consify deploy docker --name mysite --domain docs.example.com --ci
+consify deploy nginx --name mysite --domain docs.example.com --ci
+```
+
+Both workflows do the same three things on every push to `main` that touches `content/`, `custom/`, `docs.config.ts` or `public/` (or on a manual run):
+
+1. **Check**: `consify doctor`, `typecheck`, and `build` — a build renders every page in every language, so a broken link or a bad MDX file fails right here, before anything is deployed.
+2. **Ship**: `docker` builds the image and pushes it to `ghcr.io` (the repository's own `GITHUB_TOKEN`, no extra login needed on your side); `nginx` uploads the new build into a fresh `/var/www/mysite/releases/<commit>/` folder over SSH.
+3. **Switch**: `docker` runs `docker compose pull && docker compose up -d` on the server; `nginx` swaps the `current` symlink to the new release (and restarts the systemd unit, for a server build) — the same atomic update described above, just no longer typed by hand. Old releases beyond the last 5 are removed.
+
+Both need three repository secrets (Settings → Secrets and variables → Actions): `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` (a private key whose public half is in that user's `authorized_keys` on the server) — `docker` also needs `DEPLOY_PATH`, the folder on the server that holds its `docker-compose.yml`. `consify deploy <target> --ci` prints the exact list for what it wrote.
+
+<Callout type="warn" title="The image name">
+  `docker --ci` reads the image name from the repository's GitHub remote (`ghcr.io/<owner>/<repo>/<name>`). Outside a GitHub repository it writes a `your-org/your-repo` placeholder instead — replace it in both `docker-compose.yml` and the workflow before using it.
+</Callout>
+
+## Sub path
+
+When the site is served from a folder, such as `https://example.com/docs`, set `basePath`. It must start with `/` and must not end with `/`:
+
+```ts title="docs.config.ts"
+deploy: { mode: "static", basePath: "/docs" },
+```
+
+All links, assets and the search endpoint take the prefix.
+
+## Checklist
+
+- `consify doctor` has nothing to complain about.
+- `site.url` is set (canonical links, sitemap, RSS and social images).
+- No `CONSIFY_DRAFTS` in the environment of the production build.
+- Scheduled posts: the build runs after their date.
+- Hosts that need custom redirects (for old addresses) get them from their own settings, consify does not write them.

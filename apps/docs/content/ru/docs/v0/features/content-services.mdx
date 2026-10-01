@@ -1,0 +1,342 @@
+---
+title: Боковое меню, поиск, llms.txt, картинки, RSS
+description: Что core делает из записей фичи, если это включить, по какому адресу и как этим пользоваться на своих страницах
+---
+
+Когда у фичи есть [записи](/docs/v0/features/content), core может сделать из них больше: боковое меню, поиск, текст для ИИ-агентов, картинку для соцсетей к каждой записи и ленту. Каждое включается одним переключателем в `content`:
+
+```ts
+content: {
+  schema: example,
+  tree: true,    // a sidebar from the folders and meta.json
+  search: true,  // on by default
+  llms: true,    // llms.txt and llms-full.txt
+  og: true,      // a social image for every entry
+  rss: true,     // an RSS feed
+},
+```
+
+| Опция | По умолчанию | Что делает | Адрес |
+| --- | --- | --- | --- |
+| `tree` | выкл. | Боковое меню, в `data.tree` страниц записей | нет, это данные |
+| `search` | вкл. | Поисковый индекс; поле поиска сайта ищет по записям | `/{lang}/<id>/search.json` |
+| `llms` | выкл. | Оглавление и полный текст записей для ИИ-агентов | `/{lang}/<id>/llms.txt`, `/{lang}/<id>/llms-full.txt` |
+| `og` | выкл. | PNG-картинку для каждой записи | `/{lang}/<id>/og/<slug>.png` |
+| `rss` | выкл. | Ленту RSS 2.0 | `/{lang}/<id>/rss.xml` |
+
+`<id>` в адресах — это адрес фичи: её `id` или её `path`, если он задан. Все эти службы берут те же записи, что и `content.entries()`: проверенные схемой, без отфильтрованных, с непереведёнными так, как велит `i18n.fallback`.
+
+## Боковое меню: tree
+
+С `tree: true` каждая страница записи получает `data.tree`: боковое меню всей фичи на языке страницы. Оно строится из папок `content/<language>/<folder>/` и файлов `meta.json` в них. Ровно так строится боковое меню документации.
+
+### Что попадает в боковое меню
+
+- Каждая папка — группа; её `index.mdx` — страница группы.
+- Каждая запись — ссылка. Её текст — `title` из front matter, иначе имя файла.
+- `icon: Rocket` во front matter ставит перед ней иконку [Lucide](https://lucide.dev/icons).
+- Без `meta.json` страницы идут по алфавиту.
+- С `i18n.fallback: "notice"` у непереведённой страницы в меню других языков есть маленькая пометка `EN`. С `hide` её там нет.
+
+### meta.json
+
+`meta.json` в папке задаёт название группы, её иконку и порядок страниц:
+
+```json title="content/en/notes/meta.json"
+{
+  "title": "Notes",
+  "icon": "NotebookPen",
+  "pages": ["index", "---Basics---", "setup", "queues", "---More---", "..."]
+}
+```
+
+| Ключ | Что делает |
+| --- | --- |
+| `title` | Название группы в боковом меню |
+| `icon` | Имя иконки Lucide |
+| `pages` | Порядок. Элементы перечислены ниже |
+| `defaultOpen` | `true` раскрывает группу при загрузке страницы |
+| `collapsible` | `false` держит группу всегда раскрытой |
+| `root` | Папка — отдельное боковое меню, а сверху переключатель между такими папками. Документация так делает версии: `"root": "version"` |
+
+Элементы `pages`:
+
+| Элемент | Значит |
+| --- | --- |
+| `"setup"` | Страница `setup.mdx` или папка `setup/` |
+| `"---Basics---"` | Разделитель с подписью «Basics» |
+| `"..."` | Все страницы и папки, которые вы не перечислили, по алфавиту |
+| `"z...a"` | То же в обратном порядке |
+| `"!draft"` | Не включать `draft` в `"..."` |
+| `"...queues"` | Страницы папки `queues/` на её месте, без группы вокруг |
+| `"[GitHub](https://github.com/example/lattice)"` | Ссылка |
+| `"external:[GitHub](https://github.com/example/lattice)"` | Ссылка, помеченная как ведущая за пределы сайта |
+
+<Callout type="warn">
+Без `"..."` страница, которую вы забыли перечислить, пропадает из бокового меню. `consify check` предупреждает о каждой странице и папке, которая есть, но не указана в `pages`, и падает на имени в `pages`, для которого нет файла. Разделители, `"..."`, `"z...a"` и ссылки — не имена файлов, их она пропускает.
+</Callout>
+
+### Переведённый meta.json
+
+`meta.json` другого языка переводит названия:
+
+```json title="content/ru/notes/meta.json"
+{
+  "title": "Заметки",
+  "pages": ["index", "---Основы---", "setup", "queues", "---Ещё---", "..."]
+}
+```
+
+- `root`, `icon`, `defaultOpen` и `collapsible` берутся из `meta.json` языка по умолчанию. Переводу достаточно переводить.
+- `pages` должен перечислять те же страницы в том же порядке; отличаться могут только разделители. Иначе `consify check` упадёт.
+- Страница, которую переведённый список забыл, добавляется в его конец с предупреждением в консоли, так что она не пропадает.
+- Без переведённого `meta.json` у папки название на языке по умолчанию.
+
+### Как использовать меню на странице
+
+Меню сериализуется, чтобы дойти от сервера до браузера. `useFumadocsLoader` из Fumadocs превращает его обратно в дерево, а `DocsLayout` рисует по нему боковое меню. Вот маленькая фича «заметки» — копия того, что делает `@consify/docs` в `page.tsx`.
+
+Файл фичи:
+
+```ts title="custom/features/notes.ts"
+import { defineFeature } from "@consify/core";
+import { lazy } from "react";
+
+// the page imports @consify/core/ui, which only the bundles of the site can load
+const NotePage = lazy(() => import("./note-page.tsx"));
+
+export const notes = defineFeature({
+  id: "notes",
+  title: { en: "Notes", ru: "Заметки" },
+  content: { tree: true },
+  pages: {
+    "/*": { entry: true, layout: "none", component: NotePage },
+  },
+});
+```
+
+Файл страницы:
+
+```tsx title="custom/features/note-page.tsx"
+import { type EntryPage, Mdx, type PageProps } from "@consify/core";
+import { consify, docsLayoutOptions, FallbackNotice, Footer } from "@consify/core/ui";
+import { useFumadocsLoader } from "fumadocs-core/source/client";
+import { DocsLayout } from "fumadocs-ui/layouts/notebook";
+import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/layouts/notebook/page";
+
+type Note = { title: string; description?: string };
+
+export default function NotePage({ data, lang }: PageProps<EntryPage<Note>>) {
+  const { pageTree } = useFumadocsLoader({ pageTree: data.tree } as never) as { pageTree: never };
+  return (
+    <>
+      <DocsLayout {...docsLayoutOptions(consify, lang, "notes", true)} tree={pageTree}>
+        <DocsPage toc={data.toc}>
+          {data.fallback ? <FallbackNotice original={data.original} /> : null}
+          <DocsTitle>{data.data.title}</DocsTitle>
+          <DocsDescription>{data.data.description}</DocsDescription>
+          <DocsBody>
+            <Mdx code={data.code} className="" />
+          </DocsBody>
+        </DocsPage>
+      </DocsLayout>
+      <Footer consify={consify} lang={lang} />
+    </>
+  );
+}
+```
+
+Строка за строкой:
+
+- `"/*"` принимает вложенные адреса (`/en/notes/queues/lanes`) и `index.mdx` (`/en/notes`). Боковое меню почти всегда означает папки, поэтому почти всегда это `"/*"`.
+- `layout: "none"`: `DocsLayout` сам рисует шапку сайта, поэтому core не должен рисовать вокруг страницы ещё одну.
+- `lazy(() => import(...))`: Node загружает фичу вместе с `docs.config.ts`, а `@consify/core/ui` там загрузить нельзя. Страница загружается только тогда, когда её показывают.
+- `useFumadocsLoader({ pageTree: data.tree })` превращает сериализованное меню обратно в то, что умеет рисовать Fumadocs, с иконками и пометками. Приведения типов нужны, потому что в `EntryPage` меню имеет тип `unknown`.
+- `docsLayoutOptions(consify, lang, "notes", true)` даёт раскладке название сайта и ссылки шапки. `"notes"` — id фичи, а `true` просит боковое меню: вместе они ставят поле поиска над боковым меню, если у фичи есть поиск.
+- `DocsPage toc={data.toc}` рисует оглавление справа.
+- `className=""` у `<Mdx>`: текст уже оформляет `DocsBody`.
+- `Footer` — подвал сайта; при `layout: "none"` его рисуете вы.
+
+<Callout type="info">
+Эта страница импортирует `fumadocs-core` и `fumadocs-ui` напрямую. Добавьте их в зависимости проекта тех же версий, что использует `@consify/core` (см. его `package.json`), чтобы копия каждого была одна.
+</Callout>
+
+<Callout type="warn">
+`tree` получают только страницы записей. У страницы `"/"` со своим `load` данных меню нет. С боковым меню напишите `index.mdx`, и пусть `"/*"` покажет его как главную страницу фичи.
+</Callout>
+
+## Поиск
+
+Поиск включён у каждой фичи с `content`. Делать ничего не нужно: поле поиска сайта ищет по записям того раздела, где сейчас читатель. На странице документации оно ищет по документации, на странице вашей фичи — по вашим записям.
+
+Что индексируется, для каждого языка: `title` и `description` каждой записи, её заголовки и абзацы.
+
+| Сайт | Как он ищет |
+| --- | --- |
+| Сервер (`deploy.mode: "server"`) | Браузер на каждый запрос спрашивает `/{lang}/<id>/search.json?query=...`, сервер отвечает результатами |
+| Статический сайт (`deploy.mode: "static"`) | `consify build` один раз пишет `/{lang}/<id>/search.json` с индексом всех языков. Браузер скачивает его при первом поиске и ищет сам |
+
+На статическом сайте индекс — это файл, который скачивает браузер, поэтому очень большая фича даёт большой файл. На сервере ничего не скачивается.
+
+### Как выключить поиск
+
+```ts
+content: { schema: example, search: false },
+```
+
+`search.json` нет, и на страницах фичи нет поля поиска.
+
+### Свой поиск
+
+Фича может принести свой поиск: `search` в `defineFeature`. Сайт держит один диалог на все поиски, а фича говорит, что она нашла.
+
+`useSearch` — хук React. Он получает `{ lang, isStatic }` и возвращает то, что показывает диалог:
+
+```tsx title="custom/features/glossary.tsx"
+import { defineFeature, type SearchContext, type SearchState } from "@consify/core";
+import { useMemo, useState } from "react";
+
+const terms = [
+  { id: "queue", term: "Queue", text: "A list of jobs waiting for a worker." },
+  { id: "lane", term: "Lane", text: "A part of a queue with its own weight." },
+];
+
+function useGlossarySearch({ lang }: SearchContext): SearchState {
+  const [search, setSearch] = useState("");
+  const items = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    // null: nothing to show yet (the input is empty)
+    if (!query) return null;
+    return terms
+      .filter((item) => item.term.toLowerCase().includes(query))
+      .map((item) => ({
+        id: item.id,
+        url: `/${lang}/glossary#${item.id}`,
+        type: "page" as const,
+        content: item.term,
+      }));
+  }, [search, lang]);
+  return { search, setSearch, isLoading: false, items };
+}
+
+export const glossary = defineFeature({
+  id: "glossary",
+  title: "Glossary",
+  search: { useSearch: useGlossarySearch },
+  pages: {
+    "/": () => (
+      <dl className="mx-auto w-full max-w-3xl px-4 py-12">
+        {terms.map((item) => (
+          <div key={item.id} id={item.id}>
+            <dt className="font-medium">{item.term}</dt>
+            <dd>{item.text}</dd>
+          </div>
+        ))}
+      </dl>
+    ),
+  },
+});
+```
+
+| Поле `SearchState` | Что это |
+| --- | --- |
+| `search`, `setSearch` | Текст в поле ввода и то, как диалог его меняет |
+| `isLoading` | `true`, пока результаты в пути (крутилка) |
+| `items` | `null`, пока показывать нечего; иначе результаты: `{ id, url, type: "page" \| "heading" \| "text", content, breadcrumbs? }` |
+
+Другой вариант — `open`: страница, у которой уже есть свой поиск (Scalar в `apiReference()`), открывает его, когда читатель нажимает на поле поиска сайта. `open` возвращает `false`, если пока открыть не может:
+
+```ts
+search: {
+  open: () => {
+    const button = document.querySelector<HTMLButtonElement>("#my-search-button");
+    button?.click();
+    return button !== null;
+  },
+},
+```
+
+`search` фичи главнее поиска по её контенту: с ним диалог не использует `search.json`.
+
+## Текст для ИИ-агентов: llms
+
+`llms: true` добавляет два файла на каждый язык:
+
+| Адрес | Что в нём |
+| --- | --- |
+| `/{lang}/<id>/llms.txt` | Оглавление: заголовок, адрес и описание каждой записи |
+| `/{lang}/<id>/llms-full.txt` | Каждая запись: `# Заголовок (адрес)`, затем её текст Markdown без front matter |
+
+ИИ-агент (или человек) получает всю фичу текстом за один запрос. У документации это включено по умолчанию (`llmsTxt` в `docs()`).
+
+Ещё фича предлагает ссылку с id `<id>:llms`, которую можно поставить в шапку или подвал:
+
+```ts title="docs.config.ts"
+header: {
+  links: ["docs", "notes", "notes:llms"],
+},
+```
+
+`consify links` печатает все id ссылок, которые предлагают фичи сайта.
+
+## Картинки для соцсетей: og
+
+`og: true` делает PNG для каждой записи с её `title`, `description` и названием сайта. Это то, что показывает чат или соцсеть, когда кто-то делится ссылкой.
+
+| Запись | Картинка |
+| --- | --- |
+| `cron-schedule.mdx` | `/en/examples/og/cron-schedule.png` |
+| `queues/lanes.mdx` | `/en/examples/og/queues/lanes.png` |
+| `index.mdx` | `/en/examples/og/index.png` |
+
+Страница записи сама получает `og:image` и `twitter:card` в `<head>`. Статический сайт рисует все картинки при сборке.
+
+<Callout type="warn">
+Задайте `site.url` в `docs.config.ts`. Соцсетям нужен абсолютный адрес картинки; без `site.url` в адресе нет хоста, и картинка не покажется.
+</Callout>
+
+Для страницы, которая не страница записи, задайте картинку сами через `meta`:
+
+```ts
+"/": page({
+  load: ({ content }) => content.entries<Example>(),
+  meta: () => ({ image: "/examples/cover.png" }),
+  component: ExampleList,
+}),
+```
+
+## Лента: rss
+
+`rss: true` делает ленту RSS 2.0 на каждый язык по адресу `/{lang}/<id>/rss.xml`. Её элементы — записи в порядке `sort`, так что для ленты сортируйте по дате.
+
+| В ленте | Откуда |
+| --- | --- |
+| Название ленты | `site.name`, затем название фичи: `Lattice: Examples` |
+| Описание ленты | `site.description` |
+| `<title>` элемента | `title` из front matter, иначе slug |
+| `<link>`, `<guid>` | Адрес записи, абсолютный с `site.url` |
+| `<pubDate>` | `date` из front matter (`Date` или текст), если он есть |
+| `<description>` | `description` из front matter |
+| `<category>` | Каждое значение `categories` и `tags` |
+
+Кроме самой ленты:
+
+- у каждой страницы фичи в `<head>` есть `<link rel="alternate" type="application/rss+xml">`, так что RSS-ридеры находят ленту с любой страницы;
+- фича предлагает id ссылки `<id>:rss` для `header.links` и `footer.columns`.
+
+Непереведённые записи есть в ленте каждого языка (на своём языке), если `i18n.fallback` не `hide`. Отфильтрованных записей в ней нет никогда.
+
+## На статическом сайте
+
+У статического сайта нет сервера, поэтому каждый адрес — файл, который пишет `consify build`:
+
+| Файл | Пишется |
+| --- | --- |
+| `search.json` | Один раз на фичу и язык, со всем индексом |
+| `llms.txt`, `llms-full.txt` | Один раз на язык |
+| `og/<slug>.png` | Один раз на запись и язык |
+| `rss.xml` | Один раз на язык |
+
+На сервере каждый из них делается, когда его запрашивают; записи за ним читаются один раз и хранятся, пока сервер работает.
+
+Дальше: соберите фичу со всем этим в [пошаговом руководстве](/docs/v0/features/tutorial) или посмотрите все опции в [справочнике](/docs/v0/features/reference).

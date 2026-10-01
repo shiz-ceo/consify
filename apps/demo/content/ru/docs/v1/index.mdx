@@ -1,0 +1,21 @@
+---
+title: Введение
+description: Lattice v1
+icon: House
+---
+
+Lattice v1 — предыдущая версия без типов. Задачи — обычные объекты, очереди создаются через `new Queue(name)`.
+
+```ts
+import { Queue, Worker } from "lattice";
+
+const queue = new Queue("emails");
+await queue.add({ to: "ada@example.com" });
+
+new Worker("emails", async (job) => {
+  console.log(job.data.to);
+});
+```
+
+> [!WARNING]
+> v1 больше не получает исправлений. Чтобы обновиться, прочитайте [руководство по миграции](/ru/docs/v2/migration).

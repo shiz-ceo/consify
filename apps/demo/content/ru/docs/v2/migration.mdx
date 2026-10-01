@@ -1,0 +1,34 @@
+---
+title: Миграция с v1
+description: Что изменилось в v2 и как обновиться
+icon: ArrowRightLeft
+---
+
+<Callout type="warn" title="Ломающие изменения">
+  В v2 изменились способ создания очередей и объявление типа задачи.
+</Callout>
+
+## Очереди создаются с аргументом типа
+
+```diff
+- const queue = new Queue("emails");
++ const queue = createQueue<{ to: string }>("emails");
+```
+
+## Воркер принимает очередь
+
+```diff
+- new Worker("emails", handler);
++ createWorker(queue, handler);
+```
+
+## Шаги
+
+<Steps>
+<Step>Обновите пакет до `lattice@2`.</Step>
+<Step>Замените `new Queue` на `createQueue<T>`.</Step>
+<Step>Замените `new Worker` на `createWorker`.</Step>
+<Step>Переименуйте `attempts` в `retries` и вычтите единицу.</Step>
+</Steps>
+
+Старая документация доступна как [v1](/ru/docs/v1).

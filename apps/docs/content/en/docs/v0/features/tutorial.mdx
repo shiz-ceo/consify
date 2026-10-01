@@ -1,0 +1,669 @@
+---
+title: "Tutorial: a content feature step by step"
+description: Build the examples section of the demo site from nothing, one step at a time, and understand every line
+---
+
+In this tutorial you build a section of recipes for a job queue library called Lattice. It is the `examples` feature of the demo site of consify (`apps/demo/custom/features/examples.tsx`), rebuilt from an empty file.
+
+When you finish, the site has:
+
+- `/en/examples`: a list of examples as cards, newest first, with a filter by tag;
+- `/en/examples/cron-schedule`: a page for every example, its MDX text compiled on the server;
+- the same in Russian at `/ru/examples`, with the untranslated examples shown in English, with a note on their page;
+- a search, an RSS feed and a social image per example, without writing them.
+
+You need a consify site that runs (see [Getting started](/docs/v0/getting-started)) with two languages, `en` and `ru`, in `i18n.languages`. Read [Content and entries](/docs/v0/features/content) when you want the details behind a step.
+
+## Steps
+
+<Steps>
+<Step>
+
+### Write the files in content/
+
+An example is an MDX file. Create three of them in `content/en/examples/`:
+
+<Files>
+  <Folder name="content" defaultOpen>
+    <Folder name="en" defaultOpen>
+      <Folder name="examples" defaultOpen>
+        <File name="cron-schedule.mdx" />
+        <File name="priority-lanes.mdx" />
+        <File name="retry-with-backoff.mdx" />
+      </Folder>
+    </Folder>
+  </Folder>
+  <Folder name="custom" defaultOpen>
+    <Folder name="features" defaultOpen>
+      <File name="examples.tsx" />
+    </Folder>
+  </Folder>
+  <File name="docs.config.ts" />
+</Files>
+
+````mdx title="content/en/examples/retry-with-backoff.mdx"
+---
+title: Retry with backoff
+description: Retry a failing job with exponential delays.
+level: beginner
+tags: [retries, jobs]
+date: 2026-08-01
+---
+
+A job that fails is retried. Give it a number of attempts and a backoff:
+
+```ts
+await payments.add({ orderId: "o_1" }, { retries: 5, backoff: "exponential" });
+```
+
+The delay doubles with every attempt, with some jitter so retries do not arrive together.
+````
+
+````mdx title="content/en/examples/cron-schedule.mdx"
+---
+title: A job on a schedule
+description: Run a job every night with a cron expression.
+level: beginner
+tags: [cron, jobs]
+date: 2026-08-10
+---
+
+```ts
+await reports.schedule("nightly", { cron: "0 3 * * *" });
+```
+
+The scheduler keeps one job per name, so a restart does not add a second one.
+````
+
+````mdx title="content/en/examples/priority-lanes.mdx"
+---
+title: Priority lanes
+description: Keep urgent jobs ahead of the bulk with separate lanes.
+level: advanced
+tags: [queues, priority]
+date: 2026-08-20
+---
+
+Give a queue several lanes and a weight for each:
+
+```ts
+const emails = createQueue("emails", { lanes: { urgent: 5, bulk: 1 } });
+await emails.add({ to: "a@b.c" }, { lane: "urgent" });
+```
+
+Workers take five urgent jobs for every bulk one, so the bulk never starves.
+````
+
+The block between the two `---` lines is the front matter. It is data about the example, not text for the reader:
+
+- `title` and `description` go on the card, in `<head>`, in the search, the feed and the social image. Core knows these two names.
+- `level` is ours: `beginner` or `advanced`. We show it on the card.
+- `tags` is ours: a list for the filter. Core also puts tags into the feed.
+- `date` is for the order, newest first. Core also puts it into the feed.
+
+Everything after the front matter is the text: Markdown with code blocks. It could use any MDX component of the site (`<Callout>`, `<Tabs>`), without an import.
+
+The name of the file is the address: `retry-with-backoff.mdx` will be at `/en/examples/retry-with-backoff`. Each file is an **entry**.
+
+</Step>
+<Step>
+
+### Create an empty feature and connect it
+
+A feature is one call of `defineFeature`. Start with the smallest one that shows a page:
+
+```tsx title="custom/features/examples.tsx"
+import { defineFeature } from "@consify/core";
+
+export const examples = defineFeature({
+  id: "examples",
+  title: "Examples",
+  pages: {
+    "/": () => <main className="mx-auto w-full max-w-3xl px-4 py-12">Examples</main>,
+  },
+});
+```
+
+- `id: "examples"` is three things at once: the address (`/en/examples`), the folder of the content (`content/<language>/examples/`) and the id of the link to the section.
+- `title` is the text of that link. With a title, the feature offers a link in the header.
+- `pages` maps addresses **inside** the feature to components. `"/"` is the front page of the feature: `/en/examples`, `/ru/examples`.
+- The component is a plain React component. The classes are Tailwind; the site already has it.
+
+Add the feature to `features` in `docs.config.ts`:
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { docs } from "@consify/docs";
+import { examples } from "./custom/features/examples.tsx";
+
+export default defineConfig({
+  // site, i18n, ...
+  features: [docs(), examples],
+});
+```
+
+Run `consify dev` and open `/en/examples`. The page says "Examples", inside the header and the footer of the site. The header has a link "Examples". (If your config sets `header.links`, add `"examples"` to it: a site that chooses its links shows only those.)
+
+</Step>
+<Step>
+
+### Describe the front matter with a schema
+
+Tell core what a correct example looks like. Core then checks every file:
+
+```tsx title="custom/features/examples.tsx"
+import { defineFeature, z } from "@consify/core";
+
+/** The front matter of an example: `content/<language>/examples/<slug>.mdx`. */
+const example = z.object({
+  title: z.string(),
+  description: z.string(),
+  level: z.enum(["beginner", "advanced"]),
+  tags: z.array(z.string()).default([]),
+  date: z.coerce.date(),
+});
+
+type Example = z.output<typeof example>;
+
+export const examples = defineFeature({
+  id: "examples",
+  title: "Examples",
+  content: {
+    schema: example,
+  },
+  pages: {
+    "/": () => <main className="mx-auto w-full max-w-3xl px-4 py-12">Examples</main>,
+  },
+});
+```
+
+- `z` is Zod, exported by `@consify/core`. You do not install it.
+- `z.object({...})` lists the fields. A field without `.optional()` or `.default()` is required.
+- `z.enum(["beginner", "advanced"])` accepts only these two texts.
+- `z.array(z.string()).default([])`: a file without `tags` gets an empty list, so the page never checks for `undefined`.
+- `z.coerce.date()`: YAML gives `2026-08-01` as text; this turns it into a `Date`. `z.date()` would reject every file.
+- `type Example = z.output<typeof example>` is the type of the checked front matter: `{ title: string; ...; tags: string[]; date: Date }`. We use it for the pages.
+- `content: { schema: example }` gives the feature content. From now on core reads `content/<language>/examples/`.
+
+Try it: change `level: beginner` to `level: expert` in `cron-schedule.mdx`. The next step reads the entries, and then the page shows:
+
+```text
+Invalid content of "examples":
+  - content/en/examples/cron-schedule.mdx: level: Invalid option: expected one of "beginner"|"advanced"
+```
+
+The file and the field are named. Put `beginner` back.
+
+</Step>
+<Step>
+
+### List the entries
+
+The front page loads the entries and draws a card for each:
+
+```tsx title="custom/features/examples.tsx"
+import { defineFeature, type Entry, type PageProps, page, z } from "@consify/core";
+import { Link } from "react-router";
+
+// const example = z.object({ ... }), type Example: as in the previous step
+
+function ExampleList({ data }: PageProps<Entry<Example>[]>) {
+  return (
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
+      <h1 className="text-3xl font-semibold">Examples</h1>
+      <ul className="mt-8 space-y-4">
+        {data.map((entry) => (
+          <li key={entry.slug} className="rounded-lg border border-fd-border p-4">
+            <Link to={entry.url} className="font-medium underline">
+              {entry.data.title}
+            </Link>
+            <p className="mt-1 text-sm text-fd-muted-foreground">{entry.data.description}</p>
+            <p className="mt-2 text-xs text-fd-muted-foreground">
+              {entry.data.level} · {entry.readingTime} min
+            </p>
+          </li>
+        ))}
+      </ul>
+    </main>
+  );
+}
+
+export const examples = defineFeature({
+  id: "examples",
+  title: "Examples",
+  content: {
+    schema: example,
+  },
+  pages: {
+    "/": page({
+      load: ({ content }) => content.entries<Example>(),
+      component: ExampleList,
+    }),
+  },
+});
+```
+
+The page part:
+
+- `load` runs on the server, before the page is drawn. It gets `content`: the content of this feature in the language of the address.
+- `content.entries<Example>()` returns every entry, checked by the schema. `<Example>` only tells TypeScript the type of `data`.
+- What `load` returns becomes `data` of the component. `page()` connects the two types; it does nothing at run time.
+
+The component part:
+
+- `PageProps<Entry<Example>[]>`: `data` is a list of entries whose front matter is an `Example`.
+- `entry.slug` is a stable key: `retry-with-backoff`.
+- `entry.url` is the full address, with the language: `/en/examples/retry-with-backoff`. You never build addresses of entries yourself.
+- `entry.data` is the checked front matter: `entry.data.title`, `entry.data.level`.
+- `entry.readingTime` is counted by core: words / 200, at least 1.
+- `Link` from `react-router` opens the page without reloading the site.
+- `border-fd-border`, `text-fd-muted-foreground` are colors of the theme of the site, right in light and dark mode.
+
+Open `/en/examples`: three cards, in the order of their file names. The links lead to 404 for now: there is no page for an entry yet.
+
+</Step>
+<Step>
+
+### Filter by tag with search params
+
+Add a row of tags above the list. A click adds `?tag=jobs` to the address, and the list shows only the examples with that tag:
+
+```tsx title="custom/features/examples.tsx"
+import { defineFeature, type Entry, type PageProps, page, z } from "@consify/core";
+import { Link, useSearchParams } from "react-router";
+
+function ExampleList({ data }: PageProps<Entry<Example>[]>) {
+  const tag = useSearchParams()[0].get("tag");
+  const shown = tag ? data.filter((entry) => entry.data.tags.includes(tag)) : data;
+  const tags = [...new Set(data.flatMap((entry) => entry.data.tags))].sort();
+  return (
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
+      <h1 className="text-3xl font-semibold">Examples</h1>
+      <nav className="mt-6 flex flex-wrap gap-2 text-sm">
+        {tags.map((name) => (
+          <Link
+            key={name}
+            to={tag === name ? "." : `?tag=${encodeURIComponent(name)}`}
+            className={tag === name ? "font-medium" : "text-fd-muted-foreground"}
+          >
+            #{name}
+          </Link>
+        ))}
+      </nav>
+      <ul className="mt-8 space-y-4">
+        {shown.map((entry) => (
+          <li key={entry.slug} className="rounded-lg border border-fd-border p-4">
+            <Link to={entry.url} className="font-medium underline">
+              {entry.data.title}
+            </Link>
+            <p className="mt-1 text-sm text-fd-muted-foreground">{entry.data.description}</p>
+            <p className="mt-2 text-xs text-fd-muted-foreground">
+              {entry.data.level} · {entry.readingTime} min
+            </p>
+          </li>
+        ))}
+      </ul>
+    </main>
+  );
+}
+```
+
+- `useSearchParams()` reads the query of the address. `search.get("tag")` is `"jobs"` for `?tag=jobs`, `null` without it.
+- `shown` is the list to draw: filtered when there is a tag, whole otherwise.
+- `tags` collects every tag of every entry: `flatMap` makes one list, `new Set` removes repeats, `sort` puts them in order. The row is built from the content, so a new tag in a file appears by itself.
+- ``to={`?tag=${encodeURIComponent(name)}`}`` keeps the address and changes only the query. `encodeURIComponent` keeps a tag with a space or `&` from breaking the address.
+- The link of the chosen tag goes to `"."`, the same page without a query: a second click clears the filter.
+- The link of the chosen tag is bold (`font-medium`), the others muted.
+- The list now maps `shown`, not `data`.
+
+Why filter in the component and not in `load`? A static site renders `/en/examples` once, at build time, without any query. A filter in the component runs in the browser too, so it works on a static site and on a server. The list is small (front matter only), so sending all of it is cheap.
+
+</Step>
+<Step>
+
+### Add a page for every entry
+
+One more page, with `entry: true`:
+
+```tsx title="custom/features/examples.tsx"
+import { defineFeature, type Entry, type EntryPage, Mdx, type PageProps, page, z } from "@consify/core";
+
+function ExamplePage({ data }: PageProps<EntryPage<Example>>) {
+  return (
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
+      <h1 className="text-3xl font-semibold">{data.data.title}</h1>
+      <Mdx code={data.code} className="prose mt-8" />
+    </main>
+  );
+}
+```
+
+```tsx
+  pages: {
+    "/": page({
+      load: ({ content }) => content.entries<Example>(),
+      component: ExampleList,
+    }),
+    "/:slug": { entry: true, component: ExamplePage },
+  },
+```
+
+- `"/:slug"` is an address with one parameter: `/en/examples/cron-schedule`. Our files are all directly in the folder, so one segment is enough. With sub-folders or an `index.mdx` it would be `"/*"`.
+- `entry: true` tells core: this is the page of an entry. Core reads the slug from the address, finds the entry, answers 404 when there is none, lists the addresses of every entry for the build and the sitemap, and fills `<head>` with the title and description of the entry.
+- There is no `load`: the component gets the entry itself as `data`.
+- `PageProps<EntryPage<Example>>`: an `EntryPage` is an entry plus its compiled text (`code`), its headings (`toc`), its translations (`alternates`) and its original address (`original`).
+- `data.data.title`: `data` is what the page got, `data.data` is the front matter of the entry.
+- `<Mdx code={data.code} />` draws the text. MDX was compiled on the server, with the code highlighting of the site. `className="prose mt-8"` keeps the typography of the site (`prose`, the default) and adds a margin.
+
+Open a card: the page shows the title and the text with a highlighted code block. The tab of the browser shows the title of the example. Open `/en/examples/nothing`: 404.
+
+</Step>
+<Step>
+
+### Translate the interface strings
+
+"Examples" and "min" are text of the interface, not of the content. They go to `messages`, one set per language, and the page gets them through `t`:
+
+```tsx title="custom/features/examples.tsx"
+export const examples = defineFeature({
+  id: "examples",
+  title: ({ t }) => t("examples"),
+  messages: {
+    en: {
+      examples: "Examples",
+      beginner: "Beginner",
+      advanced: "Advanced",
+      minutes: "{n} min",
+    },
+    ru: {
+      examples: "Примеры",
+      beginner: "Для начала",
+      advanced: "Продвинутый",
+      minutes: "{n} мин",
+    },
+  },
+  // content, pages: as before
+});
+```
+
+Then replace the text in the components:
+
+```tsx
+<h1 className="text-3xl font-semibold">{t("examples")}</h1>
+```
+
+```tsx
+{t(entry.data.level)} · {t("minutes", { n: String(entry.readingTime) })}
+```
+
+Take `t` from the props of the list: `function ExampleList({ data, t }: ...)`.
+
+- `title: ({ t }) => t("examples")`: the title is a function now, so the header says "Примеры" on Russian pages.
+- `messages.en` is the reference. A key missing in `ru` shows the English string.
+- `t(entry.data.level)`: the values of `level` (`beginner`, `advanced`) are also keys of the strings. The schema allows only these two, so every value has a string.
+- `"{n} min"` has a placeholder; `t("minutes", { n: "3" })` fills it. Values are strings, hence `String(...)`.
+
+More about strings: [Strings](/docs/v0/features/strings).
+
+</Step>
+<Step>
+
+### Sort, and turn on images, feed and search
+
+Four lines in `content`:
+
+```ts
+  content: {
+    schema: example,
+    sort: (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+    og: true,
+    rss: true,
+  },
+```
+
+- `sort` is a compare function over entries. `b` before `a` means newest first: priority lanes (August 20), the schedule (August 10), retries (August 1). `date` is a `Date` thanks to `z.coerce.date()`, so `getTime()` works. `content.entries()` and the feed use this order.
+- `og: true`: a PNG with the title, the description and the site name for every example, at `/en/examples/og/cron-schedule.png`, and `og:image` in `<head>` of its page.
+- `rss: true`: a feed at `/en/examples/rss.xml` with the title, description, date and tags of every example; a `<link rel="alternate">` to it on every page of the feature; and a link id `examples:rss` for the header or the footer.
+- Search needs no line: it is on for any feature with content. The search field on the pages of the section searches the titles, descriptions, headings and text of the examples.
+
+Inside `content`, `a` and `b` are typed `any`. For type checks write `(a: Entry<Example>, b: Entry<Example>)`; the demo keeps the short form.
+
+Details of each: [Sidebar, search, llms.txt, images, RSS](/docs/v0/features/content-services).
+
+</Step>
+<Step>
+
+### Translate an entry, and see an untranslated one
+
+A translation is a file with the same name in the folder of the language:
+
+````mdx title="content/ru/examples/retry-with-backoff.mdx"
+---
+title: Повторы с backoff
+description: Повторить упавшую задачу с растущей задержкой.
+level: beginner
+tags: [retries, jobs]
+date: 2026-08-01
+---
+
+Упавшая задача повторяется. Задайте число попыток и задержку:
+
+```ts
+await payments.add({ orderId: "o_1" }, { retries: 5, backoff: "exponential" });
+```
+
+Задержка удваивается с каждой попыткой, со случайным разбросом, чтобы повторы не приходили разом.
+````
+
+- `title`, `description` and the text are translated.
+- `level`, `tags` and `date` are not: the code compares them. `level: beginner` stays `beginner`, and `t()` shows it as "Для начала".
+- The code block is the same as in the original. `consify check` compares them.
+
+The list needs no change. Open `/ru/examples`. There are three cards, not one:
+
+- "Повторы с backoff" is the Russian file.
+- "A job on a schedule" and "Priority lanes" have no Russian file. Core took the English ones and set `entry.fallback` to `true`; their cards show the English title and text.
+
+Open `/ru/examples/cron-schedule`. It shows the English text. Core also:
+
+- points the canonical address to `/en/examples/cron-schedule`, so search engines do not see a copy;
+- sets `<html lang="en">`, the language of the text;
+- leaves the address out of the sitemap.
+
+The reader of the page still does not know why the text is in English. Tell them with the note of the site. Add `FallbackNotice` to the import:
+
+```tsx
+import {
+  defineFeature,
+  type Entry,
+  type EntryPage,
+  FallbackNotice,
+  Mdx,
+  type PageProps,
+  page,
+  z,
+} from "@consify/core";
+```
+
+and draw it in `ExamplePage`, between the title and the text:
+
+```tsx
+      <h1 className="text-3xl font-semibold">{data.data.title}</h1>
+      {data.fallback ? <FallbackNotice original={data.original} className="mt-6" /> : null}
+      <Mdx code={data.code} className="prose mt-8" />
+```
+
+- `data.fallback` is `true` only for an untranslated copy, so the Russian page of `retry-with-backoff` has no note.
+- `FallbackNotice` says "This page has not been translated yet. The English version is shown." in the language of the page, with a link to `data.original`, the English address.
+- `className="mt-6"` adds a margin above it.
+- It is loaded the first time it is drawn, so it can live in this file next to `defineFeature`: Node still loads the file with `docs.config.ts`.
+
+This is `i18n.fallback: "notice"`, the default. With `"hide"` the two cards disappear from `/ru/examples` and their Russian pages answer 404. With `"show"` they look translated: no mark, no note, `fallback` is `false`. More in [Translations](/docs/v0/features/content).
+
+</Step>
+<Step>
+
+### Check it
+
+Run the check of the content:
+
+```bash
+consify check
+```
+
+It builds the list of every address of every feature (which reads and checks every entry), checks the front matter of every file, compares every translation with its original and checks `meta.json` files. For our files it warns:
+
+```text
+warning: content/en/examples/cron-schedule.mdx: no "ru" version
+warning: content/en/examples/priority-lanes.mdx: no "ru" version
+```
+
+These are warnings: untranslated entries are allowed. With `consify check --strict` they are errors, for a site that must be fully translated. A broken front matter or a translation with a different code block is always an error, and the command exits with code 1, so you can run it in CI.
+
+Then look at it with `consify dev`:
+
+| Address | What you should see |
+| --- | --- |
+| `/en/examples` | Three cards, newest first, the tag row |
+| `/en/examples?tag=jobs` | Two cards |
+| `/en/examples/cron-schedule` | The text with a highlighted code block |
+| `/ru/examples` | Three cards, two of them in English |
+| `/ru/examples/cron-schedule` | The note "not translated yet", then the English text |
+| `/en/examples/rss.xml` | The feed |
+| `/en/examples/og/cron-schedule.png` | The social image |
+
+Change a file in `content/` and save: the open page reloads with the change. In `consify dev` nothing is cached.
+
+Automated tests of a feature: [Testing](/docs/v0/features/testing).
+
+</Step>
+<Step>
+
+### The finished file
+
+This is the whole feature, the same as `apps/demo/custom/features/examples.tsx`:
+
+```tsx title="custom/features/examples.tsx"
+import {
+  defineFeature,
+  type Entry,
+  type EntryPage,
+  FallbackNotice,
+  Mdx,
+  type PageProps,
+  page,
+  z,
+} from "@consify/core";
+import { Link, useSearchParams } from "react-router";
+
+/** The front matter of an example: `content/<language>/examples/<slug>.mdx`. */
+const example = z.object({
+  title: z.string(),
+  description: z.string(),
+  level: z.enum(["beginner", "advanced"]),
+  tags: z.array(z.string()).default([]),
+  date: z.coerce.date(),
+});
+
+type Example = z.output<typeof example>;
+
+/** The list: every example as a card, filtered by a tag from the address (`?tag=cron`). */
+function ExampleList({ data, t }: PageProps<Entry<Example>[]>) {
+  const tag = useSearchParams()[0].get("tag");
+  const shown = tag ? data.filter((entry) => entry.data.tags.includes(tag)) : data;
+  const tags = [...new Set(data.flatMap((entry) => entry.data.tags))].sort();
+  return (
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
+      <h1 className="text-3xl font-semibold">{t("examples")}</h1>
+      <nav className="mt-6 flex flex-wrap gap-2 text-sm">
+        {tags.map((name) => (
+          <Link
+            key={name}
+            to={tag === name ? "." : `?tag=${encodeURIComponent(name)}`}
+            className={tag === name ? "font-medium" : "text-fd-muted-foreground"}
+          >
+            #{name}
+          </Link>
+        ))}
+      </nav>
+      <ul className="mt-8 space-y-4">
+        {shown.map((entry) => (
+          <li key={entry.slug} className="rounded-lg border border-fd-border p-4">
+            <Link to={entry.url} className="font-medium underline">
+              {entry.data.title}
+            </Link>
+            <p className="mt-1 text-sm text-fd-muted-foreground">{entry.data.description}</p>
+            <p className="mt-2 text-xs text-fd-muted-foreground">
+              {t(entry.data.level)} · {t("minutes", { n: String(entry.readingTime) })}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </main>
+  );
+}
+
+/** One example: its text, compiled from MDX by core. */
+function ExamplePage({ data }: PageProps<EntryPage<Example>>) {
+  return (
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
+      <h1 className="text-3xl font-semibold">{data.data.title}</h1>
+      {data.fallback ? <FallbackNotice original={data.original} className="mt-6" /> : null}
+      <Mdx code={data.code} className="prose mt-8" />
+    </main>
+  );
+}
+
+/** Examples of Lattice: MDX files with a checked front matter and tags, a page per file. */
+export const examples = defineFeature({
+  id: "examples",
+  title: ({ t }) => t("examples"),
+  messages: {
+    en: {
+      examples: "Examples",
+      beginner: "Beginner",
+      advanced: "Advanced",
+      minutes: "{n} min",
+    },
+    ru: {
+      examples: "Примеры",
+      beginner: "Для начала",
+      advanced: "Продвинутый",
+      minutes: "{n} мин",
+    },
+  },
+  content: {
+    schema: example,
+    sort: (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+    og: true,
+    rss: true,
+  },
+  pages: {
+    "/": page({ load: ({ content }) => content.entries<Example>(), component: ExampleList }),
+    "/:slug": { entry: true, component: ExamplePage },
+  },
+});
+```
+
+| Lines | What they are | Step |
+| --- | --- | --- |
+| 1–11 | Imports: everything from `@consify/core`, links and the query from `react-router` | 4, 6, 9 |
+| 13–22 | The schema of the front matter and its type | 3 |
+| 24–58 | The list, with the tag filter | 4, 5, 9 |
+| 60–69 | The page of one example, with the note for an untranslated one | 6, 9 |
+| 72–74 | The id and the title from the strings | 2, 7 |
+| 75–88 | The strings in two languages | 7 |
+| 89–94 | The content: schema, order, social images, feed | 3, 8 |
+| 95–98 | The pages: the list and the page of an entry | 4, 6 |
+
+About 100 lines, and none of them reads a file, parses YAML, compiles MDX, builds an address, handles a missing translation or writes XML. Core does that.
+
+</Step>
+</Steps>
+
+## Where to go next
+
+- A sidebar for entries in folders, like the docs: [the sidebar](/docs/v0/features/content-services).
+- More data on the page of an entry (related examples, authors): [an entry page with load](/docs/v0/features/content).
+- Publish the feature as a package for other sites: [Packages](/docs/v0/features/packages).
+- Every option in one place: [Reference](/docs/v0/features/reference).

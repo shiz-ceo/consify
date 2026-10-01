@@ -1,0 +1,114 @@
+---
+title: Languages
+description: Translate pages and the interface
+---
+
+```ts title="docs.config.ts"
+i18n: {
+  defaultLanguage: "en",
+  languages: ["en", "ru"],
+  labels: { en: "English", ru: "Русский" },
+  messages: { ru: { documentation: "Доки" } },
+},
+```
+
+<TypeTable
+  type={{
+    defaultLanguage: { description: "Used when a page has no translation. Must be in `languages`.", type: "string", default: '"en"' },
+    languages: { description: "Language codes: `en`, `ru`, `pt-BR`.", type: "string[]", default: '["en"]' },
+    labels: { description: "Names in the language switcher.", type: "Record<string, string>", default: "{}" },
+    messages: { description: "Overrides for the interface strings of consify, per language.", type: "Record<string, Record<string, string>>", default: "{}" },
+    fallback: { description: "What a page without a translation does: `notice`, `show` or `hide`.", type: '"notice" | "show" | "hide"', default: '"notice"' },
+  }}
+/>
+
+## URLs
+
+Every page has the language in its address: `/en/docs/v0/getting-started`, `/ru/docs/v0/getting-started`. `/` redirects to the default language.
+
+## Translating pages
+
+Every language has a folder in `content/`: the original is `content/en/docs/v0/guide.mdx`, the translation is `content/ru/docs/v0/guide.mdx`, with the same path. Slugs are not translated, so the address is `/ru/docs/v0/guide`. `meta.json` works the same way, inside each language folder. Run `consify lang add <language>` to prepare a new language and `consify lang status` to see what is left to translate. See [Languages and versions](/docs/v0/writing/translations-and-versions).
+
+## Pages without a translation
+
+A page that has no file in the folder of a language (or a language with no folder at all) is shown in the default language, so you can translate gradually. `i18n.fallback` decides how that looks:
+
+| Value | What the reader sees |
+| --- | --- |
+| `notice` (default) | The original text with a note "This page has not been translated yet", a small `EN` mark in the sidebar and on blog cards, `lang` of the document set to the language of the text, the original address as the canonical one, and no address in the sitemap |
+| `show` | The original text as if it were translated, no marks |
+| `hide` | The page does not exist in that language: its address leads to the default language, and it is missing from the sidebar, the blog list, the feed and the sitemap. Every language then needs its own `meta.json` |
+
+Links to the other languages (`hreflang`) list only translations that exist.
+
+The `meta.json` in a language folder translates the title of a folder and the order of its pages. Whatever is not text (`root`, `icon`, `defaultOpen`, `collapsible`) is taken from the `meta.json` of the default language, so the version switcher looks the same in every language. A page that the translated list forgets is added at its end, with a warning in the console, so it never disappears from the sidebar.
+
+## Interface strings
+
+consify ships English and Russian strings for what it draws itself: the footer, the 404 page, notices, and the strings of the docs, the blog and other features. The sidebar, the search box, the table of contents and the theme switcher come from Fumadocs, and Russian is translated for them too. Every other language shows English until you translate it.
+
+### A language pack
+
+To translate the interface into another language, make a pack for it:
+
+```sh
+consify locale de
+```
+
+This writes `custom/locales/de.ts` with every string of consify, of the features of the site and of the Fumadocs widgets. The values are the current text, so you translate line by line:
+
+```ts title="custom/locales/de.ts"
+import { defineLocale } from "@consify/core";
+
+export default defineLocale({
+  // the name of the language in the language switcher
+  label: "Deutsch",
+
+  messages: {
+    // consify
+    notFound: "Diese Seite wurde nicht gefunden.",
+    backToHome: "Zur Startseite",
+    // …
+  },
+
+  // the widgets of Fumadocs: sidebar, search, table of contents, theme switcher
+  ui: {
+    "On this page(table of contents)": "Auf dieser Seite",
+    // …
+  },
+});
+```
+
+Then add `"de"` to `i18n.languages`. Delete a line to keep the built-in text. A `.json` file with the same fields works too. `create-consify` makes an empty pack for every language it has no strings for, and when a language of the site has no pack the console says so and names the command.
+
+`consify locale de --force` writes the file again (it never replaces one without `--force`).
+
+### Which string wins
+
+From the weakest to the strongest:
+
+1. English, from consify and the features.
+2. The language's own strings, from consify and the features.
+3. `messages` of [plugins](/docs/v0/customizing/plugins).
+4. The pack of the project, `custom/locales/<language>`.
+5. `i18n.messages` in `docs.config.ts`, for a change of one or two strings.
+
+A string that a language does not have is taken from the next source down, so a pack can be partial.
+
+In `t` of a feature, the feature's own `messages` come before the strings of other features and plugins with the same key, so two features can both have `title` without clashing. The pack of the project and `i18n.messages` still win over them. See [Strings](/docs/v0/features/strings).
+
+### In your own components
+
+`useMessages()` from `@consify/core/ui` gives the strings of the language of the page. A feature names its own keys:
+
+```tsx
+import { useMessages } from "@consify/core/ui";
+
+function Cart() {
+  const t = useMessages<{ cart: string }>();
+  return <h2>{t.cart}</h2>;
+}
+```
+
+Strings of a feature go in its `messages: { en: {...}, ru: {...} }`, and of a plugin in `messages` of the plugin. Both are listed in the pack made by `consify locale`. A page of a feature gets the same strings as `t`: `t("cart")`, and `t("hello", { name })` fills `{name}` in the string.

@@ -1,0 +1,583 @@
+---
+title: Reference
+description: Every type and function of the feature API, the entry points of @consify/core and the addresses core makes
+---
+
+Every type and function you use to write a feature, in one place. For explanations and examples, read [Features](/docs/v0/features), [Pages](/docs/v0/features/pages), [Data and load](/docs/v0/features/data), [Content](/docs/v0/features/content) and [Content services](/docs/v0/features/content-services).
+
+A `?` after a field name means the field is optional. All types are exported from `@consify/core`:
+
+```ts
+import type { FeatureInput, LoadContext, PageProps } from "@consify/core";
+```
+
+## Entry points
+
+| Import | Loaded by | What it has |
+| --- | --- | --- |
+| `@consify/core` | Node, Vite, the browser | `defineConfig`, `defineFeature`, `page`, `isFeature`, `lazyComponents`, `Mdx`, `z`, `featureUrl`, `fillUrl`, `featureText`, `createTranslate`, `linkCatalog`, `linkIds`, `primaryLinks`, `localized`, `resolveHref`, `format`, `getMessages`, `defineLocale`, `definePlugin`, and every type below. No JSX, no CSS: safe in `docs.config.ts` and `index.ts` of a package |
+| `@consify/core/ui` | Only the bundles of the site | The parts of the site for pages: `SitePage`, `docsLayoutOptions`, `headerLinks`, `Footer`, `FallbackNotice`, `SearchField`, `SiteLink`, `Redirecting`, `useMessages`, `useSidebarCollapsed`, `consify`, `isStatic`, `requireLang`, `buildMeta`, `absoluteUrl`, `Hero`, `Features`, `MdxImage`. Never import it from `index.ts` |
+| `@consify/core/node` | Node: the CLI and tests | `createLoadContext`, `siteAddresses`, `createContent`, `diskSource`, `bundledSource`, `contentDir`, `slugOf`, `loadConfig`, `prerenderPaths`, `packageDirs`, `allFeatures`, `compileMdx`, `splitFrontmatter`, `renderLocaleTemplate`, `warnMissingLocales` |
+| `@consify/core/search` | Page modules and features | `createFumadocsSearch` |
+
+## defineFeature
+
+```ts
+function defineFeature(input: FeatureInput): Feature;
+```
+
+Checks the input and returns a frozen `Feature`. List it in `features` of `docs.config.ts`. It throws when:
+
+- `id` is not lowercase letters, digits and `-`, starting with a letter;
+- `path` is not a relative address or `""`;
+- an address of a page or a file does not start with `/`, ends with `/`, or has `//`;
+- a page is not a component, a page object or a redirect;
+- a file is not a function or `{ load }`.
+
+A feature with `content` and without `search` gets a search of its content by itself (unless `content.search` is `false`).
+
+`isFeature(value)` tells whether a value is a feature made by `defineFeature`.
+
+### FeatureInput
+
+| Field | Type | |
+| --- | --- | --- |
+| `id` | `string` | Lowercase letters, digits and `-`. The address (`/{lang}/<id>`), the content folder and the link id |
+| `path?` | `string` | The address of the feature under the language, when it is not `id`. `""` is the front page (`/{lang}`) |
+| `folder?` | `string` | The folder of its content under `content/<language>/`, when it is not `id` |
+| `title?` | `FeatureText` | The link to the feature in the header, and the title of its pages. Without it the feature offers no link |
+| `description?` | `FeatureText` | A few words about the feature for drop-down menus |
+| `messages?` | `Record<string, Strings>` | Strings per language, for `t`. English is the reference: other languages fall back to it |
+| `pages?` | `Record<string, PageInput>` | Pages by address relative to the feature: `"/"`, `"/:slug"`, `"/*"` |
+| `files?` | `Record<string, FileInput>` | Files by address relative to the feature: `"/rss.xml"`, `"/:slug/og.png"` |
+| `content?` | `ContentOptions` | MDX content the feature shows: core reads, checks and translates it |
+| `links?` | `(context: LinksContext) => LinkOption[]` | More places to link to than the front page (`blog:rss`) |
+| `components?` | `Record<string, ComponentType>` | MDX components this feature adds to every `.mdx` of the site |
+| `search?` | `FeatureSearch` | The search of the feature |
+
+The keys of `messages` type `t`: with `messages: { en: { up: "Up" } }` a call `t("down")` is a type error.
+
+### Feature
+
+What `defineFeature` returns. Every field is read-only.
+
+| Field | Type | |
+| --- | --- | --- |
+| `id` | `string` | As given |
+| `path` | `string` | The address under the language: `id`, or `path` when given |
+| `folder` | `string` | The folder under `content/<language>/` |
+| `content` | `ContentOptions \| undefined` | As given |
+| `title`, `description` | `FeatureText \| undefined` | As given |
+| `messages` | `Record<string, Strings>` | `{}` when not given |
+| `pages` | `Record<string, Page>` | Every page, normalized: `{ kind: "page", component, ... }` or `{ kind: "redirect", redirect }` |
+| `files` | `Record<string, FileDefinition>` | Every file, normalized to `{ load, paths? }` |
+| `links` | `function \| undefined` | As given |
+| `components` | `Record<string, ComponentType>` | `{}` when not given |
+| `search` | `FeatureSearch \| undefined` | As given, or the default search of the content |
+
+## Pages
+
+### PageInput
+
+A page is one of three things:
+
+| Form | Example |
+| --- | --- |
+| A component | `"/": ({ t }) => <h1>{t("title")}</h1>` |
+| A `PageDefinition` | `"/:slug": page({ load, component })` |
+| A `RedirectDefinition` | `` "/": { redirect: ({ lang }) => `/${lang}/docs/v2` } `` |
+
+`lazy(() => import("./page.tsx"))` and `memo(...)` are components too.
+
+### page
+
+```ts
+function page<Data>(definition: PageDefinition<Data>): PageDefinition<Data>;
+```
+
+Returns its argument. It only types `data` of the component from what `load` returns. A plain object works the same, with `data` untyped.
+
+### PageDefinition
+
+| Field | Type | |
+| --- | --- | --- |
+| `component` | `ComponentType<PageProps<Data>>` | The page |
+| `entry?` | `boolean` | A page for every entry of the content: its address names the entry (`"/*"` or `"/:slug"`). Core finds it, answers 404 without one, fills `<head>`, and gives it to the component as `data` (or to `load` as `entry`) |
+| `load?` | `(context: LoadContext) => Data \| Promise<Data>` | Reads what the page shows. Runs on the server. Its result is `data` of the component |
+| `paths?` | `(context: PathsContext) => Params[] \| Promise<Params[]>` | The parameters of a page with `:param` or `*`, for every address that exists. They are pre-rendered and listed in the sitemap. Without it such a page is only rendered on demand, which a static site cannot do |
+| `title?` | `string \| (context: MetaContext<Data>) => string \| undefined` | `<title>`. Default: the title of the feature, then the name of the site |
+| `description?` | `string \| (context: MetaContext<Data>) => string \| undefined` | The description of the page |
+| `meta?` | `(context: MetaContext<Data>) => PageMeta` | Everything of the `<head>` at once. Wins over `title` and `description` |
+| `layout?` | `PageLayout` | What core draws around the page. Default `"site"` |
+
+### RedirectDefinition
+
+| Field | Type | |
+| --- | --- | --- |
+| `redirect` | `(context: { lang: string; config: DocsConfig }) => string` | The address to send the reader to. An HTTP redirect on a server, a page that redirects itself on a static site |
+
+### PageLayout
+
+`"site" | "sidebar" | "none"`
+
+| Value | |
+| --- | --- |
+| `"site"` | The default. The header and the footer of the site around the page |
+| `"sidebar"` | The same, and the header gets a button for a panel the page draws itself. `useSidebarCollapsed()` tells the page its state |
+| `"none"` | Nothing around the page. The component draws everything |
+
+### PageProps
+
+What a page component gets.
+
+| Field | Type | |
+| --- | --- | --- |
+| `data` | `Data` | What `load` returned. For an entry page without `load`: the `EntryPage` |
+| `lang` | `string` | The language of the page |
+| `params` | `Params` | The parameters of the address |
+| `t` | `Translate` | The strings of the feature in the language of the page |
+
+## Data
+
+### LoadContext
+
+What `load` of a page or a file gets. Runs on the server.
+
+| Field | Type | |
+| --- | --- | --- |
+| `entry?` | `EntryPage` | The entry of a page with `entry: true` |
+| `lang` | `string` | The language of the page |
+| `params` | `Params` | The parameters of the address |
+| `t` | `Translate` | The strings of the feature |
+| `content` | `Content` | The content of the feature in this language |
+| `readFile` | `(path: string) => Promise<string>` | A file of the project, by its path from the project folder (`./openapi.json`). Throws for a path outside the project |
+| `config` | `DocsConfig` | The config of the site |
+| `request` | `Request` | The request |
+| `url` | `(path: string) => string` | The absolute address of a path of the site (with `site.url`), the path itself without it |
+| `notFound` | `() => never` | Answers with the 404 page |
+| `redirect` | `(to: string) => never` | Sends the reader to another address |
+
+### PathsContext
+
+What `paths` gets. It runs at build time and in `consify check`, to list the addresses to pre-render.
+
+| Field | Type | |
+| --- | --- | --- |
+| `lang` | `string` | The language |
+| `content` | `Content` | The content of the feature in this language |
+| `config` | `DocsConfig` | The config of the site |
+
+There is no `readFile` and no `request` here.
+
+### MetaContext
+
+What `title`, `description` and `meta` of a page get.
+
+| Field | Type | |
+| --- | --- | --- |
+| `data` | `Data` | What `load` returned |
+| `lang` | `string` | The language |
+| `params` | `Params` | The parameters of the address |
+| `t` | `Translate` | The strings of the feature |
+
+### PageMeta
+
+What `meta` of a page returns: the `<head>` beyond the title.
+
+| Field | Type | |
+| --- | --- | --- |
+| `title?` | `string` | `<title>` |
+| `description?` | `string` | The description |
+| `image?` | `string` | Path or URL of the social image |
+| `alternates?` | `Record<string, string>` | Language → path of the same page in that language (hreflang) |
+| `canonical?` | `string` | Path of the original when this page is a copy (a page shown without a translation) |
+| `head?` | `HeadTag[]` | More tags for `<head>`: `og:type`, a link to a feed |
+
+### HeadTag
+
+`Record<string, string>`: a tag of `<head>`. `{ name, content }` and `{ property, content }` are `<meta>` tags, `{ tagName: "link", rel, href }` is a `<link>`.
+
+## Files
+
+### FileInput and FileDefinition
+
+A file is a function (its `load`) or a `FileDefinition`:
+
+| Field | Type | |
+| --- | --- | --- |
+| `load` | `(context: LoadContext) => FileBody \| Promise<FileBody>` | Makes the answer |
+| `paths?` | the same as `paths` of a page | The parameters of a file with `:param` or `*` in its address |
+
+### FileBody
+
+`Response | string | Uint8Array | ArrayBuffer | object`
+
+| Returned | Answer |
+| --- | --- |
+| `Response` | Sent as is |
+| `string` | Text. The type comes from the extension of the address (`.xml`, `.txt`, `.md`, `.html`, `.css`, `.js`, `.svg`), `text/plain` otherwise |
+| `Uint8Array`, `ArrayBuffer` | Bytes. The type comes from the extension (`.png`, `.jpg`, `.webp`, `.gif`), `application/octet-stream` otherwise |
+| any other object | JSON |
+
+## Links
+
+### LinkOption
+
+A place of the site a feature offers to link to. The site chooses where it goes (`header.links`, `footer.columns`).
+
+| Field | Type | |
+| --- | --- | --- |
+| `id` | `string` | `<feature>` for the front page, `<feature>:<name>` for another place (`blog:rss`) |
+| `title` | `string` | The text of the link |
+| `description?` | `string` | A few words, shown in drop-down menus |
+| `url` | `string` | With the language in it: `/en/blog` |
+| `primary?` | `boolean` | Listed in the header when the site does not choose its links |
+| `external?` | `boolean` | Opens outside the site |
+
+### LinksContext
+
+What `links` of a feature gets.
+
+| Field | Type | |
+| --- | --- | --- |
+| `lang` | `string` | The language |
+| `t` | `Translate` | The strings of the feature |
+| `config` | `DocsConfig` | The config of the site |
+
+### The link catalog
+
+`linkCatalog(config, lang)` returns every `LinkOption` of the site, in the order of `features`:
+
+| Id | When |
+| --- | --- |
+| `<id>` | The feature has a `title`. `primary: true` |
+| `<id>:llms` | `content.llms` is on |
+| `<id>:rss` | `content.rss` is on. `external: true` |
+| anything | What `links` of the feature returns |
+
+`linkIds(config)` returns only the ids. `primaryLinks(config, lang)` returns the options with `primary`.
+
+## Strings
+
+| Type | Definition | |
+| --- | --- | --- |
+| `Localized<T>` | `T \| Record<string, T>` | A text for every language, or one per language code: `"API"` or `{ en: "Status", ru: "Статус" }` |
+| `FeatureText` | `Localized \| (context: { lang, t }) => string \| undefined` | A text of a feature: fixed, per language, or from its strings (`({ t }) => t("blog")`) |
+| `Strings` | `Record<string, string>` | The strings of a feature in one language |
+| `Translate` | `(key, values?) => string` | A string in the language of the page. `{name}` in it is replaced by `values.name`. An unknown key comes back as is |
+| `Params` | `Record<string, string>` | The parameters of an address: `:service` in `"/:service"` is `params.service`, `*` is `params["*"]` |
+| `MessagesOf<typeof messages>` | `Record<key, string>` | The type of the strings of a feature, for `useMessages<T>()` |
+
+`t` reads the strings of its feature first, then those of consify and the other features. The project overrides any of them in `i18n.messages` or `custom/locales/`.
+
+## Content
+
+### ContentOptions
+
+`content` of `defineFeature`: the MDX files of `content/<language>/<folder>/`.
+
+| Field | Type | |
+| --- | --- | --- |
+| `schema?` | `Schema<Data>` | Checks the front matter of every file (a zod schema). A wrong one stops with the file named |
+| `filter?` | `(entry: Entry<Data>) => boolean` | Leaves entries out: drafts, posts dated in the future |
+| `sort?` | `(a: Entry<Data>, b: Entry<Data>) => number` | The order of `content.entries()`. Default: by path |
+| `tree?` | `boolean` | A sidebar from the folders and `meta.json` files (`entry.tree`) |
+| `search?` | `boolean` | The search dialog of the site searches the entries. Default: on |
+| `llms?` | `boolean` | `llms.txt` and `llms-full.txt`: the entries as text for AI agents |
+| `og?` | `boolean` | A social image for every entry |
+| `rss?` | `boolean` | An RSS feed of the entries (`/{lang}/<id>/rss.xml`): their `title`, `description`, `date`, `categories` and `tags`, in the order of `sort` |
+
+### Schema
+
+Anything with `safeParse`, the way zod has it:
+
+```ts
+interface Schema<Data> {
+  safeParse(input: unknown):
+    | { success: true; data: Data }
+    | {
+        success: false;
+        error: { issues: readonly { path: readonly PropertyKey[]; message: string }[] };
+      };
+}
+```
+
+### Content
+
+The content of a feature in one language: `content` of `LoadContext` and `PathsContext`. A file without a translation is read from the default language, as `i18n.fallback` says (with `fallback: true` on it). With `fallback: "hide"` it does not exist in the other languages.
+
+| Member | Type | |
+| --- | --- | --- |
+| `root` | `string` | The folder of this content: `/site/content/en/docs` |
+| `list(dir?)` | `Promise<ContentFile[]>` | Every file under `dir` (the whole folder by default), in the language of the page |
+| `read(path)` | `Promise<string \| undefined>` | The text of a file, `undefined` when there is none |
+| `json<T>(path)` | `Promise<T \| undefined>` | A JSON file, parsed |
+| `frontmatter<T>(path)` | `Promise<T \| undefined>` | The front matter of an MDX file, without compiling it |
+| `mdx<T>(path)` | `Promise<MdxFile<T> \| undefined>` | An MDX file compiled for `<Mdx />`, with its front matter and headings |
+| `in(lang)` | `Content` | The same content in another language (with the same fallback) |
+| `entries<Data>()` | `Promise<Entry<Data>[]>` | Every entry of the feature in this language: checked, filtered and sorted |
+| `entry<Data>(slug)` | `Promise<EntryPage<Data> \| undefined>` | One entry with its compiled text |
+
+A path must stay inside the folder of the feature: `read("../x")` throws.
+
+### ContentFile
+
+A file of `content/<language>/<folder>/`.
+
+| Field | Type | |
+| --- | --- | --- |
+| `path` | `string` | Relative to the folder of the feature, with `/`: `guides/setup.mdx` |
+| `slug` | `string` | `path` without the extension and without a trailing `index`: `guides/setup`, `""` for `index.mdx` |
+| `lang` | `string` | The language the file is written in |
+| `fallback` | `boolean` | The file is the one of the default language, shown because there is no translation |
+
+### MdxFile
+
+An MDX (or Markdown) file compiled on the server: what `content.mdx()` returns. It has every field of `ContentFile`, and:
+
+| Field | Type | |
+| --- | --- | --- |
+| `frontmatter` | `Frontmatter` | The front matter, not checked |
+| `code` | `string` | The compiled page, for `<Mdx code={file.code} />` |
+| `toc` | `TocItem[]` | Its headings |
+| `text` | `string` | The Markdown text without the front matter (for `llms.txt`, reading time, search) |
+| `languages` | `string[]` | Every language the file exists in |
+| `structuredData` | `unknown` | Headings and paragraphs, for a search index (Fumadocs' `StructuredData`) |
+
+### Entry
+
+An MDX (or `.md`) file of a feature with `content`: one page of its content.
+
+| Field | Type | |
+| --- | --- | --- |
+| `slug` | `string` | Its address in the feature: `v2/guide`, `hello`, `""` for `index.mdx` |
+| `url` | `string` | Its page: `/en/docs/v2/guide` |
+| `path` | `string` | Relative to the folder of the feature: `v2/guide.mdx` |
+| `lang` | `string` | The language it is written in |
+| `fallback` | `boolean` | It is the one of the default language, shown because there is no translation (and `i18n.fallback` is not `show`) |
+| `data` | `Data` | The front matter, checked by `content.schema` |
+| `readingTime` | `number` | Minutes to read it, at least 1 |
+
+### EntryPage
+
+An entry with its text, for the page that shows it. It has every field of `Entry`, and:
+
+| Field | Type | |
+| --- | --- | --- |
+| `code` | `string` | The compiled text, for `<Mdx code={entry.code} />` |
+| `toc` | `TocItem[]` | Its headings |
+| `alternates` | `Record<string, string>` | Language → address of the same page in that language |
+| `original` | `string` | Its address in the default language |
+| `tree?` | `unknown` | The sidebar of the content (with `content.tree`), for Fumadocs' `useFumadocsLoader` |
+
+### TocItem
+
+| Field | Type | |
+| --- | --- | --- |
+| `title` | `string` | The text of the heading |
+| `url` | `string` | Its anchor: `#install` |
+| `depth` | `number` | 2 for `##`, 3 for `###` |
+
+### Mdx
+
+```tsx
+import { Mdx } from "@consify/core";
+
+component: ({ data }) => <Mdx code={data.code} />
+```
+
+Draws compiled MDX (`code` of `content.mdx()` or of an entry). Every MDX component of the site is available in it.
+
+| Prop | Type | |
+| --- | --- | --- |
+| `code` | `string` | `code` of a file read with `content.mdx()`, or of an entry |
+| `components?` | `MDXComponents` | Components for this file only, added to (or replacing) those of the site |
+| `className?` | `string` | Classes of the wrapper. Default `"prose"`, the typography of the site |
+
+### lazyComponents
+
+```ts
+function lazyComponents<Name extends string>(
+  load: () => Promise<Record<Name, ComponentType>>,
+  names: readonly Name[],
+): Record<Name, LazyExoticComponent<ComponentType>>;
+```
+
+One lazy component per name, all from one module. The module is loaded once, when the first of them is drawn. For `components` of a package, whose `index.ts` must not import JSX:
+
+```ts
+components: lazyComponents(() => import("./mdx.tsx"), ["Authors", "Figure"]),
+```
+
+## Search
+
+### FeatureSearch
+
+The search of a feature. The site draws one dialog for every search. The feature says what it finds, or opens a search of its own.
+
+| Field | Type | |
+| --- | --- | --- |
+| `useSearch?` | `(context: SearchContext) => SearchState` | A React hook: what the search dialog of the site shows for this feature |
+| `open?` | `() => boolean` | Opens a search of its own. Returns `false` when it is not there yet |
+
+### SearchContext
+
+| Field | Type | |
+| --- | --- | --- |
+| `lang` | `string` | The language of the page |
+| `isStatic` | `boolean` | `deploy.mode` is `static`: there is no server to ask |
+
+### SearchState
+
+What `useSearch` returns.
+
+| Field | Type | |
+| --- | --- | --- |
+| `search` | `string` | The text in the field |
+| `setSearch` | `(search: string) => void` | Changes it |
+| `isLoading` | `boolean` | The results are loading |
+| `items` | `SearchResult[] \| null` | The results. `null` while there is nothing to show (an empty field) |
+
+### SearchResult
+
+One line of the results.
+
+| Field | Type | |
+| --- | --- | --- |
+| `id` | `string` | Unique in the list |
+| `url` | `string` | Where it leads |
+| `type` | `"page" \| "heading" \| "text"` | A page, a heading of it, or an excerpt |
+| `content` | `string` | The text of the line |
+| `breadcrumbs?` | `string[]` | Where it is |
+
+### createFumadocsSearch
+
+```ts
+import { createFumadocsSearch } from "@consify/core/search";
+
+search: createFumadocsSearch((lang) => `/${lang}/notes/search.json`),
+```
+
+A `FeatureSearch` backed by a Fumadocs search API served as a file of the feature. On a server the search asks the API. On a static site the API is pre-rendered to one file, the exported Orama index, which the browser downloads and searches itself. A feature with `content` gets this search by itself.
+
+## Functions for tests and tools
+
+### createLoadContext
+
+```ts
+import { createLoadContext } from "@consify/core/node";
+
+function createLoadContext(options: LoadContextOptions): LoadContext;
+```
+
+The context of `load` for a feature in a language, built the same way the server builds it.
+
+| Option | Type | |
+| --- | --- | --- |
+| `config` | `DocsConfig` | The config of the site |
+| `feature` | `Feature` | The feature: its strings for `t`, its folder for `content` |
+| `lang` | `string` | The language |
+| `params?` | `Params` | The parameters of the address. Default `{}` |
+| `request?` | `Request` | Default: a request for `http://localhost/{lang}` |
+| `cwd?` | `string` | The project folder. Default: the current folder |
+| `source?` | `ContentSource` | Where the content comes from. Default: `content/` of `cwd` on the disk |
+
+### siteAddresses
+
+```ts
+import { siteAddresses } from "@consify/core/node";
+
+function siteAddresses(config: DocsConfig, cwd?: string, source?: ContentSource): Promise<Address[]>;
+```
+
+Every address of the site: every page, redirect and file of every feature, in every language, with its parameters filled in. Pre-rendering, the sitemap and `consify check` use it.
+
+| Field of `Address` | Type | |
+| --- | --- | --- |
+| `feature` | `Feature` | The feature of the address |
+| `key` | `string` | The address in the feature: `"/:service"` |
+| `kind` | `"page" \| "redirect" \| "file"` | What it is |
+| `lang` | `string` | The language |
+| `url` | `string` | The address: `/en/status/api` |
+| `copy?` | `boolean` | A page of an entry that is not translated: a copy of the original, left out of the sitemap |
+
+`prerenderPaths(config, cwd)` returns the URLs a build pre-renders: the addresses without redirects on a server (they stay HTTP redirects), with them on a static site, plus `/sitemap.xml` and `/robots.txt`.
+
+### createContent
+
+```ts
+import { createContent } from "@consify/core/node";
+
+function createContent(options: CreateContentOptions): Content;
+```
+
+`content` for one feature and one language, without a page.
+
+| Option | Type | |
+| --- | --- | --- |
+| `config` | `DocsConfig` | The config of the site |
+| `cwd` | `string` | The project folder |
+| `feature` | `Feature` (at least `folder`) | The feature whose folder and entries this is |
+| `lang` | `string` | The language |
+| `source?` | `ContentSource` | Where the files come from. Default: `diskSource(cwd)` |
+
+### diskSource and bundledSource
+
+A `ContentSource` says where the files of `content/` come from, by their path in it (`en/docs/guide.mdx`).
+
+| Function | Source |
+| --- | --- |
+| `diskSource(cwd)` | The `content/` folder of the project on the disk. The default |
+| `bundledSource(modules)` | An object path → `() => Promise<text>`: `import.meta.glob("/content/**", { query: "?raw" })`, as the server build has it. A built server needs no `content/` folder next to it |
+
+Both leave out hidden files (a name that starts with `.`).
+
+```ts
+const source = bundledSource({
+  "/content/en/notes/a.mdx": async () => "---\ntitle: A\n---\nText",
+});
+```
+
+### Other helpers
+
+| Function | From | |
+| --- | --- | --- |
+| `featureUrl(feature, lang)` | `@consify/core` | The front page of a feature: `/en/status`, `/en` for a feature with `path: ""` |
+| `fillUrl(feature, key, lang, params?)` | `@consify/core` | The URL of a page or a file with its parameters: `/en/status/api`. Throws when a required parameter is missing |
+| `featureText(config, lang, text, feature?)` | `@consify/core` | A `FeatureText` in a language |
+| `createTranslate(config, lang, feature?)` | `@consify/core` | `t` of a language |
+| `localized(config, lang, value)` | `@consify/core` | A `Localized` string in a language: the one for `lang`, else the default language, else any |
+| `resolveHref(config, lang, href)` | `@consify/core` | A link of the config as a URL: a link id (`blog:rss`) becomes its address, `/x` becomes `/{lang}/x` |
+| `format(template, values)` | `@consify/core` | Fills `{name}` in a string |
+| `slugOf(path)` | `@consify/core/node` | `guides/setup.mdx` → `guides/setup`, `index.mdx` → `""` |
+| `packageDirs(cwd)` | `@consify/core/node` | The folders of the `@consify/*` and `consify-*` dependencies of a project |
+| `allFeatures(config)` | `@consify/core/node` | Every feature of the site, with the built-in front page first |
+| `loadConfig(cwd)` | `@consify/core/node` | Loads `docs.config.ts` of a project |
+
+## Addresses core makes
+
+For a feature with `path` `status`, every address is under `/{lang}/status`.
+
+### Addresses of a feature
+
+| Address | Kind | When |
+| --- | --- | --- |
+| `/{lang}/<path>` + a key of `pages` | page or redirect | Every page. A page with parameters: once per item of `paths`, or per entry with `entry: true` |
+| `/{lang}/<path>` + a key of `files` | file | Every file. With parameters: once per item of `paths` |
+| `/{lang}/<path>/search.json` | file | `content` without `search: false`. A file only on a static site: a server answers the queries itself |
+| `/{lang}/<path>/llms.txt` | file | `content.llms` |
+| `/{lang}/<path>/llms-full.txt` | file | `content.llms` |
+| `/{lang}/<path>/og/<slug>.png` | file | `content.og`: one per entry, `og/index.png` for `index.mdx` |
+| `/{lang}/<path>/rss.xml` | file | `content.rss` |
+
+Do not use these addresses for your own pages or files.
+
+### Addresses of the site
+
+| Address | What |
+| --- | --- |
+| `/` | Sends the reader to a language of the site |
+| `/{lang}` | The front page: `content/<language>/home.mdx`, or the first section of the site without it. A feature with `path: ""` replaces it |
+| `/sitemap.xml` | Every page, without copies |
+| `/robots.txt` | For search engines |
+| anything else | The 404 page |

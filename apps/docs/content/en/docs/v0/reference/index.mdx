@@ -1,0 +1,22 @@
+---
+title: Reference
+description: "Exact facts: commands, options, types"
+---
+
+- [CLI](/docs/v0/reference/cli): the `consify` commands.
+- [Configuration](/docs/v0/reference/config): every option of `docs.config.ts`.
+- [Plugins](/docs/v0/reference/plugins): the plugin type.
+- [Slots](/docs/v0/reference/slots): props of the home page, the header and the footer.
+- [MDX components](/docs/v0/reference/mdx-components): what is available in `.mdx`.
+- [Environment](/docs/v0/reference/environment): variables that change the behavior.
+
+The exports of the package:
+
+| Import | What |
+| --- | --- |
+| `consify` | `defineConfig`, types (`Slots`, `HeaderSlotProps`, ...), `resolveHref`, `getMessages` |
+| `consify/vite` | `consify(config)`, the Vite plugin |
+| `consify/react-router` | `defineRouterConfig(config)` |
+| `consify/plugins` | `definePlugin` and the plugin type |
+| `consify/components` | `Hero`, `Features`, `SiteFooter`, `Footer`, `Badge`, `Video`, `Mermaid`, `getMDXComponents` |
+| `consify/theme.css` | The stylesheet of the theme (imported for you) |

@@ -1,0 +1,741 @@
+---
+title: Testing features
+description: Test the options, addresses, links, load functions and content of a feature with bun test
+---
+
+A feature is plain data: `defineFeature` returns an object with its pages, files and content settings. So most of a feature can be tested without a browser and without a running site. You call its functions directly and check what they return.
+
+This page shows how. The examples come from the tests of `@consify/core`, `@consify/blog`, `@consify/docs` and `@consify/api-reference`, and from the `consify-status` package of [A feature as a package](/docs/v0/features/packages).
+
+## What to test
+
+| What | Tool | Catches |
+| --- | --- | --- |
+| Options | The factory function itself | A wrong option that does not stop, a bad error message |
+| Links | `linkCatalog` | A missing or untranslated header link |
+| Addresses | `siteAddresses` | A page that is not built, a missing `paths`, a wrong address |
+| Data | `createLoadContext` + `load` | Wrong data, a missing 404, a wrong redirect |
+| Files | `createLoadContext` + `load` of a file | A wrong JSON or feed |
+| Content | `createContent`, `bundledSource` | Front matter checks, filters, order, translations |
+| Plain logic | Import it | Sorting, filtering, parsing |
+| Pages | `consify dev`, `consify check`, `consify build` | What you see: layout, languages, theme |
+
+Test from the bottom up. Plain logic first: it is fast and has no setup. Then the feature through core's functions. The pages last, in a real site.
+
+## Setup
+
+Tests run with `bun test`. Put them into `test/*.test.ts`:
+
+```bash
+bun test
+bun test --watch
+bun test test/status.test.ts
+```
+
+The functions for tests come from two entry points:
+
+| Import | From |
+| --- | --- |
+| `defineConfig`, `defineFeature`, `page`, `linkCatalog`, `z`, types | `@consify/core` |
+| `createLoadContext`, `siteAddresses`, `createContent`, `bundledSource`, `diskSource` | `@consify/core/node` |
+
+Most tests need a project folder: content, a data file. Make a new temp folder for each test and remove it after:
+
+```ts title="test/notes.test.ts"
+import { afterEach, beforeEach } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+
+let cwd: string;
+beforeEach(() => {
+  cwd = mkdtempSync(join(tmpdir(), "consify-notes-"));
+});
+afterEach(() => {
+  rmSync(cwd, { recursive: true, force: true });
+});
+
+/** `write("content/en/notes/a.mdx", "...")`: a file of the temp project. */
+function write(path: string, text: string) {
+  mkdirSync(dirname(join(cwd, path)), { recursive: true });
+  writeFileSync(join(cwd, path), text);
+}
+```
+
+Every function that reads the project takes this folder: `siteAddresses(config, cwd)`, `createLoadContext({ ..., cwd })`, `createContent({ ..., cwd })`.
+
+<Callout type="warn" title="Do not test against the real project">
+Without `cwd` these functions read the current folder. A test that reads your real `content/` breaks when someone edits a page. Always pass a temp folder, even an empty one.
+</Callout>
+
+## A config for the test
+
+A feature is tested inside a config, as a site uses it. `defineConfig` checks the config the same way as `docs.config.ts`:
+
+```ts
+import { defineConfig } from "@consify/core";
+import { status } from "../src/index.ts";
+
+const site = { name: "D", url: "https://d.example" };
+const services = [
+  { id: "api", name: "API" },
+  { id: "workers", name: "Workers" },
+];
+const config = (...features: ReturnType<typeof status>[]) =>
+  defineConfig({ site, i18n: { languages: ["en", "ru"] }, features });
+```
+
+Use two languages. Many mistakes show only in the second one: an untranslated title, an address with the wrong language.
+
+Set `site.url` when you test `url()` of the load context or anything that makes absolute addresses (a share link, a feed).
+
+## Options
+
+A wrong option must stop with its name:
+
+```ts
+test("wrong options stop with their name", () => {
+  expect(() => status({ source: "./status.json", services: [] })).toThrow(
+    /status\(\): services: list at least one service/,
+  );
+  expect(() => status({ source: "./s.json", services, perPage: 3 } as never)).toThrow(
+    /status\(\)/,
+  );
+});
+```
+
+`as never` lets you pass an option TypeScript does not allow. A user of plain JavaScript can do the same.
+
+`defineFeature` checks its own input too. A test of core shows what it refuses:
+
+```ts
+expect(() => defineFeature({ id: "shop", pages: { item: View } })).toThrow(/start with "\/"/);
+expect(() => defineFeature({ id: "Shop" })).toThrow(/lowercase/);
+```
+
+## Links
+
+`linkCatalog(config, lang)` lists every place the features offer to link to: the front page of every feature with a `title`, then `<id>:llms`, `<id>:rss` and what `links` adds. The header and the footer are made from it.
+
+```ts
+import { linkCatalog } from "@consify/core";
+
+test("offers a translated link", () => {
+  const c = config(status({ source: "./status.json", services }));
+  expect(linkCatalog(c, "ru").map((l) => [l.id, l.title, l.url])).toEqual([
+    ["status", "Статус", "/ru/status"],
+  ]);
+});
+```
+
+The blog also offers its feed:
+
+```ts
+expect(linkCatalog(config(blog()), "ru").map((l) => [l.id, l.title, l.url])).toEqual([
+  ["blog", "Блог", "/ru/blog"],
+  ["blog:rss", "RSS", "/ru/blog/rss.xml"],
+]);
+```
+
+## Addresses
+
+`siteAddresses(config, cwd)` lists every address of the site: every page, redirect and file of every feature, in every language, with the parameters filled in. Pre-rendering, the sitemap and `consify check` use the same list. If an address is not in it, a static site does not build it.
+
+Each item has `feature`, `key` (the address in the feature, `"/:service"`), `kind` (`page`, `redirect` or `file`), `lang`, `url`, and `copy: true` for a page shown without a translation.
+
+```ts
+import { siteAddresses } from "@consify/core/node";
+
+test("a page per service in every language, and the JSON file", async () => {
+  const c = config(status({ source: "./status.json", services }));
+  const urls = (await siteAddresses(c, cwd))
+    .filter((a) => a.feature.id === "status")
+    .map((a) => `${a.kind} ${a.url}`);
+  expect(urls).toEqual([
+    "page /en/status",
+    "page /en/status/api",
+    "page /en/status/workers",
+    "file /en/status/status.json",
+    "page /ru/status",
+    "page /ru/status/api",
+    "page /ru/status/workers",
+    "file /ru/status/status.json",
+  ]);
+});
+```
+
+Filter by `feature.id`: the list also has the built-in front page of the site.
+
+Test the static mode separately when your feature has content. A server answers search queries itself, and only a static site gets the search index as a file:
+
+```ts
+test("a static site gets the search index as a file", async () => {
+  const built = defineConfig({ ...config, deploy: { mode: "static" } });
+  const urls = (await siteAddresses(built, cwd)).map((a) => a.url);
+  expect(urls).toContain("/en/notes/search.json");
+});
+```
+
+<Callout type="warn" title="A page with a parameter and no paths">
+A page with `:param` or `*` in its address and without `paths` (and without `entry: true`) has **no** addresses in this list. A server still renders it on demand, a static site does not have it at all. A test of `siteAddresses` catches this.
+</Callout>
+
+## Data: load
+
+`createLoadContext` builds the same context the server gives to `load`: `lang`, `params`, `t`, `content`, `readFile`, `config`, `request`, `url`, `notFound` and `redirect`. So you can call `load` directly.
+
+```ts
+import { createLoadContext } from "@consify/core/node";
+
+test("the list reads the states from the file of the project", async () => {
+  const c = config(status({ source: "./status.json", services }));
+  const feature = c.features[0] as ReturnType<typeof status>;
+  const list = feature.pages["/"];
+  if (list?.kind !== "page" || !list.load) throw new Error("no list");
+  const data = await list.load(createLoadContext({ config: c, feature, lang: "en", cwd }));
+  expect(data).toEqual({
+    base: "/en/status",
+    services: [
+      { id: "api", name: "API", state: "up" },
+      { id: "workers", name: "Workers", state: "down" },
+    ],
+  });
+});
+```
+
+The options of `createLoadContext`:
+
+| Option | Default | |
+| --- | --- | --- |
+| `config` | — | The config, from `defineConfig` |
+| `feature` | — | The feature whose `load` you call: its strings for `t`, its folder for `content` |
+| `lang` | — | The language of the page |
+| `params` | `{}` | The parameters of the address: `{ service: "api" }`, `{ "*": "v2/guide" }` |
+| `request` | `new Request("http://localhost/{lang}")` | The request |
+| `cwd` | The current folder | The project folder: `readFile` and `content` read from it |
+| `source` | `content/` of `cwd` on the disk | Where the content comes from, see [Content without a disk](#content-without-a-disk) |
+
+Take the feature from the config (`c.features[0]`), not from a separate call. Then the test uses exactly what the site uses.
+
+`feature.pages[key]` is either a page or a redirect. Check `kind` before you call `load`: `if (page?.kind !== "page" || !page.load) throw ...`. This also tells TypeScript that `load` exists.
+
+### A 404
+
+`notFound()` throws a `Response` with the status 404. Catch it:
+
+```ts
+test("an unknown service is a 404", async () => {
+  const c = config(status({ source: "./status.json", services }));
+  const feature = c.features[0] as ReturnType<typeof status>;
+  const one = feature.pages["/:service"];
+  if (one?.kind !== "page" || !one.load) throw new Error("no page");
+  const context = createLoadContext({
+    config: c,
+    feature,
+    lang: "en",
+    cwd,
+    params: { service: "nope" },
+  });
+  let error: unknown;
+  try {
+    await one.load(context);
+  } catch (thrown) {
+    error = thrown;
+  }
+  expect(error).toBeInstanceOf(Response);
+  expect((error as Response).status).toBe(404);
+});
+```
+
+### A redirect
+
+`redirect(to)` throws an object with `to`. A small helper catches what a function throws, sync or async:
+
+```ts
+import { expect, test } from "bun:test";
+import { defineConfig, defineFeature, page } from "@consify/core";
+import { createLoadContext } from "@consify/core/node";
+
+/** What a function throws (sync or async), `undefined` when it throws nothing. */
+async function thrown(run: () => unknown): Promise<unknown> {
+  try {
+    await run();
+  } catch (error) {
+    return error;
+  }
+  return undefined;
+}
+
+test("load sends the reader elsewhere", async () => {
+  const shop = defineFeature({
+    id: "shop",
+    pages: {
+      "/:item": page({
+        load: ({ lang, params, redirect }) =>
+          params.item === "old" ? redirect(`/${lang}/shop/new`) : params.item,
+        component: () => null,
+      }),
+    },
+  });
+  const config = defineConfig({ site: { name: "D" }, features: [shop] });
+  const item = shop.pages["/:item"];
+  if (item?.kind !== "page" || !item.load) throw new Error("no page");
+  const context = createLoadContext({ config, feature: shop, lang: "en", params: { item: "old" } });
+  expect(await thrown(() => item.load?.(context))).toMatchObject({ to: "/en/shop/new" });
+});
+```
+
+<Callout type="warn" title="A sync load throws at once">
+When `load` is not `async`, `notFound()` and `redirect()` throw before any promise exists. `load(context).catch(...)` does not catch that. Use `try`/`catch` around `await`, as above.
+</Callout>
+
+A redirect **page** (`{ redirect: ... }`) has no `load`. Call its function:
+
+```ts
+test("a redirect", () => {
+  const old = notes.pages["/old"];
+  if (old?.kind !== "redirect") throw new Error("no redirect");
+  expect(old.redirect({ lang: "ru", config })).toBe("/ru/notes");
+});
+```
+
+### The page of an entry
+
+A page with `entry: true` gets the entry in `load` as `entry`. The server finds it by the address. In a test, read it with `content.entry(slug)` and add it to the context:
+
+```ts
+test("the page of an entry gets the entry", async () => {
+  write("content/en/notes/a.mdx", "---\ntitle: A\n---\nHello");
+  const context = createLoadContext({
+    config,
+    feature: notes,
+    lang: "en",
+    cwd,
+    params: { "*": "a" },
+  });
+  const entry = (await context.content.entry("a")) as EntryPage;
+  const one = notes.pages["/*"];
+  if (one?.kind !== "page" || !one.load) throw new Error("no page");
+  const data = (await one.load({ ...context, entry })) as { title: string; code: string };
+  expect(data.title).toBe("A");
+  expect(data.code).toContain("Hello");
+});
+```
+
+The `notes` feature of this and the next examples:
+
+```ts
+import { defineConfig, defineFeature, type EntryPage, page, z } from "@consify/core";
+
+const View = () => null;
+
+const notes = defineFeature({
+  id: "notes",
+  content: {
+    schema: z.object({ title: z.string(), draft: z.boolean().default(false) }),
+    filter: (entry) => !entry.data.draft,
+    og: true,
+  },
+  pages: {
+    "/": page({
+      load: async ({ content }) => (await content.entries()).map((e) => e.slug),
+      title: ({ data }) => `${data.length} notes`,
+      component: View,
+    }),
+    "/*": page({
+      entry: true,
+      load: ({ entry }) => ({ title: String(entry?.data.title), code: entry?.code ?? "" }),
+      component: View,
+    }),
+    "/old": { redirect: ({ lang }) => `/${lang}/notes` },
+  },
+});
+
+const config = defineConfig({
+  site: { name: "D" },
+  i18n: { languages: ["en", "ru"] },
+  features: [notes],
+});
+```
+
+`View = () => null` is enough: a test of `load` never draws the component.
+
+### Titles and meta
+
+`title`, `description` and `meta` of a page are functions of `data`. Call them with the data `load` returned:
+
+```ts
+test("the title is made from the data", async () => {
+  write("content/en/notes/a.mdx", "---\ntitle: A\n---\n");
+  const list = notes.pages["/"];
+  if (list?.kind !== "page" || !list.load || typeof list.title !== "function") {
+    throw new Error("no list");
+  }
+  const context = createLoadContext({ config, feature: notes, lang: "en", cwd });
+  const data = await list.load(context);
+  expect(list.title({ data, lang: "en", params: {}, t: context.t })).toBe("1 notes");
+});
+```
+
+## Files
+
+A file has only `load`. Call it the same way:
+
+```ts
+test("the JSON file", async () => {
+  const c = config(status({ source: "./status.json", services }));
+  const feature = c.features[0] as ReturnType<typeof status>;
+  const file = feature.files["/status.json"];
+  if (!file) throw new Error("no file");
+  const body = await file.load(createLoadContext({ config: c, feature, lang: "en", cwd }));
+  expect(body).toMatchObject({ services: [{ id: "api", state: "up" }, { id: "workers" }] });
+});
+```
+
+`load` returns the body before core turns it into a `Response`: an object (sent as JSON), a string, bytes or a `Response`.
+
+## Strings
+
+`t` of the load context reads the strings of **its** feature first. Two features may use the same key:
+
+```ts
+test("two features may use the same key: each reads its own", () => {
+  const a = defineFeature({
+    id: "a",
+    title: ({ t }) => t("hint"),
+    messages: { en: { hint: "A" } },
+  });
+  const b = defineFeature({
+    id: "b",
+    title: ({ t }) => t("hint"),
+    messages: { en: { hint: "B" } },
+  });
+  const config = defineConfig({ site, features: [a, b] });
+  expect(createLoadContext({ config, feature: a, lang: "en", cwd }).t("hint")).toBe("A");
+  expect(createLoadContext({ config, feature: b, lang: "en", cwd }).t("hint")).toBe("B");
+  const catalog = linkCatalog(config, "en").map((l) => l.title);
+  expect(catalog).toEqual(["A", "B"]);
+});
+```
+
+`t("hi", { name: "Ada" })` fills `{name}` in the string. A key that does not exist comes back as is, so a typo shows up in the test as the key itself.
+
+## Content
+
+`createContent` gives the `content` of a feature in one language, without a page. It is the same object `load` gets as `content`.
+
+```ts
+import { createContent } from "@consify/core/node";
+
+test("entries are checked, filtered and translated", async () => {
+  write("content/en/notes/a.mdx", "---\ntitle: A\n---\nText");
+  write("content/en/notes/b.mdx", "---\ntitle: B\ndraft: true\n---\n");
+  const ru = createContent({ config, cwd, feature: notes, lang: "ru" });
+  const entries = await ru.entries();
+  expect(entries.map((e) => [e.slug, e.url, e.fallback])).toEqual([["a", "/ru/notes/a", true]]);
+});
+```
+
+This one test checks four things: the draft is filtered out, the address is right, the Russian list uses the English file, and that file is marked `fallback`.
+
+A wrong front matter must stop with the file named:
+
+```ts
+test("a wrong front matter names its file", async () => {
+  write("content/en/notes/a.mdx", "---\ntitle: 3\n---\n");
+  const en = createContent({ config, cwd, feature: notes, lang: "en" });
+  await expect(en.entries()).rejects.toThrow(/content\/en\/notes\/a\.mdx: title/);
+});
+```
+
+Other methods of `content` to test: `list(dir)`, `read(path)`, `json(path)`, `frontmatter(path)`, `mdx(path)`, `entry(slug)`, `in(lang)`. See [Content](/docs/v0/features/content) and the [Reference](/docs/v0/features/reference).
+
+Test the `i18n.fallback` of the site too, when your feature depends on it. With `"hide"` an untranslated file does not exist in the other language:
+
+```ts
+const hidden = defineConfig({
+  site,
+  i18n: { languages: ["en", "ru"], fallback: "hide" },
+  features: [notes],
+});
+```
+
+### Content without a disk
+
+A built server reads its content from its own bundle, not from `content/`. `bundledSource` makes such a source from an object: path → function that returns the text. Use it for a quick test without files, or to test the bundle case:
+
+```ts
+import { bundledSource, createContent } from "@consify/core/node";
+
+test("the same content from a bundle, with no folder", async () => {
+  const source = bundledSource({
+    "/content/en/notes/a.mdx": async () => "---\ntitle: A\n---\nText",
+  });
+  const en = createContent({ config, cwd, feature: notes, lang: "en", source });
+  expect((await en.entry("a"))?.code).toContain("Text");
+});
+```
+
+`createLoadContext` and `siteAddresses` take the same `source` (`siteAddresses(config, cwd, source)`).
+
+### Addresses of content
+
+A feature with content gets addresses from core: a page per entry, a social image per entry with `og`, `llms.txt` with `llms`, a feed with `rss`. Check them with `siteAddresses`:
+
+```ts
+test("a page and a social image per entry, in every language", async () => {
+  write("content/en/notes/a.mdx", "---\ntitle: A\n---\n");
+  const addresses = await siteAddresses(config, cwd);
+  expect(addresses.map((a) => `${a.kind} ${a.url}${a.copy ? " (copy)" : ""}`)).toEqual(
+    expect.arrayContaining([
+      "page /en/notes",
+      "page /en/notes/a",
+      "redirect /en/notes/old",
+      "file /en/notes/og/a.png",
+      "page /ru/notes/a (copy)",
+    ]),
+  );
+});
+```
+
+`/ru/notes/a` is a copy: the English page shown in Russian. It is built, but it is left out of the sitemap.
+
+## Server-only code
+
+`load` that imports `server.ts` behind `import.meta.env.SSR` does not work in `bun test`: there `import.meta.env.SSR` is `undefined`, so the import is refused. Test the functions of `server.ts` directly:
+
+```ts
+import { expect, test } from "bun:test";
+import { parseChangelog } from "../src/server.ts";
+
+test("reads the versions of a changelog", () => {
+  expect(parseChangelog("# Changes\n\n## 1.1.0\nFixes\n\n## 1.0.0\nFirst").map((r) => r.version))
+    .toEqual(["1.1.0", "1.0.0"]);
+});
+```
+
+This is one more reason to keep logic in plain `.ts` files: a function without React and without the load context is the easiest thing to test.
+
+## Two instances
+
+A feature package must work twice in one site. Test it:
+
+```ts
+test("a second one has its own id and address; the same id twice is refused", async () => {
+  const c = config(
+    status({ source: "./status.json", services }),
+    status({ id: "uptime", title: "Uptime", source: "./status.json", services }),
+  );
+  expect(linkCatalog(c, "en").map((l) => [l.id, l.url])).toEqual([
+    ["status", "/en/status"],
+    ["uptime", "/en/uptime"],
+  ]);
+  expect(() =>
+    config(
+      status({ source: "./status.json", services }),
+      status({ source: "./status.json", services }),
+    ),
+  ).toThrow(/duplicate feature "status"/);
+});
+```
+
+With content, check that each instance reads its own folder. In the tests of `@consify/blog`, `write(lang, slug, header, folder)` writes a post and `urls(config, id)` lists the addresses of one feature:
+
+```ts
+test("a second blog reads its own folder", async () => {
+  write("en", "one", "date: 2026-01-01", "news");
+  const c = config(blog(), blog({ id: "news", title: "News" }));
+  expect(await urls(c, "news")).toContain("/en/news/one");
+  expect(await urls(c, "blog")).not.toContain("/en/blog/one");
+});
+```
+
+## A complete test file
+
+The tests of `consify-status` from [A feature as a package](/docs/v0/features/packages), in one file:
+
+```ts title="test/status.test.ts"
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { defineConfig, linkCatalog } from "@consify/core";
+import { createLoadContext, siteAddresses } from "@consify/core/node";
+import { status } from "../src/index.ts";
+
+let cwd: string;
+beforeEach(() => {
+  cwd = mkdtempSync(join(tmpdir(), "consify-status-"));
+  writeFileSync(join(cwd, "status.json"), '{ "api": "up", "workers": "down" }');
+});
+afterEach(() => {
+  rmSync(cwd, { recursive: true, force: true });
+});
+
+const site = { name: "D", url: "https://d.example" };
+const services = [
+  { id: "api", name: "API" },
+  { id: "workers", name: "Workers" },
+];
+const config = (...features: ReturnType<typeof status>[]) =>
+  defineConfig({ site, i18n: { languages: ["en", "ru"] }, features });
+
+describe("status()", () => {
+  test("wrong options stop with their name", () => {
+    expect(() => status({ source: "./status.json", services: [] })).toThrow(
+      /status\(\): services: list at least one service/,
+    );
+    expect(() => status({ source: "./s.json", services, perPage: 3 } as never)).toThrow(
+      /status\(\)/,
+    );
+  });
+
+  test("offers a translated link", () => {
+    const c = config(status({ source: "./status.json", services }));
+    expect(linkCatalog(c, "ru").map((l) => [l.id, l.title, l.url])).toEqual([
+      ["status", "Статус", "/ru/status"],
+    ]);
+  });
+
+  test("a page per service in every language, and the JSON file", async () => {
+    const c = config(status({ source: "./status.json", services }));
+    const urls = (await siteAddresses(c, cwd))
+      .filter((a) => a.feature.id === "status")
+      .map((a) => `${a.kind} ${a.url}`);
+    expect(urls).toEqual([
+      "page /en/status",
+      "page /en/status/api",
+      "page /en/status/workers",
+      "file /en/status/status.json",
+      "page /ru/status",
+      "page /ru/status/api",
+      "page /ru/status/workers",
+      "file /ru/status/status.json",
+    ]);
+  });
+
+  test("the list reads the states from the file of the project", async () => {
+    const c = config(status({ source: "./status.json", services }));
+    const feature = c.features[0] as ReturnType<typeof status>;
+    const list = feature.pages["/"];
+    if (list?.kind !== "page" || !list.load) throw new Error("no list");
+    const data = await list.load(createLoadContext({ config: c, feature, lang: "en", cwd }));
+    expect(data).toEqual({
+      base: "/en/status",
+      services: [
+        { id: "api", name: "API", state: "up" },
+        { id: "workers", name: "Workers", state: "down" },
+      ],
+    });
+  });
+
+  test("an unknown service is a 404", async () => {
+    const c = config(status({ source: "./status.json", services }));
+    const feature = c.features[0] as ReturnType<typeof status>;
+    const one = feature.pages["/:service"];
+    if (one?.kind !== "page" || !one.load) throw new Error("no page");
+    const context = createLoadContext({
+      config: c,
+      feature,
+      lang: "en",
+      cwd,
+      params: { service: "nope" },
+    });
+    let error: unknown;
+    try {
+      await one.load(context);
+    } catch (thrown) {
+      error = thrown;
+    }
+    expect(error).toBeInstanceOf(Response);
+    expect((error as Response).status).toBe(404);
+  });
+
+  test("the JSON file", async () => {
+    const c = config(status({ source: "./status.json", services }));
+    const feature = c.features[0] as ReturnType<typeof status>;
+    const file = feature.files["/status.json"];
+    if (!file) throw new Error("no file");
+    const body = await file.load(createLoadContext({ config: c, feature, lang: "en", cwd }));
+    expect(body).toMatchObject({ services: [{ id: "api", state: "up" }, { id: "workers" }] });
+  });
+
+  test("a second one has its own id and address; the same id twice is refused", async () => {
+    const c = config(
+      status({ source: "./status.json", services }),
+      status({ id: "uptime", title: "Uptime", source: "./status.json", services }),
+    );
+    expect(linkCatalog(c, "en").map((l) => [l.id, l.url])).toEqual([
+      ["status", "/en/status"],
+      ["uptime", "/en/uptime"],
+    ]);
+    expect(() =>
+      config(
+        status({ source: "./status.json", services }),
+        status({ source: "./status.json", services }),
+      ),
+    ).toThrow(/duplicate feature "status"/);
+  });
+});
+```
+
+## Testing pages
+
+The tests above check data, not what the reader sees. Check the pages in a real site.
+
+<Steps>
+<Step>
+
+### Run the site
+
+Add the feature to `features` of a site (for a package: `bun link` it, or install it), then:
+
+```bash
+consify dev
+```
+
+Open every page of the feature. Check:
+
+- every language of the site: the title, the strings, the links;
+- the light and the dark theme;
+- a narrow window (a phone);
+- a page shown without a translation, when the feature has content;
+- an address that does not exist: `/en/status/nope` must show the 404 page.
+
+</Step>
+<Step>
+
+### Check the content
+
+```bash
+consify check
+```
+
+`consify check` builds the list of every address (`siteAddresses`), so a wrong front matter, a broken `meta.json` or an exception in `paths` stops it. It also checks that every content file is in a language of the site and that translations have the same code blocks, links and headings as their originals. `consify check --strict` makes a missing translation an error.
+
+</Step>
+<Step>
+
+### Build
+
+```bash
+consify build
+```
+
+Build with `deploy.mode: "static"` too, if the feature should work on a static site. A static build pre-renders every address, so it runs every `load` once. An exception there is a bug a test missed.
+
+</Step>
+</Steps>
+
+## Pitfalls
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| A test passes alone and fails with others | Tests share one folder, or a file is left from the previous test | A new `mkdtempSync` folder in `beforeEach`, removed in `afterEach` |
+| `load is not a function` | `pages[key]` is a redirect, or the page has no `load` | Check `kind === "page"` and `load` first |
+| `entry` is `undefined` in `load` | The test did not pass it | `load({ ...context, entry })` with `await context.content.entry(slug)` |
+| A 404 or a redirect is not caught | `load` is sync and throws at once | `try`/`catch` around `await load(...)` |
+| `load` that imports `server.ts` rejects | `import.meta.env.SSR` is not set in `bun test` | Test `server.ts` directly |
+| The Russian list is empty | `i18n.languages` of the test config has only `en` | Add the second language |
+| `url()` returns a path, not a URL | `site.url` is not set | Set it in the test config |
+| `siteAddresses` has an address from another feature | The built-in front page is in the list | Filter by `a.feature.id` |

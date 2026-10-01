@@ -1,0 +1,85 @@
+---
+title: Project structure
+description: Which file does what
+---
+
+```
+my-docs/
+├─ docs.config.ts            all settings
+├─ vite.config.ts            plugins: [consify(config)]
+├─ react-router.config.ts    export default defineRouterConfig(config)
+├─ content/
+│  ├─ en/                    one folder per language, the same tree in each
+│  │  ├─ home.mdx            optional, the front page
+│  │  ├─ docs/<version>/     pages of the documentation (with docs())
+│  │  ├─ blog/               posts (with blog())
+│  │  └─ <feature>/          the content of a feature of your own, by its id
+│  └─ ru/                    a translation keeps the path of the original
+├─ custom/
+│  ├─ components/            Foo.tsx becomes <Foo /> in every .mdx file
+│  ├─ features/              your features, one file each, listed in `features`
+│  ├─ locales/               de.ts: the interface strings in a language (consify locale de)
+│  ├─ skills/                <name>/SKILL.md: skills of the project for AI agents
+│  ├─ header.tsx             optional, the middle and the right of the header
+│  ├─ footer.tsx             optional, replaces the footer
+│  └─ theme.css              optional, your styles, loaded after the core theme
+├─ public/                   files served as they are (favicon, images)
+├─ .consify/                 generated, do not edit, do not commit
+└─ build/                    the result of `consify build`
+```
+
+## Files you write
+
+<TypeTable
+  type={{
+    "docs.config.ts": { description: "Every setting. Validated at start.", type: "file", required: true },
+    "vite.config.ts": { description: "One line: the consify plugin.", type: "file", required: true },
+    "react-router.config.ts": { description: "One line: the router settings derived from your config.", type: "file", required: true },
+    "content/<language>": { description: "Everything written in one language: `home.mdx` and a folder per feature. The default language has a folder too. A language without a folder is shown in the default language.", type: "folder" },
+    "content/en/docs": { description: "Pages of the documentation, one folder per version. Used by `docs()`. Translations: `content/ru/docs/…`, the same path.", type: "folder" },
+    "content/en/blog": { description: "Posts of the blog: `slug.mdx`. Used by `blog()`. Translations: `content/ru/blog/slug.mdx`.", type: "folder" },
+    "content/en/<feature>": { description: "The content of a feature of your own. The folder is its `id` (or its `folder` option).", type: "folder" },
+    "custom/components": { description: "React components for MDX, found automatically.", type: "folder" },
+    "custom/features": { description: "Your features, made with `defineFeature`. One file is enough for one; import it in `docs.config.ts` and add it to `features`.", type: "folder" },
+    "custom/locales": { description: "Language packs: the strings of the interface in one language, `<language>.ts` or `.json`.", type: "folder" },
+    "custom/skills": { description: "Skills of the project for AI agents, `<name>/SKILL.md`. `consify skill sync` copies them, with the skills of the consify packages, into `.claude/skills/`.", type: "folder" },
+  }}
+/>
+
+## Generated files
+
+`.consify/` is written when the dev server or a build starts. It contains:
+
+| File | Purpose |
+| --- | --- |
+| `instance.ts` | Creates the site object from your config and from `custom/` (components, header, footer, language packs) |
+| `styles.css` | The theme of consify, plus the packages Tailwind has to scan |
+| `app/root.tsx`, `app/routes.ts` | The root of the React Router app and the list of routes |
+| `routes/` | One small module for every page and file of every feature |
+
+Add `.consify` to `.gitignore`.
+
+## Folders in `content/en/docs`
+
+Each folder is a section of the sidebar. A `meta.json` in a folder sets its title, icon and the order of its pages:
+
+```json title="content/en/docs/v0/guides/meta.json"
+{
+  "title": "Guides",
+  "icon": "Compass",
+  "pages": ["intro", "---Advanced---", "caching", "..."]
+}
+```
+
+- `"---Text---"` draws a separator with a label.
+- `"..."` stands for all the pages you did not list.
+- `"root": "version"` marks the top folder of a documentation version (see [Languages and versions](/docs/v0/writing/translations-and-versions)).
+
+Front matter of a docs page:
+
+| Field | Meaning |
+| --- | --- |
+| `title` | Page title (required) |
+| `description` | Shown under the title, used in search and meta tags |
+| `icon` | Name of a [Lucide](https://lucide.dev/icons) icon for the sidebar |
+| `full` | `true` makes the page use the full width |

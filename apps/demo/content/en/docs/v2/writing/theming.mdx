@@ -1,0 +1,38 @@
+---
+title: Theming
+description: Colors, radius and fonts
+---
+
+The theme is a set of CSS variables (design tokens). Change them in `docs.config.ts` or in your own stylesheet.
+
+```ts title="docs.config.ts"
+theme: {
+  radius: "0.5rem",
+  colors: {
+    light: { primary: "oklch(0.55 0.2 260)" },
+    dark: { primary: "oklch(0.75 0.15 260)" },
+  },
+  fonts: { sans: "Inter, sans-serif" },
+}
+```
+
+## Tokens
+
+| Token | Used for |
+| ----- | -------- |
+| `background` / `foreground` | Page background and text |
+| `card` / `popover` | Cards and floating panels |
+| `primary` | Buttons and accents |
+| `secondary` / `muted` / `accent` | Subtle surfaces and hovers |
+| `border` / `input` / `ring` | Lines and focus rings |
+| `radius` | Base corner radius |
+
+## Your own CSS
+
+```css title="custom/theme.css"
+.my-banner {
+  border-left: 3px solid var(--primary);
+}
+```
+
+It is imported **after** the core theme, so it always wins. The default font is Geist.

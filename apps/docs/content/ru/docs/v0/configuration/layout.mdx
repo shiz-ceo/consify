@@ -1,0 +1,111 @@
+---
+title: Главная, шапка и подвал
+description: Рамка вокруг каждой страницы
+---
+
+Главная страница, шапка и подвал описываются **один раз**, и их используют все страницы: разделы фич (документация, блог, справочник API, ваши собственные) и сама главная. Так сайт остаётся единообразным. Своя главная страница рисуется внутри той же шапки и того же подвала, что и всё остальное.
+
+У каждой части есть три уровня. Берите самый нижний из тех, что решают задачу.
+
+| Уровень | Главная | Шапка | Подвал |
+| --- | --- | --- | --- |
+| Настроить | `content/<язык>/home.mdx` | `header.links` | блок `footer` |
+| Отключить | не создавать (перенаправляет на первый раздел) | (есть всегда) | `footer: false` |
+| Заменить | фича с `path: ""` | `custom/header.tsx` | `custom/footer.tsx` |
+
+О замене шапки и подвала рассказано в разделе [Слоты](/docs/v0/customizing/slots). Эта страница — про настройку.
+
+## Главная страница
+
+Страница по адресу `/{lang}` — это `content/<язык>/home.mdx`, по файлу на язык. Это обычный MDX-файл, в котором есть два компонента для главной, `<Hero />` и `<Features />`:
+
+```mdx title="content/en/home.mdx"
+---
+title: Lattice
+description: A typed job queue for TypeScript.
+---
+
+<Hero
+  title="Background jobs without the guesswork"
+  description="A typed job queue for TypeScript."
+  actions={[
+    { label: "Get started", href: "/docs" },
+    { label: "Why?", href: "/docs/v0/concepts", variant: "secondary" },
+  ]}
+/>
+
+<Features
+  items={[
+    { icon: "ShieldCheck", title: "Typed", description: "One type for the whole flow.", href: "/docs/v0" },
+  ]}
+/>
+```
+
+Ниже в файле может быть всё, что бывает на странице: текст, блоки кода, ваши компоненты. `title` и `description` из front matter попадают в `<head>` страницы.
+
+Язык без своего `home.mdx` показывает файл языка по умолчанию, как любая страница без перевода. Ссылки, начинающиеся с `/`, получают язык; `/docs` открывает версию документации по умолчанию. В `href` можно указать и id [ссылки](/docs/v0/configuration/navigation), например `"blog"`. `icon` — это название значка [Lucide](https://lucide.dev/icons).
+
+Без `home.mdx` читателя отправляют в первый раздел, у которого есть ссылка (у сайта с `docs()` это обычно документация).
+
+### Главная на React
+
+Если главная должна быть React-компонентом, напишите фичу с `path: ""` и добавьте её в `features`. Она займёт `/{lang}` вместо `home.mdx`:
+
+```tsx title="custom/features/landing.tsx"
+import { defineFeature } from "@consify/core";
+
+export const landing = defineFeature({
+  id: "landing",
+  path: "",
+  pages: {
+    "/": ({ lang }) => <main>Welcome ({lang})</main>,
+  },
+});
+```
+
+Что ещё умеет фича, см. в разделе [Фичи](/docs/v0/features).
+
+## Шапка
+
+В шапке слева стоит название сайта, посередине ссылки, справа язык и тема. Какие ссылки показывать, задаёт `header.links`: см. [Ссылки шапки и подвала](/docs/v0/configuration/navigation). Без него в шапке главное место каждого раздела с заголовком (Документация, Блог, API) в порядке `features`.
+
+`slots.header` заменяет ссылки посередине, `slots.headerEnd` добавляет что-то справа, `slots.footer` заменяет подвал. Это React-компоненты; файлы `custom/header.tsx` и `custom/footer.tsx` делают то же самое (см. [Слоты](/docs/v0/customizing/slots)).
+
+## Поиск
+
+У каждого раздела с контентом свой поиск: документация ищет по своим страницам, блог по постам. Выглядят и работают они одинаково. Поиск это поле вверху боковой панели (в документации и в боковой панели справочника API, где оно открывает поиск Scalar). На малых экранах боковая панель открывается кнопкой, и поле лежит в ней. Cmd/Ctrl+K открывает поиск того раздела, в котором находится читатель.
+
+На страницах без боковой панели (главная, блог, 404) поля поиска нет. В списке блога есть своё поле поиска, которое фильтрует записи. У раздела без контента (собственного, который не приносит поиск) поиска нет.
+
+## Подвал
+
+Без настроек в подвале одна колонка с главными местами включённых разделов и ссылкой на GitHub, описание сайта и строка об авторских правах. Настройка (колонки принимают те же элементы ссылок, что и шапка, см. [Ссылки шапки и подвала](/docs/v0/configuration/navigation)):
+
+```ts title="docs.config.ts"
+footer: {
+  description: { en: "A typed job queue.", ru: "Типизированная очередь задач." },
+  columns: [
+    {
+      title: "Product",
+      links: [
+        "docs",
+        "blog:rss",
+        { title: "GitHub", url: "https://github.com/example/lattice" },
+      ],
+    },
+  ],
+  social: [{ type: "github", url: "https://github.com/example/lattice" }],
+  legal: "© 2026 Lattice",
+},
+```
+
+<TypeTable
+  type={{
+    description: { description: "Текст под названием сайта.", type: "string | Record<language, string>", default: "site.description" },
+    columns: { description: "Колонки со ссылками. Заголовки могут быть строками или объектом со строкой для каждого языка. Ссылки: [элементы ссылок](/docs/v0/configuration/navigation), без выпадающих меню.", type: "{ title, links[] }[]", default: "one column with the main places and GitHub" },
+    social: { description: "Значки: `github`, `x`, `bluesky`, `linkedin`, `discord`, `youtube`, `rss`.", type: "{ type, url }[]", default: "[]" },
+    legal: { description: "Нижняя строка.", type: "string | Record<language, string>", default: "© {year} {name}. All rights reserved." },
+  }}
+/>
+
+На страницах без боковой панели (главная, блог) показывается полный подвал. В документации и справочнике API показывается компактный, выровненный по контенту. `footer: false` убирает оба.

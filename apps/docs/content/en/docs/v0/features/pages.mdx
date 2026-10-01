@@ -1,0 +1,439 @@
+---
+title: Pages
+description: Addresses, components, titles, layouts and redirects of a feature
+---
+
+`pages` is an object. Each key is an address relative to the feature, each value is a page. This page explains both halves: how addresses work, and what a page can be.
+
+```tsx title="custom/features/status.tsx"
+import { defineFeature } from "@consify/core";
+
+export const status = defineFeature({
+  id: "status",
+  pages: {
+    "/": () => <main>All services</main>, // /en/status
+    "/about": () => <main>About this page</main>, // /en/status/about
+  },
+});
+```
+
+## Addresses
+
+### The forms of a key
+
+A key always starts with `/`. After that it can have fixed segments, parameters and one `*` at the end.
+
+| Key | Addresses (feature `status`) | `params` |
+| --- | --- | --- |
+| `"/"` | `/en/status` | `{}` |
+| `"/about"` | `/en/status/about` | `{}` |
+| `"/:service"` | `/en/status/api`, `/en/status/workers` | `{ service: "api" }` |
+| `"/:service/history"` | `/en/status/api/history` | `{ service: "api" }` |
+| `"/:service/:day"` | `/en/status/api/2026-09-01` | `{ service: "api", day: "2026-09-01" }` |
+| `"/:tab?"` | `/en/status` and `/en/status/uptime` | `{}` or `{ tab: "uptime" }` |
+| `"/*"` | `/en/status/a`, `/en/status/a/b/c` | `{ "*": "a/b/c" }` |
+
+- `:name` is a parameter: one segment of the address, any text. The page reads it as `params.name`.
+- `:name?` is an optional parameter. The page exists with and without that segment. When it is missing, `params.name` is not there.
+- `*` takes the rest of the address, slashes included, as `params["*"]`. It has no slashes at the start or the end.
+
+A key must start with `/`, must not end with `/` (except `"/"` itself) and must not have `//`. A wrong key stops the start with an error:
+
+```text
+defineFeature("status"): the address "status/" of a page must start with "/" and not end with one
+```
+
+### How a key becomes an address
+
+The address of a page is three parts joined: the language, the `path` of the feature (its `id` by default), and the key.
+
+```text
+/{lang} + /{feature path} + {key}
+
+/en     + /status         + /:service   →  /en/status/:service  →  /en/status/api
+/ru     + /status         + /           →  /ru/status
+```
+
+Every page exists in every language of the site (`i18n.languages`). You never write the language in a key. An address with a language the site does not have, like `/xx/status`, answers 404 before your page runs.
+
+### Which page wins
+
+When two keys could match the same address, the more exact one wins:
+
+1. A fixed segment beats a parameter: `"/about"` beats `"/:service"` for `/en/status/about`.
+2. A parameter beats `*`: `"/:service"` beats `"/*"` for `/en/status/api`.
+3. `"/"` beats `"/*"` for `/en/status`.
+
+`"/*"` also matches the front address of the feature (`/en/status`, with `params["*"]` empty) when the feature has no `"/"` page.
+
+### Parameters are text, and any text
+
+A parameter is always a `string`. Turn it into a number yourself: `Number(params.page)`.
+
+Core does not know which values exist. `/en/status/anything` reaches the page `"/:service"` with `params.service = "anything"`. Your page must answer 404 for a value it does not know, with `notFound()` in `load`:
+
+```tsx
+"/:service": page({
+  load: ({ params, notFound }) =>
+    services.find((service) => service.id === params.service) ?? notFound(),
+  component: ({ data }) => <h1>{data.name}</h1>,
+}),
+```
+
+The values to render at build time are listed by `paths`. Both are explained in [Loading data](/docs/v0/features/data).
+
+## path: the address of the feature
+
+By default the feature lives at `/{lang}/<id>`. `path` gives it another address and keeps the `id` (the link id and the content folder stay the same):
+
+```ts
+defineFeature({
+  id: "status",
+  path: "health", // /en/health, /en/health/api
+  pages: {
+    /* … */
+  },
+});
+```
+
+`path` may have several segments: `path: "tools/status"` gives `/en/tools/status`. Two features cannot share a `path`.
+
+### The front page of the site: path ""
+
+`path: ""` makes the feature the front page of the site. Its `"/"` page opens at `/{lang}` (`/en`, `/ru`), and it replaces the built-in front page (`content/<language>/home.mdx`).
+
+```tsx title="custom/features/landing.tsx"
+import { defineFeature } from "@consify/core";
+import { Link } from "react-router";
+
+export const landing = defineFeature({
+  id: "landing",
+  path: "",
+  pages: {
+    // /en, /ru
+    "/": ({ lang }) => (
+      <main className="mx-auto w-full max-w-4xl px-4 py-24 text-center">
+        <h1 className="text-5xl font-bold">Acme</h1>
+        <Link to={`/${lang}/docs`} className="mt-8 inline-block underline">
+          Read the docs
+        </Link>
+      </main>
+    ),
+    // /en/pricing, /ru/pricing
+    "/pricing": () => <main className="mx-auto w-full max-w-4xl px-4 py-12">Pricing</main>,
+  },
+});
+```
+
+Leave `title` out for a front page: it needs no link in the header, and the browser tab shows the name of the site.
+
+Without such a feature and without `home.mdx`, `/{lang}` sends the reader to the first feature that has a title.
+
+## A component is a page
+
+The simplest page is a React component. It gets four props:
+
+| Prop | Type | What it is |
+| --- | --- | --- |
+| `data` | `undefined` here | What `load` returned. A plain component has no `load` |
+| `lang` | `string` | The language of the address: `"en"`, `"ru"` |
+| `params` | `Record<string, string>` | The parameters of the address, without the language |
+| `t` | `(key, values?) => string` | The strings of the feature in the language of the page |
+
+```tsx
+"/:tab?": ({ lang, params, t }) => (
+  <main className="mx-auto w-full max-w-2xl px-4 py-12">
+    <h1>{t("status")}</h1>
+    <p>Language: {lang}</p>
+    <p>Tab: {params.tab ?? "overview"}</p>
+  </main>
+),
+```
+
+A page is an ordinary React component. It is rendered on the server first (so the HTML is complete), then it runs in the browser. Hooks, state and effects work:
+
+```tsx
+import { useState } from "react";
+
+function Counter() {
+  const [count, setCount] = useState(0);
+  return (
+    <main className="mx-auto w-full max-w-2xl px-4 py-12">
+      <button type="button" onClick={() => setCount(count + 1)}>
+        Clicked {count} times
+      </button>
+    </main>
+  );
+}
+
+// in defineFeature: pages: { "/counter": Counter }
+```
+
+<Callout type="warn">
+  Code in the component runs on the server too, where there is no `window` or `localStorage`. Use them inside `useEffect` or event handlers, never directly in the body of the component.
+</Callout>
+
+### A component in its own function
+
+For a bigger page, write the component as a function and type its props with `PageProps`:
+
+```tsx
+import { defineFeature, type PageProps } from "@consify/core";
+
+function ServiceList({ lang, t }: PageProps) {
+  return <h1 lang={lang}>{t("status")}</h1>;
+}
+
+export const status = defineFeature({
+  id: "status",
+  messages: { en: { status: "Status" }, ru: { status: "Статус" } },
+  pages: { "/": ServiceList },
+});
+```
+
+`PageProps<Data>` types `data` too. See [Loading data](/docs/v0/features/data) for pages with data.
+
+### The page draws its own main area
+
+Core puts nothing around your component but the header and the footer: no width, no padding. Start the page with a `<main>` and give it a width, like the examples on this page (`mx-auto w-full max-w-2xl px-4 py-12`). Use the theme classes (`text-fd-muted-foreground`, `border-fd-border`, `bg-fd-card`) so light and dark themes both work.
+
+## The object form
+
+A component alone cannot load data, set a title or choose a layout. For that, the page is an object with the component in `component`:
+
+```tsx
+"/": {
+  title: "All services",
+  description: "The state of every service, updated every minute",
+  layout: "site",
+  component: ({ t }) => <main>{t("status")}</main>,
+},
+```
+
+<TypeTable
+  type={{
+    component: { description: "The React component of the page. Gets `data`, `lang`, `params`, `t`.", type: "ComponentType<PageProps>", required: true },
+    load: { description: "Reads what the page shows. Runs on the server; its result is `data`. See [Loading data](/docs/v0/features/data).", type: "(context: LoadContext) => Data | Promise<Data>" },
+    paths: { description: "The parameters to render at build time and list in the sitemap. See [Loading data](/docs/v0/features/data).", type: "(context: PathsContext) => Params[] | Promise<Params[]>" },
+    title: { description: "The `<title>` of the page.", type: "string | (context: MetaContext) => string | undefined", default: "the title of the feature, then the name of the site" },
+    description: { description: "`<meta name=\"description\">`.", type: "string | (context: MetaContext) => string | undefined", default: "`site.description`" },
+    meta: { description: "Everything of the `<head>` at once. Its fields win over `title` and `description`.", type: "(context: MetaContext) => PageMeta" },
+    layout: { description: "What is drawn around the component.", type: '"site" | "sidebar" | "none"', default: '"site"' },
+    entry: { description: "A page for every entry of the content. See [Content](/docs/v0/features/content).", type: "boolean" },
+  }}
+/>
+
+Wrap the object in `page()` when it has `load`, so `data` is typed. [Loading data](/docs/v0/features/data) explains why.
+
+## Title and description
+
+### Where the title comes from
+
+Core takes the first title it finds:
+
+1. `title` returned by `meta`,
+2. `title` of the page,
+3. `title` of the feature,
+4. nothing: the name of the site alone.
+
+Then it adds the name of the site: the `<title>` is `Title | Site`, for example `Scheduler | Acme`. When the title is the name of the site itself, it is not repeated: the tab says `Acme`, not `Acme | Acme`.
+
+The description is found the same way: `description` of `meta`, then `description` of the page, then `site.description` of the config.
+
+### A string or a function
+
+A fixed text is a string. A text that depends on the data, the language or the parameters is a function. The function gets the same `data`, `lang`, `params` and `t` as the component:
+
+```tsx
+"/:service": page({
+  load: ({ params, notFound }) =>
+    services.find((service) => service.id === params.service) ?? notFound(),
+  title: ({ data }) => data.name,
+  description: ({ data, t }) => t("serviceHint", { name: data.name }),
+  component: ({ data }) => <h1>{data.name}</h1>,
+}),
+```
+
+A page title is a string or a function, not an object per language. For a title in several languages, use a string of the feature: `title: ({ t }) => t("status")`.
+
+## meta: the whole head
+
+`meta` returns every field of the `<head>` at once. Use it when the page needs more than a title and a description: a social image, links to translations, extra tags.
+
+| Field | What it becomes |
+| --- | --- |
+| `title` | `<title>` (with the name of the site added) and `og:title` |
+| `description` | `<meta name="description">` and `og:description` |
+| `image` | `og:image` and a large Twitter card. A path (`/og/api.png`) or a URL |
+| `alternates` | `<link rel="alternate" hreflang>` for each language: `{ en: "/en/status/api", ru: "/ru/status/api" }` |
+| `canonical` | The canonical address. Default: the address of the page |
+| `head` | More tags, each an object of attributes |
+
+```tsx
+import { type PageMeta, page } from "@consify/core";
+
+"/:service": page({
+  load: ({ params, config, notFound }) => {
+    const service = services.find((s) => s.id === params.service) ?? notFound();
+    // the same page in every language of the site
+    const alternates = Object.fromEntries(
+      config.i18n.languages.map((code) => [code, `/${code}/status/${service.id}`]),
+    );
+    return { ...service, alternates };
+  },
+  // the return type helps TypeScript with the mixed tags of `head`
+  meta: ({ data, lang }): PageMeta => ({
+    title: data.name,
+    description: `${data.name}: ${data.state}`,
+    image: `/images/status/${data.id}.png`,
+    alternates: data.alternates,
+    head: [
+      { property: "og:type", content: "article" },
+      { tagName: "link", rel: "alternate", type: "application/json", href: `/${lang}/status/status.json` },
+    ],
+  }),
+  component: ({ data }) => <h1>{data.name}</h1>,
+}),
+```
+
+A field that `meta` leaves out falls back to `title` and `description` of the page, as above. `meta` gets no `config`: compute what needs it in `load` and return it in `data`, like `alternates` here.
+
+What core always puts in the `<head>` of a page of a feature:
+
+- `<title>`, `og:title`, `og:site_name`,
+- `<link rel="canonical">`: the address of the page without a trailing slash, absolute when `site.url` is set,
+- `description` and `og:description` when there is a description,
+- `hreflang` links when there are `alternates`, `og:image` when there is an image,
+- a link to the feed on every page of a feature whose content has `rss: true`,
+- the tags of `head` of `docs.config.ts`, on every page of the site.
+
+Paths in `image`, `alternates` and `canonical` become absolute addresses with `site.url`.
+
+## Layouts
+
+`layout` chooses what core draws around the component.
+
+| Value | What is drawn |
+| --- | --- |
+| `"site"` (default) | The header of the site (logo, links, search, language and theme switchers) above the page, and the footer below it |
+| `"sidebar"` | The same, and the header gets a button to hide a panel. The page draws the panel itself |
+| `"none"` | Nothing. The component draws the whole page, header and footer included if it wants them |
+
+A page written as a plain component always has the `"site"` layout. Use the object form to choose another.
+
+### sidebar
+
+For a page with a side panel of its own (the API reference uses it for the panel of Scalar). The header shows a button; your page reads whether the reader closed the panel with `useSidebarCollapsed()`:
+
+```tsx
+import { useSidebarCollapsed } from "@consify/core/ui";
+
+function Explorer() {
+  const collapsed = useSidebarCollapsed();
+  return (
+    <div className="flex">
+      {collapsed ? null : <aside className="w-64 border-r border-fd-border p-4">Tree</aside>}
+      <main className="flex-1 p-4">Details</main>
+    </div>
+  );
+}
+
+// in defineFeature: pages: { "/": { layout: "sidebar", component: Explorer } }
+```
+
+In CSS, the same state is the attribute `[data-consify-sidebar-collapsed="true"]` on a wrapper of the page.
+
+### none
+
+For a page that must not look like the site: an embed, a page to print, a full-screen demo. It can still use the parts of the site from `@consify/core/ui`:
+
+```tsx
+import { consify, SitePage } from "@consify/core/ui";
+
+function Print() {
+  return <article className="p-8 print:p-0">A page to print, without header and footer</article>;
+}
+
+function Wrapped({ lang }: { lang: string }) {
+  // the header and the footer of the site, drawn by the page itself
+  return (
+    <SitePage consify={consify} lang={lang}>
+      <main className="p-8">A page that draws the site layout itself</main>
+    </SitePage>
+  );
+}
+
+// in defineFeature:
+// pages: {
+//   "/print": { layout: "none", component: Print },
+//   "/custom": { layout: "none", component: Wrapped },
+// }
+```
+
+## Redirects
+
+A page can only send the reader elsewhere. Its value is an object with `redirect`, a function that gets `lang` and `config` and returns the address:
+
+```ts
+pages: {
+  // /en/status/old → /en/status
+  "/old": { redirect: ({ lang }) => `/${lang}/status` },
+  // to another feature
+  "/docs": { redirect: ({ lang }) => `/${lang}/docs/status-page` },
+  // outside the site
+  "/github": { redirect: () => "https://github.com/acme/status" },
+},
+```
+
+How it works depends on `deploy.mode`:
+
+| | Server | Static site |
+| --- | --- | --- |
+| What the reader gets | An HTTP redirect | A small page that redirects at once (`<meta http-equiv="refresh">`, and a link) |
+| Built at build time | No: the server answers each request | Yes, in every language |
+| In the sitemap | No | No |
+
+A redirect page gets no `params`. On a static site, a redirect key with a parameter (`"/old/:id"`) has no address to build and is left out. To redirect depending on a parameter or on data, use `redirect()` inside `load` (see [Loading data](/docs/v0/features/data)).
+
+## Links between pages
+
+Link to another page with `Link` from `react-router`. The address includes the language: take it from `lang`.
+
+```tsx
+import { Link } from "react-router";
+
+// in a page component that gets `lang`
+<Link to={`/${lang}/status/${service.id}`}>{service.name}</Link>
+<Link to={`/${lang}/docs`}>Documentation</Link>
+```
+
+- `Link` changes the page without reloading it, and adds `deploy.basePath` when the site lives in a sub folder. A plain `<a href="/en/status">` reloads the page and does not add `basePath`.
+- A file of a feature (`status.json`) is not a page. Link to it with `reloadDocument`, so the browser loads it: `` <Link reloadDocument to={`/${lang}/status/status.json`}>JSON</Link> ``.
+- Links to the same page in another language are drawn by the language switcher of the header: it keeps the address and changes the language.
+
+`fillUrl` from `@consify/core` builds an address from a key and parameters, if you prefer not to write it by hand:
+
+```ts
+import { fillUrl } from "@consify/core";
+
+fillUrl({ path: "status" }, "/:service", "en", { service: "api" }); // "/en/status/api"
+fillUrl({ path: "status" }, "/:tab?", "ru"); // "/ru/status"
+```
+
+## Common mistakes
+
+<Callout type="warn">
+  **Every value of a parameter shows a page.** `/en/status/typo` shows the page of `"/:service"` with empty data. Answer 404 in `load` with `notFound()` for a value you do not know.
+</Callout>
+
+<Callout type="warn">
+  **A link leads to a 404.** The address has no language: `to="/status"` instead of ``to={`/${lang}/status`}``.
+</Callout>
+
+<Callout type="warn">
+  **`title: { en: "…", ru: "…" }` on a page is a type error.** Only the feature takes a title per language. On a page, use a function: `title: ({ t }) => t("key")`.
+</Callout>
+
+<Callout type="warn">
+  **The page has no width or padding.** Core adds none. Wrap the content in `<main className="mx-auto w-full max-w-2xl px-4 py-12">`.
+</Callout>

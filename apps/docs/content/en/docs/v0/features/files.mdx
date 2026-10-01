@@ -1,0 +1,255 @@
+---
+title: Files
+description: JSON, text, XML and images at an address of a feature
+---
+
+A file is an address with no page: `/en/status/status.json`, `/en/changelog/feed.xml`, `/en/status/api/badge.svg`. No header, no footer, no React. A function returns what the address answers with.
+
+## files
+
+`files` is an object like `pages`: the key is the address relative to the feature, the value is a function.
+
+```tsx title="custom/features/status.tsx"
+import { defineFeature } from "@consify/core";
+
+const services = [
+  { id: "api", name: "API", state: "operational" },
+  { id: "dashboard", name: "Dashboard", state: "degraded" },
+];
+
+export const status = defineFeature({
+  id: "status",
+  pages: {
+    "/": () => <main className="mx-auto w-full max-w-2xl px-4 py-12">Status</main>,
+  },
+  files: {
+    // /en/status/status.json, /ru/status/status.json
+    "/status.json": () => ({ services }),
+  },
+});
+```
+
+`/en/status/status.json` now answers:
+
+```json
+{"services":[{"id":"api","name":"API","state":"operational"},{"id":"dashboard","name":"Dashboard","state":"degraded"}]}
+```
+
+A file has an address in every language, like a page: `/en/status/status.json` and `/ru/status/status.json`. Use `lang` when the content differs by language, and ignore it when it does not.
+
+## The function of a file
+
+The function is the `load` of the file. It gets the same context as `load` of a page: `lang`, `params`, `t`, `content`, `readFile`, `config`, `request`, `url`, `notFound`, `redirect`. Each field is described in [Loading data](/docs/v0/features/data).
+
+```tsx
+files: {
+  "/status.json": async ({ lang, t, content, url }) => ({
+    title: t("status"),
+    language: lang,
+    link: url(`/${lang}/status`),
+    services: await content.json("services.json"),
+  }),
+},
+```
+
+Like `load`, it runs on the server only, can be `async`, and can answer 404 with `notFound()`.
+
+The value can also be an object with `load` and `paths`, for a file with parameters (see below):
+
+```tsx
+files: {
+  "/status.json": { load: () => ({ services }) },
+},
+```
+
+## What a file can return
+
+| It returns | The answer |
+| --- | --- |
+| An object or an array | JSON (`application/json`), whatever the extension |
+| A string | The text, with the content type from the extension |
+| A `Uint8Array` or an `ArrayBuffer` | The bytes, with the content type from the extension |
+| A `Response` | That response as it is: status, headers, body |
+
+### The content type comes from the extension
+
+For a string or bytes, core looks at the extension of the key:
+
+| Extension | Content type |
+| --- | --- |
+| `.json` | `application/json; charset=utf-8` |
+| `.xml` | `application/xml; charset=utf-8` |
+| `.rss` | `application/rss+xml; charset=utf-8` |
+| `.txt` | `text/plain; charset=utf-8` |
+| `.md` | `text/markdown; charset=utf-8` |
+| `.html` | `text/html; charset=utf-8` |
+| `.css` | `text/css; charset=utf-8` |
+| `.js` | `text/javascript; charset=utf-8` |
+| `.svg` | `image/svg+xml` |
+| `.png` | `image/png` |
+| `.jpg`, `.jpeg` | `image/jpeg` |
+| `.webp` | `image/webp` |
+| `.gif` | `image/gif` |
+| anything else | `text/plain; charset=utf-8` for a string, `application/octet-stream` for bytes |
+
+Give every file an extension. On a static site the host decides the type from the name of the file, not from your code.
+
+## Examples
+
+### A JSON API
+
+```tsx
+files: {
+  // /en/status/services.json
+  "/services.json": async ({ content }) => {
+    const services = (await content.json<{ id: string; state: string }[]>("services.json")) ?? [];
+    return {
+      updated: new Date().toISOString(),
+      down: services.filter((service) => service.state !== "operational").length,
+      services,
+    };
+  },
+},
+```
+
+### A text file
+
+```tsx
+files: {
+  // /en/status/summary.txt
+  "/summary.txt": ({ t }) =>
+    services.map((service) => `${service.name}: ${t(service.state)}`).join("\n"),
+},
+```
+
+### XML
+
+```tsx
+const escape = (text: string) =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+files: {
+  // /en/status/services.xml
+  "/services.xml": () =>
+    `<?xml version="1.0" encoding="UTF-8"?>\n<services>\n${services
+      .map((s) => `  <service id="${escape(s.id)}">${escape(s.name)}</service>`)
+      .join("\n")}\n</services>\n`,
+},
+```
+
+### Bytes
+
+```tsx
+// a 1×1 transparent GIF
+const pixel = Uint8Array.from(
+  atob("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"),
+  (char) => char.charCodeAt(0),
+);
+
+files: {
+  // /en/status/pixel.gif, answered as image/gif
+  "/pixel.gif": () => pixel,
+},
+```
+
+### A Response with headers
+
+Return a `Response` when you need a status or headers of your own:
+
+```tsx
+files: {
+  "/status.json": () =>
+    Response.json(
+      { services },
+      { headers: { "Cache-Control": "public, max-age=60", "Access-Control-Allow-Origin": "*" } },
+    ),
+  "/health.txt": () =>
+    new Response("ok", { status: 200, headers: { "Content-Type": "text/plain" } }),
+},
+```
+
+<Callout type="warn">
+  On a static site a file is written to disk at build time and served by the host. The headers and the status of your `Response` are lost there; only the body is kept. Set headers in the configuration of the host instead.
+</Callout>
+
+## Files with parameters
+
+A key can have parameters, like a page. A badge per service:
+
+```tsx
+const badge = (label: string, color: string) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="20"><rect width="120" height="20" rx="3" fill="${color}"/><text x="60" y="14" fill="#fff" font-family="sans-serif" font-size="11" text-anchor="middle">${label}</text></svg>`;
+
+files: {
+  // /en/status/api/badge.svg, /en/status/dashboard/badge.svg
+  "/:service/badge.svg": {
+    paths: () => services.map((service) => ({ service: service.id })),
+    load: ({ params, notFound }) => {
+      const service = services.find((s) => s.id === params.service) ?? notFound();
+      return badge(service.name, service.state === "operational" ? "#16a34a" : "#d97706");
+    },
+  },
+},
+```
+
+`paths` works as for pages: the addresses it lists are made at build time. Without `paths`, a server makes the file when someone asks for it, and a static site does not have it. Keep the extension in the last segment (`/:service/badge.svg`), not in the parameter: `/:service.svg` is not supported.
+
+## When files are made
+
+| File | Server | Static site |
+| --- | --- | --- |
+| No parameters | At build time | At build time |
+| Parameters, with `paths` | The listed ones at build time, others on demand | Only the listed ones |
+| Parameters, no `paths` | On demand | Does not exist |
+
+A file made at build time keeps the data of the build, on a server too. Files are not listed in `sitemap.xml`; only pages are.
+
+## Linking to a file
+
+A file is not a page, so a `Link` must load it as a document:
+
+```tsx
+import { Link } from "react-router";
+
+// in a page component that gets `lang`
+<Link reloadDocument to={`/${lang}/status/status.json`}>
+  status.json
+</Link>
+```
+
+To offer a file as a place the site can put in its header or footer, return it from `links` of the feature:
+
+```tsx
+links: ({ lang }) => [
+  { id: "status:json", title: "JSON", description: "The state as JSON", url: `/${lang}/status/status.json` },
+],
+```
+
+The site then lists `"status:json"` in `header.links` or `footer.columns`.
+
+## Files or pages?
+
+| | Page | File |
+| --- | --- | --- |
+| Returns | A React component | JSON, text, bytes, a `Response` |
+| Header and footer | Yes (depends on `layout`) | No |
+| `<head>`, title | Yes | No |
+| In `sitemap.xml` | Yes | No |
+| Address | Any key | Any key, best with an extension |
+| For | People | Programs, feeds, images, other sites |
+
+A fixed file that never changes (a PDF, an image, `CNAME`) needs no feature at all: put it in `public/`. A file of a feature is for what is computed: from data, from content, per language. A file of a feature always has the language and the feature in its address; a file of `public/` is served at the root of the site.
+
+## Common mistakes
+
+<Callout type="warn">
+  **The JSON is served as text.** The function returns a string made with `JSON.stringify` under a key without `.json`. Return the object itself, or add `.json` to the key.
+</Callout>
+
+<Callout type="warn">
+  **A link to the file does not open it.** `Link` without `reloadDocument` tries to open the address as a page of the site. Add `reloadDocument`.
+</Callout>
+
+<Callout type="warn">
+  **The file is missing on the static site.** Its key has a parameter and no `paths`.
+</Callout>

@@ -1,0 +1,85 @@
+---
+title: Структура проекта
+description: Какой файл за что отвечает
+---
+
+```
+my-docs/
+├─ docs.config.ts            all settings
+├─ vite.config.ts            plugins: [consify(config)]
+├─ react-router.config.ts    export default defineRouterConfig(config)
+├─ content/
+│  ├─ en/                    one folder per language, the same tree in each
+│  │  ├─ home.mdx            optional, the front page
+│  │  ├─ docs/<version>/     pages of the documentation (with docs())
+│  │  ├─ blog/               posts (with blog())
+│  │  └─ <feature>/          the content of a feature of your own, by its id
+│  └─ ru/                    a translation keeps the path of the original
+├─ custom/
+│  ├─ components/            Foo.tsx becomes <Foo /> in every .mdx file
+│  ├─ features/              your features, one file each, listed in `features`
+│  ├─ locales/               de.ts: the interface strings in a language (consify locale de)
+│  ├─ skills/                <name>/SKILL.md: skills of the project for AI agents
+│  ├─ header.tsx             optional, the middle and the right of the header
+│  ├─ footer.tsx             optional, replaces the footer
+│  └─ theme.css              optional, your styles, loaded after the core theme
+├─ public/                   files served as they are (favicon, images)
+├─ .consify/                 generated, do not edit, do not commit
+└─ build/                    the result of `consify build`
+```
+
+## Файлы, которые вы пишете
+
+<TypeTable
+  type={{
+    "docs.config.ts": { description: "Все настройки. Проверяются при запуске.", type: "file", required: true },
+    "vite.config.ts": { description: "Одна строка: плагин consify.", type: "file", required: true },
+    "react-router.config.ts": { description: "Одна строка: настройки роутера, выведенные из вашего конфига.", type: "file", required: true },
+    "content/<language>": { description: "Всё, что написано на одном языке: `home.mdx` и по папке на каждую фичу. У языка по умолчанию тоже своя папка. Язык без папки показывается на языке по умолчанию.", type: "folder" },
+    "content/en/docs": { description: "Страницы документации, по одной папке на версию. Их использует `docs()`. Переводы: `content/ru/docs/…`, тот же путь.", type: "folder" },
+    "content/en/blog": { description: "Посты блога: `slug.mdx`. Их использует `blog()`. Переводы: `content/ru/blog/slug.mdx`.", type: "folder" },
+    "content/en/<feature>": { description: "Контент вашей собственной фичи. Имя папки — её `id` (или опция `folder`).", type: "folder" },
+    "custom/components": { description: "React-компоненты для MDX, находятся автоматически.", type: "folder" },
+    "custom/features": { description: "Ваши фичи, сделанные через `defineFeature`. Для одной фичи хватит одного файла; импортируйте его в `docs.config.ts` и добавьте в `features`.", type: "folder" },
+    "custom/locales": { description: "Языковые пакеты: строки интерфейса на одном языке, `<язык>.ts` или `.json`.", type: "folder" },
+    "custom/skills": { description: "Навыки проекта для ИИ-агентов, `<name>/SKILL.md`. `consify skill sync` копирует их вместе с навыками пакетов consify в `.claude/skills/`.", type: "folder" },
+  }}
+/>
+
+## Сгенерированные файлы
+
+`.consify/` записывается при запуске сервера разработки или сборки. В нём лежит:
+
+| Файл | Назначение |
+| --- | --- |
+| `instance.ts` | Создаёт объект сайта из вашего конфига и из `custom/` (компоненты, шапка, подвал, языковые пакеты) |
+| `styles.css` | Тема consify и пакеты, которые должен просканировать Tailwind |
+| `app/root.tsx`, `app/routes.ts` | Корень приложения на React Router и список маршрутов |
+| `routes/` | По маленькому модулю на каждую страницу и каждый файл каждой фичи |
+
+Добавьте `.consify` в `.gitignore`.
+
+## Папки в `content/en/docs`
+
+Каждая папка — раздел боковой панели. Файл `meta.json` в папке задаёт её заголовок, иконку и порядок страниц:
+
+```json title="content/en/docs/v0/guides/meta.json"
+{
+  "title": "Guides",
+  "icon": "Compass",
+  "pages": ["intro", "---Advanced---", "caching", "..."]
+}
+```
+
+- `"---Text---"` рисует разделитель с подписью.
+- `"..."` обозначает все страницы, которые вы не перечислили.
+- `"root": "version"` помечает верхнюю папку версии документации (см. [Языки и версии](/docs/v0/writing/translations-and-versions)).
+
+Front matter страницы документации:
+
+| Поле | Значение |
+| --- | --- |
+| `title` | Заголовок страницы (обязательное) |
+| `description` | Показывается под заголовком, используется в поиске и мета-тегах |
+| `icon` | Название иконки [Lucide](https://lucide.dev/icons) для боковой панели |
+| `full` | `true` растягивает страницу на всю ширину |

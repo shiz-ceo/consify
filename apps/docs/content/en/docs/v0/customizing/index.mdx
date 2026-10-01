@@ -1,0 +1,20 @@
+---
+title: Customizing
+description: Ways to make the site yours, from the least to the most work
+---
+
+consify is meant to be changed without forking. Pick the smallest tool:
+
+| You want | Use |
+| --- | --- |
+| Other colors, radius or fonts | [`theme`](/docs/v0/configuration/theme) in the config |
+| A few CSS rules | `custom/theme.css` |
+| A new tag in MDX | [Custom components](/docs/v0/customizing/custom-components) |
+| Different Markdown or code block behavior | [Plugins](/docs/v0/customizing/plugins) in `mdx.plugins` |
+| A different header or footer | [Slots](/docs/v0/customizing/slots) |
+| A different home page | `content/<language>/home.mdx`, or a [feature](/docs/v0/features) with `path: ""` |
+| A new section with its own pages | [Features](/docs/v0/features) |
+| Another link in the header or footer | `header.links` and `footer` in the [config](/docs/v0/configuration/navigation) |
+| A skill for Claude about your project | [Skills for Claude](/docs/v0/customizing/skills) |
+
+Everything here lives in your project (`docs.config.ts`, `content/` and `custom/`), so the core keeps updating.

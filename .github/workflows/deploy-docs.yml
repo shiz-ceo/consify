@@ -1,0 +1,50 @@
+name: Deploy docs to GitHub Pages
+
+# Publishes apps/docs (consify.shiz-ceo.ru) — not the whole monorepo, so the generic
+# `consify deploy github-pages` workflow (one package, `bun run build`) doesn't fit as-is; this is
+# the same shape, adapted to build only the docs app and upload its own build/client.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/docs/**"
+      - "packages/**"
+      - "integrations/**"
+      - "package.json"
+      - "bun.lock"
+      - ".github/workflows/deploy-docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# only one deploy at a time; a new push cancels the one in progress
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run build:docs
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/docs/build/client
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

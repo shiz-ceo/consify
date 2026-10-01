@@ -1,0 +1,583 @@
+---
+title: Справочник
+description: Все типы и функции API фич, точки входа @consify/core и адреса, которые создаёт core
+---
+
+Все типы и функции, которыми пишут фичу, в одном месте. Объяснения и примеры ищите на страницах [Фичи](/docs/v0/features), [Страницы](/docs/v0/features/pages), [Данные и load](/docs/v0/features/data), [Контент](/docs/v0/features/content) и [Сервисы контента](/docs/v0/features/content-services).
+
+`?` после имени поля значит, что поле необязательное. Все типы экспортирует `@consify/core`:
+
+```ts
+import type { FeatureInput, LoadContext, PageProps } from "@consify/core";
+```
+
+## Точки входа
+
+| Импорт | Кто загружает | Что в нём |
+| --- | --- | --- |
+| `@consify/core` | Node, Vite, браузер | `defineConfig`, `defineFeature`, `page`, `isFeature`, `lazyComponents`, `Mdx`, `z`, `featureUrl`, `fillUrl`, `featureText`, `createTranslate`, `linkCatalog`, `linkIds`, `primaryLinks`, `localized`, `resolveHref`, `format`, `getMessages`, `defineLocale`, `definePlugin` и все типы ниже. Без JSX и CSS: безопасен в `docs.config.ts` и в `index.ts` пакета |
+| `@consify/core/ui` | Только бандлы сайта | Части сайта для страниц: `SitePage`, `docsLayoutOptions`, `headerLinks`, `Footer`, `FallbackNotice`, `SearchField`, `SiteLink`, `Redirecting`, `useMessages`, `useSidebarCollapsed`, `consify`, `isStatic`, `requireLang`, `buildMeta`, `absoluteUrl`, `Hero`, `Features`, `MdxImage`. Никогда не импортируйте его из `index.ts` |
+| `@consify/core/node` | Node: CLI и тесты | `createLoadContext`, `siteAddresses`, `createContent`, `diskSource`, `bundledSource`, `contentDir`, `slugOf`, `loadConfig`, `prerenderPaths`, `packageDirs`, `allFeatures`, `compileMdx`, `splitFrontmatter`, `renderLocaleTemplate`, `warnMissingLocales` |
+| `@consify/core/search` | Модули страниц и фичи | `createFumadocsSearch` |
+
+## defineFeature
+
+```ts
+function defineFeature(input: FeatureInput): Feature;
+```
+
+Проверяет вход и возвращает замороженный `Feature`. Добавьте его в `features` файла `docs.config.ts`. Бросает ошибку, когда:
+
+- `id` состоит не из строчных латинских букв, цифр и `-` или начинается не с буквы;
+- `path` не относительный адрес и не `""`;
+- адрес страницы или файла не начинается с `/`, заканчивается на `/` или содержит `//`;
+- страница не компонент, не объект страницы и не перенаправление;
+- файл не функция и не `{ load }`.
+
+Фича с `content` и без `search` сама получает поиск по своему контенту (если `content.search` не `false`).
+
+`isFeature(value)` говорит, создано ли значение через `defineFeature`.
+
+### FeatureInput
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `id` | `string` | Строчные латинские буквы, цифры и `-`. Адрес (`/{lang}/<id>`), папка контента и id ссылки |
+| `path?` | `string` | Адрес фичи после языка, если он не равен `id`. `""` это главная страница (`/{lang}`) |
+| `folder?` | `string` | Папка контента в `content/<language>/`, если она не равна `id` |
+| `title?` | `FeatureText` | Ссылка на фичу в шапке и заголовок её страниц. Без него фича не предлагает ссылку |
+| `description?` | `FeatureText` | Пара слов о фиче для выпадающих меню |
+| `messages?` | `Record<string, Strings>` | Строки по языкам, для `t`. Английский служит эталоном: другие языки берут недостающее из него |
+| `pages?` | `Record<string, PageInput>` | Страницы по адресу относительно фичи: `"/"`, `"/:slug"`, `"/*"` |
+| `files?` | `Record<string, FileInput>` | Файлы по адресу относительно фичи: `"/rss.xml"`, `"/:slug/og.png"` |
+| `content?` | `ContentOptions` | MDX-контент, который показывает фича: core читает, проверяет и переводит его |
+| `links?` | `(context: LinksContext) => LinkOption[]` | Другие места для ссылок, кроме главной страницы (`blog:rss`) |
+| `components?` | `Record<string, ComponentType>` | MDX-компоненты, которые фича добавляет в каждый `.mdx` сайта |
+| `search?` | `FeatureSearch` | Поиск фичи |
+
+Ключи `messages` типизируют `t`: при `messages: { en: { up: "Up" } }` вызов `t("down")` даёт ошибку типов.
+
+### Feature
+
+То, что возвращает `defineFeature`. Все поля только для чтения.
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `id` | `string` | Как передано |
+| `path` | `string` | Адрес после языка: `id` или переданный `path` |
+| `folder` | `string` | Папка в `content/<language>/` |
+| `content` | `ContentOptions \| undefined` | Как передано |
+| `title`, `description` | `FeatureText \| undefined` | Как передано |
+| `messages` | `Record<string, Strings>` | `{}`, если не передано |
+| `pages` | `Record<string, Page>` | Все страницы в едином виде: `{ kind: "page", component, ... }` или `{ kind: "redirect", redirect }` |
+| `files` | `Record<string, FileDefinition>` | Все файлы в едином виде `{ load, paths? }` |
+| `links` | `function \| undefined` | Как передано |
+| `components` | `Record<string, ComponentType>` | `{}`, если не передано |
+| `search` | `FeatureSearch \| undefined` | Как передано, или поиск по контенту по умолчанию |
+
+## Страницы
+
+### PageInput
+
+Страница бывает трёх видов:
+
+| Вид | Пример |
+| --- | --- |
+| Компонент | `"/": ({ t }) => <h1>{t("title")}</h1>` |
+| `PageDefinition` | `"/:slug": page({ load, component })` |
+| `RedirectDefinition` | `` "/": { redirect: ({ lang }) => `/${lang}/docs/v2` } `` |
+
+`lazy(() => import("./page.tsx"))` и `memo(...)` тоже компоненты.
+
+### page
+
+```ts
+function page<Data>(definition: PageDefinition<Data>): PageDefinition<Data>;
+```
+
+Возвращает свой аргумент. Нужна только для того, чтобы `data` компонента получил тип из того, что возвращает `load`. Обычный объект работает так же, но `data` будет без типа.
+
+### PageDefinition
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `component` | `ComponentType<PageProps<Data>>` | Страница |
+| `entry?` | `boolean` | Страница на каждую запись контента: адрес называет запись (`"/*"` или `"/:slug"`). Core находит её, отвечает 404, если её нет, заполняет `<head>` и передаёт её компоненту как `data` (или в `load` как `entry`) |
+| `load?` | `(context: LoadContext) => Data \| Promise<Data>` | Читает то, что показывает страница. Выполняется на сервере. Результат становится `data` компонента |
+| `paths?` | `(context: PathsContext) => Params[] \| Promise<Params[]>` | Параметры страницы с `:param` или `*` для каждого существующего адреса. Они пререндерятся и попадают в карту сайта. Без него такая страница рисуется только по запросу, а статический сайт так не умеет |
+| `title?` | `string \| (context: MetaContext<Data>) => string \| undefined` | `<title>`. По умолчанию: заголовок фичи, затем имя сайта |
+| `description?` | `string \| (context: MetaContext<Data>) => string \| undefined` | Описание страницы |
+| `meta?` | `(context: MetaContext<Data>) => PageMeta` | Весь `<head>` сразу. Важнее `title` и `description` |
+| `layout?` | `PageLayout` | Что core рисует вокруг страницы. По умолчанию `"site"` |
+
+### RedirectDefinition
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `redirect` | `(context: { lang: string; config: DocsConfig }) => string` | Адрес, куда отправить читателя. На сервере это HTTP-перенаправление, на статическом сайте страница, которая перенаправляет сама |
+
+### PageLayout
+
+`"site" | "sidebar" | "none"`
+
+| Значение | |
+| --- | --- |
+| `"site"` | По умолчанию. Шапка и подвал сайта вокруг страницы |
+| `"sidebar"` | То же, и в шапке появляется кнопка для панели, которую рисует сама страница. `useSidebarCollapsed()` сообщает странице её состояние |
+| `"none"` | Вокруг страницы ничего. Компонент рисует всё сам |
+
+### PageProps
+
+Что получает компонент страницы.
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `data` | `Data` | То, что вернул `load`. Для страницы записи без `load`: `EntryPage` |
+| `lang` | `string` | Язык страницы |
+| `params` | `Params` | Параметры адреса |
+| `t` | `Translate` | Строки фичи на языке страницы |
+
+## Данные
+
+### LoadContext
+
+Что получает `load` страницы или файла. Выполняется на сервере.
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `entry?` | `EntryPage` | Запись страницы с `entry: true` |
+| `lang` | `string` | Язык страницы |
+| `params` | `Params` | Параметры адреса |
+| `t` | `Translate` | Строки фичи |
+| `content` | `Content` | Контент фичи на этом языке |
+| `readFile` | `(path: string) => Promise<string>` | Файл проекта по пути от папки проекта (`./openapi.json`). Бросает ошибку для пути за пределами проекта |
+| `config` | `DocsConfig` | Конфиг сайта |
+| `request` | `Request` | Запрос |
+| `url` | `(path: string) => string` | Абсолютный адрес пути сайта (с `site.url`), без него сам путь |
+| `notFound` | `() => never` | Отвечает страницей 404 |
+| `redirect` | `(to: string) => never` | Отправляет читателя на другой адрес |
+
+### PathsContext
+
+Что получает `paths`. Выполняется при сборке и в `consify check`, чтобы перечислить адреса для пререндеринга.
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `lang` | `string` | Язык |
+| `content` | `Content` | Контент фичи на этом языке |
+| `config` | `DocsConfig` | Конфиг сайта |
+
+Здесь нет ни `readFile`, ни `request`.
+
+### MetaContext
+
+Что получают `title`, `description` и `meta` страницы.
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `data` | `Data` | То, что вернул `load` |
+| `lang` | `string` | Язык |
+| `params` | `Params` | Параметры адреса |
+| `t` | `Translate` | Строки фичи |
+
+### PageMeta
+
+Что возвращает `meta` страницы: `<head>` сверх заголовка.
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `title?` | `string` | `<title>` |
+| `description?` | `string` | Описание |
+| `image?` | `string` | Путь или URL картинки для соцсетей |
+| `alternates?` | `Record<string, string>` | Язык → путь той же страницы на этом языке (hreflang) |
+| `canonical?` | `string` | Путь оригинала, если страница копия (показана без перевода) |
+| `head?` | `HeadTag[]` | Другие теги для `<head>`: `og:type`, ссылка на ленту |
+
+### HeadTag
+
+`Record<string, string>`: тег `<head>`. `{ name, content }` и `{ property, content }` это теги `<meta>`, `{ tagName: "link", rel, href }` это `<link>`.
+
+## Файлы
+
+### FileInput и FileDefinition
+
+Файл это функция (его `load`) или `FileDefinition`:
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `load` | `(context: LoadContext) => FileBody \| Promise<FileBody>` | Готовит ответ |
+| `paths?` | такой же, как `paths` страницы | Параметры файла с `:param` или `*` в адресе |
+
+### FileBody
+
+`Response | string | Uint8Array | ArrayBuffer | object`
+
+| Что вернули | Ответ |
+| --- | --- |
+| `Response` | Отправляется как есть |
+| `string` | Текст. Тип берётся из расширения адреса (`.xml`, `.txt`, `.md`, `.html`, `.css`, `.js`, `.svg`), иначе `text/plain` |
+| `Uint8Array`, `ArrayBuffer` | Байты. Тип берётся из расширения (`.png`, `.jpg`, `.webp`, `.gif`), иначе `application/octet-stream` |
+| любой другой объект | JSON |
+
+## Ссылки
+
+### LinkOption
+
+Место сайта, на которое фича предлагает ссылаться. Сайт сам решает, куда его поставить (`header.links`, `footer.columns`).
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `id` | `string` | `<feature>` для главной страницы, `<feature>:<name>` для другого места (`blog:rss`) |
+| `title` | `string` | Текст ссылки |
+| `description?` | `string` | Пара слов, показывается в выпадающих меню |
+| `url` | `string` | С языком: `/en/blog` |
+| `primary?` | `boolean` | Попадает в шапку, если сайт не выбирает ссылки сам |
+| `external?` | `boolean` | Открывается вне сайта |
+
+### LinksContext
+
+Что получает `links` фичи.
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `lang` | `string` | Язык |
+| `t` | `Translate` | Строки фичи |
+| `config` | `DocsConfig` | Конфиг сайта |
+
+### Каталог ссылок
+
+`linkCatalog(config, lang)` возвращает все `LinkOption` сайта в порядке `features`:
+
+| Id | Когда |
+| --- | --- |
+| `<id>` | У фичи есть `title`. `primary: true` |
+| `<id>:llms` | Включён `content.llms` |
+| `<id>:rss` | Включён `content.rss`. `external: true` |
+| любой | То, что возвращает `links` фичи |
+
+`linkIds(config)` возвращает только id. `primaryLinks(config, lang)` возвращает варианты с `primary`.
+
+## Строки
+
+| Тип | Определение | |
+| --- | --- | --- |
+| `Localized<T>` | `T \| Record<string, T>` | Текст для всех языков или по одному на код языка: `"API"` или `{ en: "Status", ru: "Статус" }` |
+| `FeatureText` | `Localized \| (context: { lang, t }) => string \| undefined` | Текст фичи: постоянный, по языкам или из её строк (`({ t }) => t("blog")`) |
+| `Strings` | `Record<string, string>` | Строки фичи на одном языке |
+| `Translate` | `(key, values?) => string` | Строка на языке страницы. `{name}` в ней заменяется на `values.name`. Неизвестный ключ возвращается как есть |
+| `Params` | `Record<string, string>` | Параметры адреса: `:service` в `"/:service"` это `params.service`, `*` это `params["*"]` |
+| `MessagesOf<typeof messages>` | `Record<key, string>` | Тип строк фичи, для `useMessages<T>()` |
+
+`t` сначала читает строки своей фичи, затем строки consify и других фич. Проект может заменить любую из них в `i18n.messages` или `custom/locales/`.
+
+## Контент
+
+### ContentOptions
+
+`content` у `defineFeature`: MDX-файлы из `content/<language>/<folder>/`.
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `schema?` | `Schema<Data>` | Проверяет front matter каждого файла (схема zod). Неверный останавливает сайт и называет файл |
+| `filter?` | `(entry: Entry<Data>) => boolean` | Исключает записи: черновики, посты с датой в будущем |
+| `sort?` | `(a: Entry<Data>, b: Entry<Data>) => number` | Порядок `content.entries()`. По умолчанию по пути |
+| `tree?` | `boolean` | Боковое меню из папок и файлов `meta.json` (`entry.tree`) |
+| `search?` | `boolean` | Поиск сайта ищет по записям. По умолчанию включён |
+| `llms?` | `boolean` | `llms.txt` и `llms-full.txt`: записи текстом для ИИ-агентов |
+| `og?` | `boolean` | Картинка для соцсетей на каждую запись |
+| `rss?` | `boolean` | RSS-лента записей (`/{lang}/<id>/rss.xml`): их `title`, `description`, `date`, `categories` и `tags` в порядке `sort` |
+
+### Schema
+
+Всё, у чего есть `safeParse`, как у zod:
+
+```ts
+interface Schema<Data> {
+  safeParse(input: unknown):
+    | { success: true; data: Data }
+    | {
+        success: false;
+        error: { issues: readonly { path: readonly PropertyKey[]; message: string }[] };
+      };
+}
+```
+
+### Content
+
+Контент фичи на одном языке: `content` в `LoadContext` и `PathsContext`. Файл без перевода читается из языка по умолчанию, как говорит `i18n.fallback` (с `fallback: true`). При `fallback: "hide"` на других языках его нет.
+
+| Член | Тип | |
+| --- | --- | --- |
+| `root` | `string` | Папка этого контента: `/site/content/en/docs` |
+| `list(dir?)` | `Promise<ContentFile[]>` | Все файлы в `dir` (по умолчанию во всей папке) на языке страницы |
+| `read(path)` | `Promise<string \| undefined>` | Текст файла, `undefined`, если его нет |
+| `json<T>(path)` | `Promise<T \| undefined>` | JSON-файл, уже разобранный |
+| `frontmatter<T>(path)` | `Promise<T \| undefined>` | Front matter MDX-файла без компиляции |
+| `mdx<T>(path)` | `Promise<MdxFile<T> \| undefined>` | MDX-файл, скомпилированный для `<Mdx />`, с front matter и заголовками |
+| `in(lang)` | `Content` | Тот же контент на другом языке (с тем же fallback) |
+| `entries<Data>()` | `Promise<Entry<Data>[]>` | Все записи фичи на этом языке: проверенные, отфильтрованные и отсортированные |
+| `entry<Data>(slug)` | `Promise<EntryPage<Data> \| undefined>` | Одна запись со скомпилированным текстом |
+
+Путь должен оставаться внутри папки фичи: `read("../x")` бросает ошибку.
+
+### ContentFile
+
+Файл из `content/<language>/<folder>/`.
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `path` | `string` | Относительно папки фичи, через `/`: `guides/setup.mdx` |
+| `slug` | `string` | `path` без расширения и без `index` в конце: `guides/setup`, `""` для `index.mdx` |
+| `lang` | `string` | Язык, на котором написан файл |
+| `fallback` | `boolean` | Это файл языка по умолчанию, показанный из-за отсутствия перевода |
+
+### MdxFile
+
+MDX- (или Markdown-) файл, скомпилированный на сервере: то, что возвращает `content.mdx()`. В нём есть все поля `ContentFile`, а также:
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `frontmatter` | `Frontmatter` | Front matter, без проверки |
+| `code` | `string` | Скомпилированная страница, для `<Mdx code={file.code} />` |
+| `toc` | `TocItem[]` | Её заголовки |
+| `text` | `string` | Текст Markdown без front matter (для `llms.txt`, времени чтения, поиска) |
+| `languages` | `string[]` | Все языки, на которых есть файл |
+| `structuredData` | `unknown` | Заголовки и абзацы для поискового индекса (`StructuredData` из Fumadocs) |
+
+### Entry
+
+MDX- (или `.md`-) файл фичи с `content`: одна страница её контента.
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `slug` | `string` | Её адрес внутри фичи: `v2/guide`, `hello`, `""` для `index.mdx` |
+| `url` | `string` | Её страница: `/en/docs/v2/guide` |
+| `path` | `string` | Относительно папки фичи: `v2/guide.mdx` |
+| `lang` | `string` | Язык, на котором она написана |
+| `fallback` | `boolean` | Это запись языка по умолчанию, показанная из-за отсутствия перевода (и `i18n.fallback` не `show`) |
+| `data` | `Data` | Front matter, проверенный `content.schema` |
+| `readingTime` | `number` | Минуты на чтение, не меньше 1 |
+
+### EntryPage
+
+Запись с текстом, для страницы, которая её показывает. В ней есть все поля `Entry`, а также:
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `code` | `string` | Скомпилированный текст, для `<Mdx code={entry.code} />` |
+| `toc` | `TocItem[]` | Её заголовки |
+| `alternates` | `Record<string, string>` | Язык → адрес той же страницы на этом языке |
+| `original` | `string` | Её адрес на языке по умолчанию |
+| `tree?` | `unknown` | Боковое меню контента (при `content.tree`), для `useFumadocsLoader` из Fumadocs |
+
+### TocItem
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `title` | `string` | Текст заголовка |
+| `url` | `string` | Его якорь: `#install` |
+| `depth` | `number` | 2 для `##`, 3 для `###` |
+
+### Mdx
+
+```tsx
+import { Mdx } from "@consify/core";
+
+component: ({ data }) => <Mdx code={data.code} />
+```
+
+Рисует скомпилированный MDX (`code` из `content.mdx()` или из записи). Внутри доступны все MDX-компоненты сайта.
+
+| Проп | Тип | |
+| --- | --- | --- |
+| `code` | `string` | `code` файла, прочитанного через `content.mdx()`, или записи |
+| `components?` | `MDXComponents` | Компоненты только для этого файла, добавляются к компонентам сайта (или заменяют их) |
+| `className?` | `string` | Классы обёртки. По умолчанию `"prose"`, типографика сайта |
+
+### lazyComponents
+
+```ts
+function lazyComponents<Name extends string>(
+  load: () => Promise<Record<Name, ComponentType>>,
+  names: readonly Name[],
+): Record<Name, LazyExoticComponent<ComponentType>>;
+```
+
+По одному ленивому компоненту на каждое имя, все из одного модуля. Модуль загружается один раз, когда рисуется первый из них. Для `components` пакета, чей `index.ts` не должен импортировать JSX:
+
+```ts
+components: lazyComponents(() => import("./mdx.tsx"), ["Authors", "Figure"]),
+```
+
+## Поиск
+
+### FeatureSearch
+
+Поиск фичи. Сайт рисует одно окно для всех поисков. Фича говорит, что она находит, или открывает свой собственный поиск.
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `useSearch?` | `(context: SearchContext) => SearchState` | React-хук: что окно поиска сайта показывает для этой фичи |
+| `open?` | `() => boolean` | Открывает собственный поиск. Возвращает `false`, если его пока нет на странице |
+
+### SearchContext
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `lang` | `string` | Язык страницы |
+| `isStatic` | `boolean` | `deploy.mode` равен `static`: спросить сервер нельзя |
+
+### SearchState
+
+Что возвращает `useSearch`.
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `search` | `string` | Текст в поле |
+| `setSearch` | `(search: string) => void` | Меняет его |
+| `isLoading` | `boolean` | Результаты загружаются |
+| `items` | `SearchResult[] \| null` | Результаты. `null`, пока показывать нечего (пустое поле) |
+
+### SearchResult
+
+Одна строка результатов.
+
+| Поле | Тип | |
+| --- | --- | --- |
+| `id` | `string` | Уникален в списке |
+| `url` | `string` | Куда ведёт |
+| `type` | `"page" \| "heading" \| "text"` | Страница, её заголовок или фрагмент текста |
+| `content` | `string` | Текст строки |
+| `breadcrumbs?` | `string[]` | Где она находится |
+
+### createFumadocsSearch
+
+```ts
+import { createFumadocsSearch } from "@consify/core/search";
+
+search: createFumadocsSearch((lang) => `/${lang}/notes/search.json`),
+```
+
+`FeatureSearch` на основе поискового API Fumadocs, которое отдаётся как файл фичи. На сервере поиск обращается к API. На статическом сайте API пререндерится в один файл, экспортированный индекс Orama, который браузер скачивает и ищет по нему сам. Фича с `content` получает этот поиск сама.
+
+## Функции для тестов и инструментов
+
+### createLoadContext
+
+```ts
+import { createLoadContext } from "@consify/core/node";
+
+function createLoadContext(options: LoadContextOptions): LoadContext;
+```
+
+Контекст `load` для фичи на одном языке, собранный так же, как его собирает сервер.
+
+| Опция | Тип | |
+| --- | --- | --- |
+| `config` | `DocsConfig` | Конфиг сайта |
+| `feature` | `Feature` | Фича: её строки для `t`, её папка для `content` |
+| `lang` | `string` | Язык |
+| `params?` | `Params` | Параметры адреса. По умолчанию `{}` |
+| `request?` | `Request` | По умолчанию запрос к `http://localhost/{lang}` |
+| `cwd?` | `string` | Папка проекта. По умолчанию текущая папка |
+| `source?` | `ContentSource` | Откуда берётся контент. По умолчанию `content/` из `cwd` на диске |
+
+### siteAddresses
+
+```ts
+import { siteAddresses } from "@consify/core/node";
+
+function siteAddresses(config: DocsConfig, cwd?: string, source?: ContentSource): Promise<Address[]>;
+```
+
+Все адреса сайта: каждая страница, перенаправление и файл каждой фичи на каждом языке, с подставленными параметрами. Им пользуются пререндеринг, карта сайта и `consify check`.
+
+| Поле `Address` | Тип | |
+| --- | --- | --- |
+| `feature` | `Feature` | Фича, которой принадлежит адрес |
+| `key` | `string` | Адрес внутри фичи: `"/:service"` |
+| `kind` | `"page" \| "redirect" \| "file"` | Что это |
+| `lang` | `string` | Язык |
+| `url` | `string` | Адрес: `/en/status/api` |
+| `copy?` | `boolean` | Страница непереведённой записи: копия оригинала, не попадает в карту сайта |
+
+`prerenderPaths(config, cwd)` возвращает URL, которые пререндерит сборка: на сервере адреса без перенаправлений (они остаются HTTP-перенаправлениями), на статическом сайте вместе с ними, плюс `/sitemap.xml` и `/robots.txt`.
+
+### createContent
+
+```ts
+import { createContent } from "@consify/core/node";
+
+function createContent(options: CreateContentOptions): Content;
+```
+
+`content` для одной фичи и одного языка, без страницы.
+
+| Опция | Тип | |
+| --- | --- | --- |
+| `config` | `DocsConfig` | Конфиг сайта |
+| `cwd` | `string` | Папка проекта |
+| `feature` | `Feature` (хотя бы `folder`) | Фича, чьи папка и записи это |
+| `lang` | `string` | Язык |
+| `source?` | `ContentSource` | Откуда берутся файлы. По умолчанию `diskSource(cwd)` |
+
+### diskSource и bundledSource
+
+`ContentSource` говорит, откуда берутся файлы `content/`, по их пути внутри неё (`en/docs/guide.mdx`).
+
+| Функция | Источник |
+| --- | --- |
+| `diskSource(cwd)` | Папка `content/` проекта на диске. По умолчанию |
+| `bundledSource(modules)` | Объект путь → `() => Promise<text>`: `import.meta.glob("/content/**", { query: "?raw" })`, как в серверной сборке. Собранному серверу не нужна папка `content/` рядом |
+
+Оба пропускают скрытые файлы (имя начинается с `.`).
+
+```ts
+const source = bundledSource({
+  "/content/en/notes/a.mdx": async () => "---\ntitle: A\n---\nText",
+});
+```
+
+### Другие помощники
+
+| Функция | Откуда | |
+| --- | --- | --- |
+| `featureUrl(feature, lang)` | `@consify/core` | Главная страница фичи: `/en/status`, `/en` для фичи с `path: ""` |
+| `fillUrl(feature, key, lang, params?)` | `@consify/core` | URL страницы или файла с параметрами: `/en/status/api`. Бросает ошибку, если нет обязательного параметра |
+| `featureText(config, lang, text, feature?)` | `@consify/core` | `FeatureText` на нужном языке |
+| `createTranslate(config, lang, feature?)` | `@consify/core` | `t` для языка |
+| `localized(config, lang, value)` | `@consify/core` | Строка `Localized` на нужном языке: для `lang`, иначе для языка по умолчанию, иначе любая |
+| `resolveHref(config, lang, href)` | `@consify/core` | Ссылка из конфига в виде URL: id ссылки (`blog:rss`) становится адресом, `/x` становится `/{lang}/x` |
+| `format(template, values)` | `@consify/core` | Подставляет `{name}` в строку |
+| `slugOf(path)` | `@consify/core/node` | `guides/setup.mdx` → `guides/setup`, `index.mdx` → `""` |
+| `packageDirs(cwd)` | `@consify/core/node` | Папки зависимостей проекта `@consify/*` и `consify-*` |
+| `allFeatures(config)` | `@consify/core/node` | Все фичи сайта, первой встроенная главная страница |
+| `loadConfig(cwd)` | `@consify/core/node` | Загружает `docs.config.ts` проекта |
+
+## Адреса, которые создаёт core
+
+Для фичи с `path` `status` все адреса лежат под `/{lang}/status`.
+
+### Адреса фичи
+
+| Адрес | Вид | Когда |
+| --- | --- | --- |
+| `/{lang}/<path>` + ключ из `pages` | страница или перенаправление | Каждая страница. Страница с параметрами: по разу на каждый элемент `paths` или на каждую запись при `entry: true` |
+| `/{lang}/<path>` + ключ из `files` | файл | Каждый файл. С параметрами: по разу на каждый элемент `paths` |
+| `/{lang}/<path>/search.json` | файл | `content` без `search: false`. Файлом только на статическом сайте: сервер отвечает на запросы сам |
+| `/{lang}/<path>/llms.txt` | файл | `content.llms` |
+| `/{lang}/<path>/llms-full.txt` | файл | `content.llms` |
+| `/{lang}/<path>/og/<slug>.png` | файл | `content.og`: по одному на запись, `og/index.png` для `index.mdx` |
+| `/{lang}/<path>/rss.xml` | файл | `content.rss` |
+
+Не занимайте эти адреса своими страницами и файлами.
+
+### Адреса сайта
+
+| Адрес | Что |
+| --- | --- |
+| `/` | Отправляет читателя на один из языков сайта |
+| `/{lang}` | Главная страница: `content/<language>/home.mdx`, а без него первый раздел сайта. Фича с `path: ""` заменяет её |
+| `/sitemap.xml` | Все страницы, без копий |
+| `/robots.txt` | Для поисковых систем |
+| всё остальное | Страница 404 |

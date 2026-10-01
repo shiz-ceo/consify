@@ -1,0 +1,116 @@
+---
+title: Head and scripts
+description: Meta tags, links and scripts in the head of every page, and analytics recipes
+---
+
+`head` adds tags to the `<head>` of every page: the server pages, the static pages and the 404 page. It is an object with three lists, all optional.
+
+```ts title="docs.config.ts"
+head: {
+  meta: [
+    { name: "theme-color", content: "#0ea5e9" },
+    { property: "og:locale", content: "en" },
+  ],
+  links: [
+    { rel: "preconnect", href: "https://fonts.googleapis.com", crossOrigin: "anonymous" },
+  ],
+  scripts: [
+    { src: "https://plausible.io/js/script.js", defer: true, data: { domain: "lattice.dev" } },
+    { inline: "window.dataLayer = window.dataLayer || [];" },
+  ],
+},
+```
+
+| List | Fields |
+| --- | --- |
+| `meta` | `content` and one of `name`, `property` or `httpEquiv` (one of the three is required) |
+| `links` | `rel`, `href`, `as`, `type`, `media`, `sizes`, `hrefLang`, `crossOrigin` |
+| `scripts` | `src` or `inline`, plus `async`, `defer`, `type`, `integrity`, `crossOrigin` and `data` |
+
+`data` is an object of `data-*` attributes written without the prefix: `data: { domain: "lattice.dev" }` becomes `data-domain="lattice.dev"`. Unknown fields are errors.
+
+## Per language
+
+Give `head` a function of the language to return different tags for every language:
+
+```ts title="docs.config.ts"
+head: (lang) => ({
+  meta: [{ property: "og:locale", content: lang }],
+}),
+```
+
+## Scripts and Content-Security-Policy
+
+`inline` is the text of a script that you own. If your site sends a `Content-Security-Policy` header, inline scripts and scripts from other hosts need to be allowed in it (a `nonce` or a hash for the inline text, the host of every `src`). consify does not set the header; that is the job of your server or host.
+
+## Analytics recipes
+
+There are no ready-made analytics options: every service is a script, and `head.scripts` is where it goes. The snippets below follow the public instructions of each service. The dashboard of the service always shows the current snippet for your site, so copy it from there if it differs.
+
+### Plausible
+
+```ts title="docs.config.ts"
+head: {
+  scripts: [
+    { src: "https://plausible.io/js/script.js", defer: true, data: { domain: "example.com" } },
+  ],
+},
+```
+
+### Umami
+
+```ts title="docs.config.ts"
+head: {
+  scripts: [
+    {
+      src: "https://cloud.umami.is/script.js",
+      defer: true,
+      data: { "website-id": "your-website-id" },
+    },
+  ],
+},
+```
+
+For a self-hosted Umami use the address of your own server in `src`.
+
+### Google Analytics (gtag)
+
+```ts title="docs.config.ts"
+head: {
+  scripts: [
+    { src: "https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX", async: true },
+    {
+      inline: `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-XXXXXXXXXX');`,
+    },
+  ],
+},
+```
+
+### Cloudflare Web Analytics
+
+```ts title="docs.config.ts"
+head: {
+  scripts: [
+    {
+      src: "https://static.cloudflareinsights.com/beacon.min.js",
+      defer: true,
+      data: { "cf-beacon": '{"token": "your-token"}' },
+    },
+  ],
+},
+```
+
+### Yandex Metrika
+
+Yandex Metrika gives a longer snippet with your counter number. Copy it from the counter settings and put the script text into `inline`:
+
+```ts title="docs.config.ts"
+head: {
+  scripts: [{ inline: "/* the snippet from the Metrika counter settings */" }],
+},
+```
+
+The service also shows a `<noscript>` pixel; it is only for readers without JavaScript and is not needed for the counter to work.

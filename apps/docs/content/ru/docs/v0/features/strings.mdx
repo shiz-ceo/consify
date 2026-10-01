@@ -1,0 +1,318 @@
+---
+title: Строки и языки
+description: messages, t, подстановки, переопределения и язык в адресе
+---
+
+Каждая страница фичи есть на каждом языке сайта. Текст, который вы пишете в компонентах (заголовки, кнопки, подписи), переводится через строки: у каждого текста есть ключ, вы пишете текст по разу для каждого языка в `messages` и показываете его через `t("key")`.
+
+## messages
+
+В `messages` по объекту на язык. Каждый объект сопоставляет ключу текст на этом языке.
+
+```tsx title="custom/features/status.tsx"
+import { defineFeature } from "@consify/core";
+
+export const status = defineFeature({
+  id: "status",
+  messages: {
+    en: { status: "Status", operational: "Operational", degraded: "Degraded" },
+    ru: { status: "Статус", operational: "Работает", degraded: "Сбои" },
+  },
+  pages: {
+    "/": ({ t }) => (
+      <main className="mx-auto w-full max-w-2xl px-4 py-12">
+        <h1>{t("status")}</h1>
+        <p>{t("operational")}</p>
+      </main>
+    ),
+  },
+});
+```
+
+`/en/status` показывает «Status», `/ru/status` — «Статус».
+
+- Ключи называйте как угодно: `status`, `backToList`, `emptyState`. Во всех языках ключи одни и те же.
+- Коды языков — те же, что в `i18n.languages`: `en`, `ru`, `pt-BR`.
+- Язык, которого у сайта нет, игнорируется. Для языка, для которого у фичи нет строк, показывается английский.
+
+### Английский — эталон
+
+Пишите английские строки первыми и полностью. В любом другом языке ключ, которого нет, показывает свой английский текст. Поэтому фича может выйти с неполным переводом, а на странице всё равно будут все тексты.
+
+Ключ, которого нет и в английском, показывается как есть: `t("stauts")` покажет `stauts`. Опечатку легко заметить прямо на странице.
+
+Язык, которого вы не знаете, просто не указывайте в `messages`: сайт покажет английский, а владелец сайта сможет перевести его сам (см. ниже «Как поменять строки фичи»).
+
+## t
+
+`t` есть везде, где описывается страница: его получают компонент, `load`, `title`, `description` и `meta`. Он всегда говорит на языке адреса.
+
+```tsx
+"/:service": page({
+  load: ({ params, t }) => ({ id: params.service, heading: t("status") }),
+  title: ({ t }) => t("status"),
+  component: ({ data, t }) => (
+    <main>
+      <h1>{data.heading}</h1>
+      <p>{t("operational")}</p>
+    </main>
+  ),
+}),
+```
+
+### Подстановки
+
+В строке могут быть подстановки в фигурных скобках. Второй аргумент `t` их заполняет:
+
+```tsx
+messages: {
+  en: { updated: "Updated {time} ago", minutes: "{n} min" },
+  ru: { updated: "Обновлено {time} назад", minutes: "{n} мин" },
+},
+
+// in a component
+t("updated", { time: "5 min" }); // "Updated 5 min ago"
+t("minutes", { n: String(12) }); // "12 min"
+```
+
+- Значения — строки. Числа превращайте в текст через `String(n)` или `n.toLocaleString(lang)`, чтобы получить разделители этого языка.
+- Подстановка без значения остаётся как есть: `t("updated")` покажет `Updated {time} ago`.
+- Имя подстановки — латинские буквы, цифры и `_`.
+- Каждый язык может ставить подстановку туда, где этого требует его грамматика.
+
+Правил множественного числа нет. Если слово меняется вместе с числом, заведите два ключа и выбирайте в коде:
+
+```tsx
+messages: {
+  en: { incidentOne: "{n} incident", incidentMany: "{n} incidents" },
+  ru: { incidentOne: "{n} инцидент", incidentMany: "{n} инцидентов" },
+},
+
+// in a component
+t(count === 1 ? "incidentOne" : "incidentMany", { n: String(count) });
+```
+
+Для языков с большим числом форм `new Intl.PluralRules(lang).select(count)` возвращает `"one"`, `"few"`, `"many"` или `"other"` — это можно сделать частью ключа.
+
+### Типизированные ключи
+
+TypeScript знает ключи из `messages`. Несуществующий ключ — ошибка прямо в редакторе:
+
+```tsx
+defineFeature({
+  id: "status",
+  messages: {
+    en: { status: "Status", beta: "Beta" },
+    ru: { status: "Статус" },
+  },
+  pages: {
+    "/": ({ t }) => (
+      <main>
+        {t("status")}
+        {t("stauts")}
+        {t("beta")}
+      </main>
+    ),
+  },
+});
+// t("stauts"): error, no such key
+// t("beta"): error too, because ru has no "beta"
+```
+
+<Callout type="warn">
+  `t` принимает только те ключи, которые есть **во всех** языках `messages`. Ключ, добавленный только в `en`, будет ошибкой типов, пока его не добавят в остальные языки. Так задумано: TypeScript показывает, что ещё не переведено.
+</Callout>
+
+Где проверяются ключи:
+
+| Где | Ключи проверяются |
+| --- | --- |
+| Страница-компонент: `"/": ({ t }) => …` | Да |
+| Страница-объект: `"/": { component, title }` | Да |
+| Внутри `page({ … })` | Нет, `t` принимает любую строку |
+| Компонент в отдельной функции с `PageProps` | Нет, если не назвать ключи: `PageProps<Data, "status" \| "back">` |
+| `title` и `description` фичи | Да |
+
+## Какая строка побеждает
+
+Один и тот же ключ может прийти из нескольких мест. Для `t` фичи — от самого слабого к самому сильному:
+
+1. Английские строки consify и всех фич сайта.
+2. Строки языка страницы из consify и всех фич.
+3. Строки MDX-плагинов.
+4. **Строки этой фичи**, сначала английские, потом на языке страницы.
+5. Языковой пакет проекта: `custom/locales/<язык>.ts`.
+6. `i18n.messages` в `docs.config.ts`.
+
+Из этого следуют две вещи:
+
+- **Для своего `t` строки фичи сильнее чужих.** Если и у блога, и у вашей фичи есть ключ `title`, ваши страницы покажут ваш текст, а блог — свой. Придумывать уникальные имена ключей не нужно.
+- **Последнее слово всегда за владельцем сайта.** Пакет или `i18n.messages` меняют строку любой фичи, не трогая её код.
+
+## Как поменять строки фичи
+
+Владелец сайта может поменять или перевести любую строку фичи, в том числе фичи из пакета, двумя способами.
+
+### i18n.messages
+
+Для одной-двух строк — в `docs.config.ts`:
+
+```ts title="docs.config.ts"
+i18n: {
+  defaultLanguage: "en",
+  languages: ["en", "ru"],
+  messages: {
+    en: { degraded: "Partial outage" },
+    ru: { degraded: "Частичный сбой" },
+  },
+},
+```
+
+Ключи проверяются: ключ, которого нет ни у consify, ни у одной фичи, останавливает запуск с ошибкой `unknown message "…"`. Опечатка не спрячется.
+
+### Языковой пакет
+
+Для целого языка — файл в `custom/locales/`. `consify locale de` создаёт его со всеми строками consify и фич сайта, готовыми к переводу:
+
+```ts title="custom/locales/de.ts"
+import { defineLocale } from "@consify/core";
+
+export default defineLocale({
+  label: "Deutsch",
+  messages: {
+    status: "Status",
+    operational: "In Betrieb",
+    degraded: "Gestört",
+  },
+});
+```
+
+Добавьте `"de"` в `i18n.languages` — и фича заговорит по-немецки, хотя в её собственных `messages` нет `de`. Подробнее о пакетах — в разделе [Языки](/docs/v0/configuration/languages).
+
+## Заголовок и описание фичи
+
+`title` и `description` фичи (ссылка в шапке, заголовок её страниц, текст в выпадающих меню) записываются тремя способами:
+
+```ts
+// one text for every language
+title: "Status",
+
+// a text per language; a missing language gets the default language's text
+title: { en: "Status", ru: "Статус" },
+
+// from the strings of the feature
+title: ({ t }) => t("status"),
+```
+
+Функция получает `lang` и `t`. Это лучший вариант: текст живёт рядом с остальными строками, и сайт может поменять его через `i18n.messages` или пакет, как любую другую строку.
+
+`title` и `description` страницы — строка или функция от `data`, `lang`, `params` и `t` (см. [Страницы](/docs/v0/features/pages)). Объекта с языками у страницы нет: используйте `t`.
+
+## Язык в адресе
+
+Язык — первый сегмент каждого адреса: `/en/status`, `/ru/status`. В ключе его не пишут. Ядро делает каждую страницу по разу на каждый язык из `i18n.languages` и отвечает 404 на язык, которого у сайта нет.
+
+В ваш код язык приходит как `lang` — в компонент, `load`, `paths`, `title`, `description`, `meta` и функцию файла. Используйте его:
+
+- в ссылках: ``<Link to={`/${lang}/status`}>``,
+- для дат и чисел: `date.toLocaleDateString(lang)`, `new Intl.NumberFormat(lang).format(n)`,
+- чтобы выбрать данные на этом языке: `content` сам читает папку нужного языка.
+
+```tsx
+"/": page({
+  load: ({ lang }) => ({
+    today: new Intl.DateTimeFormat(lang, { dateStyle: "full", timeZone: "UTC" }).format(
+      new Date("2026-09-29"),
+    ),
+  }),
+  component: ({ data }) => <p>{data.today}</p>,
+}),
+// /en/status: "Tuesday, September 29, 2026"
+// /ru/status: "вторник, 29 сентября 2026 г."
+```
+
+### Ссылки на другие языки
+
+Переключатель языка в шапке открывает тот же адрес на другом языке: у каждой страницы фичи на всех языках одинаковый адрес. Для этого ничего делать не нужно.
+
+Чтобы нарисовать ссылки на другие языки самому, возьмите список из `config` в `load`:
+
+```tsx
+"/": page({
+  load: ({ config, lang }) => ({
+    others: config.i18n.languages.filter((code) => code !== lang),
+  }),
+  component: ({ data }) => (
+    <nav>
+      {data.others.map((code) => (
+        <Link key={code} to={`/${code}/status`}>
+          {code}
+        </Link>
+      ))}
+    </nav>
+  ),
+}),
+```
+
+Для поисковиков перечислите переводы в `meta` как `alternates` (см. [Страницы](/docs/v0/features/pages)).
+
+## Строки во вложенных компонентах
+
+Страница получает `t`, а компонент глубоко внутри неё — нет. Строки туда можно доставить двумя способами.
+
+**Передать `t` вниз.** Самый простой способ, и строки фичи сильнее чужих, как и на странице:
+
+```tsx
+import type { Translate } from "@consify/core";
+
+function StateBadge({ state, t }: { state: string; t: Translate }) {
+  return <span className="rounded border border-fd-border px-2 text-xs">{t(state)}</span>;
+}
+
+// in the page: <StateBadge state="degraded" t={t} />
+```
+
+**`useMessages()`** из `@consify/core/ui` берёт язык из адреса и возвращает все строки объектом. Свои ключи назовите в параметре типа:
+
+```tsx
+import { useMessages } from "@consify/core/ui";
+
+function EmptyState() {
+  const strings = useMessages<{ nothing: string }>();
+  return <p className="text-fd-muted-foreground">{strings.nothing}</p>;
+}
+```
+
+<Callout type="warn">
+  `useMessages()` не знает, в какой он фиче, поэтому строки никакой фичи у него не в приоритете. Если у двух фич одинаковый ключ, побеждает фича, которая стоит в `features` позже. Для таких ключей используйте `t` или давайте ключам вложенных компонентов имена, которых нет у других фич.
+</Callout>
+
+`useMessages` возвращает объект, а не функцию: `strings.nothing`, а не `strings("nothing")`. Подстановки он не заполняет — для этого есть `format(text, values)` из `@consify/core`:
+
+```tsx
+import { format } from "@consify/core";
+import { useMessages } from "@consify/core/ui";
+
+function Updated({ time }: { time: string }) {
+  const strings = useMessages<{ updated: string }>();
+  return <p>{format(strings.updated, { time })}</p>;
+}
+```
+
+## Частые ошибки
+
+<Callout type="warn">
+  **Вместо текста на странице `stauts`.** Такого ключа нет. На странице-компоненте об этом скажет TypeScript, внутри `page()` — не сможет.
+</Callout>
+
+<Callout type="warn">
+  **`t("key")` — ошибка типов, хотя ключ есть в `en`.** В каком-то другом языке `messages` этого ключа нет.
+</Callout>
+
+<Callout type="warn">
+  **`t("n", { n: 5 })` — ошибка типов.** Значения — строки: `{ n: String(5) }`.
+</Callout>
+
+<Callout type="warn">
+  **На `/ru/...` текст по-английски.** Ключа нет в `ru` в `messages`, и его не переводит ни пакет, ни `i18n.messages`.
+</Callout>

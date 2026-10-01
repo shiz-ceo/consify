@@ -1,0 +1,71 @@
+---
+title: Слоты
+description: Замените шапку и подвал своими компонентами
+---
+
+Слот — это часть сайта, которую проект может заменить. Всего их три:
+
+| Слот | Файл | Конфигурация | Что это |
+| --- | --- | --- | --- |
+| Шапка | `custom/header.tsx` (экспорт по умолчанию) | `slots.header` | Середина шапки |
+| Правая часть шапки | `custom/header.tsx` (экспорт `End`) | `slots.headerEnd` | Правая сторона шапки, перед элементами управления |
+| Подвал | `custom/footer.tsx` | `slots.footer` | Подвал каждой страницы |
+
+Слоты автоматически находятся в `custom/`. Конфигурация их тоже принимает и имеет приоритет, если есть оба варианта.
+
+<Callout type="info">
+  Шапка и подвал описываются один раз, и их используют все страницы, поэтому в документации, блоге,
+  на главной и в любой [фиче](/docs/v0/features) они одинаковые.
+</Callout>
+
+Главная страница — не слот. Напишите её в `content/<язык>/home.mdx` с `Hero` и `Features` или сделайте [фичей](/docs/v0/features) с `path: ""`, если ей нужен React.
+
+## Шапка
+
+Название сайта слева и элементы управления справа (поиск, язык, тема и кнопка панели у страницы с `layout: "sidebar"`, например у справочника API) есть всегда. Слоты заполняют пространство между ними и правую часть:
+
+```tsx title="custom/header.tsx"
+import type { HeaderSlotProps } from "@consify/core";
+import { Link } from "react-router";
+
+// The middle of the header. `links` are the ones it shows by default.
+export default function Header({ links }: HeaderSlotProps) {
+  return (
+    <>
+      {links.map((link) => (
+        <Link key={link.url} to={link.url} className="text-sm">
+          {link.text}
+        </Link>
+      ))}
+      <a href="https://status.example.dev">Status</a>
+    </>
+  );
+}
+
+// Optional: items on the right, before the controls.
+export function End() {
+  return <a href="https://example.dev/signup">Sign up</a>;
+}
+```
+
+`links` — это ссылки из [`header.links`](/docs/v0/configuration/navigation) (или ссылки по умолчанию). Выпадающее меню — элемент с `items` и необязательным `description`. На телефоне меню сохраняет ссылки по умолчанию, так что навигация никогда не пропадает.
+
+## Подвал
+
+Это один и тот же компонент на каждой странице, поэтому фича (доки, блог, ваша своя) никогда не рисует свой подвал и не выбирает, как он выглядит. Подвал по умолчанию можно переиспользовать:
+
+```tsx title="custom/footer.tsx"
+import type { FooterSlotProps } from "@consify/core";
+import { SiteFooter } from "@consify/core/components";
+
+export default function Footer(props: FooterSlotProps) {
+  return (
+    <>
+      <SiteFooter {...props} />
+      <p>Made in Berlin</p>
+    </>
+  );
+}
+```
+
+Типы пропсов описаны в [справочнике по слотам](/docs/v0/reference/slots).

@@ -1,0 +1,7 @@
+{
+  "name": "docs",
+  "type": "feature",
+  "description": "The documentation section for your consify site: MDX pages with a sidebar, search, versions, translations, llms.txt and social images",
+  "packageName": "@consify/docs",
+  "exportName": "docs"
+}

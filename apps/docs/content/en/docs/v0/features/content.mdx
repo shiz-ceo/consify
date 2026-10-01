@@ -1,0 +1,671 @@
+---
+title: Content and entries
+description: Where the files of a feature live, what an entry is, and how core reads, checks, translates and compiles them for you
+---
+
+A feature can show text that people write: Markdown and MDX files in the `content/` folder of the site. You do not read these files yourself. Core finds them, checks their front matter, picks the right language, compiles the MDX, and gives your page ready data. Your feature only draws it.
+
+This page explains everything about it, from zero. If you want to build something first and read later, go through the [tutorial](/docs/v0/features/tutorial) and come back.
+
+## What core does for you
+
+You write this:
+
+```tsx
+content: { schema: example },
+pages: {
+  "/": page({ load: ({ content }) => content.entries(), component: List }),
+  "/:slug": { entry: true, component: Item },
+},
+```
+
+And core does this:
+
+| Work | Who does it |
+| --- | --- |
+| Finds the files in `content/<language>/<folder>/` | core |
+| Reads the front matter (the YAML block at the top of a file) | core |
+| Checks it with your schema and stops with the file name when it is wrong | core |
+| Leaves out drafts and sorts the rest (`filter`, `sort`) | core, with your functions |
+| Uses the file of the default language when a translation is missing | core |
+| Compiles MDX on the server (code highlighting, headings, math, diagrams) | core |
+| Makes one address per file, answers 404 for an unknown one | core |
+| Fills `<head>`: title, description, canonical, languages, social image | core |
+| Makes the sidebar, the search, `llms.txt`, social images and the feed | core, when you turn them on |
+| Draws the list and the page | **you** |
+
+## Where the files live
+
+The files of a feature are in `content/<language>/<folder>/`. The folder is the `id` of the feature, unless you set `folder`:
+
+<Files>
+  <Folder name="content" defaultOpen>
+    <Folder name="en" defaultOpen>
+      <Folder name="examples" defaultOpen>
+        <File name="cron-schedule.mdx" />
+        <File name="priority-lanes.mdx" />
+        <File name="retry-with-backoff.mdx" />
+      </Folder>
+    </Folder>
+    <Folder name="ru" defaultOpen>
+      <Folder name="examples" defaultOpen>
+        <File name="retry-with-backoff.mdx" />
+      </Folder>
+    </Folder>
+  </Folder>
+  <File name="docs.config.ts" />
+</Files>
+
+```ts
+defineFeature({ id: "examples" });                      // content/<language>/examples/
+defineFeature({ id: "examples", folder: "recipes" });   // content/<language>/recipes/
+defineFeature({ id: "examples", path: "cookbook" });    // address /<language>/cookbook, files still in examples/
+```
+
+- `folder` changes where the files are. `path` changes the address. They are independent.
+- Every language has its own folder with the same tree inside. The default language has a folder too: a site with one language has only `content/en/`.
+- Sub-folders are allowed: `content/en/examples/queues/lanes.mdx`.
+- A file or folder whose name starts with `.` is skipped.
+- Pictures do not go here. Put them in `public/` and write `![Chart](/examples/chart.png)`.
+
+## What an entry is
+
+**One `.md` or `.mdx` file of the folder is one entry.** An entry is the file described as data: where it is, which address it has, in which language it is written, and what its front matter says.
+
+For `content/en/examples/retry-with-backoff.mdx`, the entry in English is:
+
+```ts
+{
+  slug: "retry-with-backoff",
+  url: "/en/examples/retry-with-backoff",
+  path: "retry-with-backoff.mdx",
+  lang: "en",
+  fallback: false,
+  data: {
+    title: "Retry with backoff",
+    description: "Retry a failing job with exponential delays.",
+    level: "beginner",
+    tags: ["retries", "jobs"],
+    date: new Date("2026-08-01"),
+  },
+  readingTime: 1,
+}
+```
+
+| Field | What it is |
+| --- | --- |
+| `slug` | The address of the entry inside the feature. Made from the path, see below |
+| `url` | The full address of its page, with the language: `/en/examples/retry-with-backoff` |
+| `path` | The file, relative to the folder of the feature: `retry-with-backoff.mdx`, `queues/lanes.mdx` |
+| `lang` | The language the file is **written** in. Not always the language of the page, see `fallback` |
+| `fallback` | `true` when this language has no translation and the file of the default language is shown instead |
+| `data` | The front matter, checked by your schema (with its defaults and conversions applied) |
+| `readingTime` | Minutes to read the text: words divided by 200, rounded up, at least 1 |
+
+The type is `Entry<Data>` from `@consify/core`. `Data` is the type of the front matter.
+
+### How the slug is made
+
+The slug is the path without the extension. A file named `index` gives the address of its folder:
+
+| File | `slug` | `url` (feature `examples`) |
+| --- | --- | --- |
+| `retry-with-backoff.mdx` | `retry-with-backoff` | `/en/examples/retry-with-backoff` |
+| `queues/lanes.mdx` | `queues/lanes` | `/en/examples/queues/lanes` |
+| `queues/index.mdx` | `queues` | `/en/examples/queues` |
+| `index.mdx` | `""` (empty) | `/en/examples` |
+
+The slug is never translated. The Russian file has the same name, so its address is `/ru/examples/retry-with-backoff`.
+
+### Files that are not entries
+
+Only `.md` and `.mdx` files are entries. A `meta.json`, a `authors.json` or a `data.yml` in the same folder is not an entry, but you can still read it (see [the low-level API](#the-low-level-api)).
+
+<Callout type="warn">
+Every `.md` and `.mdx` file of the folder is an entry, including one you meant as a piece of another page. If a feature has an entry page, that file gets its own address. Leave it out with `filter` (see below) and read it with `content.mdx()`.
+</Callout>
+
+## Front matter and the schema
+
+The front matter is the YAML block between two `---` lines at the top of a file:
+
+```mdx title="content/en/examples/cron-schedule.mdx"
+---
+title: A job on a schedule
+description: Run a job every night with a cron expression.
+level: beginner
+tags: [cron, jobs]
+date: 2026-08-10
+---
+
+The text of the entry.
+```
+
+Without a schema, `entry.data` is this YAML as a plain object, typed `Record<string, unknown>`, and nobody checks it. A typo like `levle: beginner` goes unnoticed until a page breaks.
+
+With a schema, core checks every file. A schema is a Zod object. `z` is exported by `@consify/core`, so you do not install Zod:
+
+```ts
+import { defineFeature, z } from "@consify/core";
+
+const example = z.object({
+  title: z.string(),
+  description: z.string(),
+  level: z.enum(["beginner", "advanced"]),
+  tags: z.array(z.string()).default([]),
+  date: z.coerce.date(),
+});
+
+type Example = z.output<typeof example>;
+
+export const examples = defineFeature({
+  id: "examples",
+  content: { schema: example },
+});
+```
+
+What the schema gives you:
+
+- **A check.** A file without `description` or with `level: expert` stops the site with the file named.
+- **Defaults.** A file without `tags` gets `tags: []`, so your page never checks for `undefined`.
+- **Conversions.** `z.coerce.date()` turns the text `2026-08-10` into a `Date`, so you can sort by it.
+- **A type.** `z.output<typeof example>` is the type of `entry.data` after the check. Pass it as `Entry<Example>`.
+
+<Callout type="warn">
+YAML reads `date: 2026-08-10` as the text `"2026-08-10"`, not as a date. Use `z.coerce.date()`, not `z.date()`: the second one rejects every file.
+</Callout>
+
+### What a wrong file looks like
+
+Say `cron-schedule.mdx` has `level: expert` and no `description`. Core collects every problem of every file and stops with one message:
+
+```text
+Invalid content of "examples":
+  - content/en/examples/cron-schedule.mdx: description: Invalid input: expected string, received undefined
+  - content/en/examples/cron-schedule.mdx: level: Invalid option: expected one of "beginner"|"advanced"
+```
+
+Each line is `file: field: problem`. Broken YAML (a missing quote, a bad indent) is reported the same way, with `front matter` instead of a field.
+
+You see this message:
+
+- in `consify dev`, on the page that reads the entries;
+- in `consify check`, before any build;
+- in `consify build`, which fails.
+
+<Callout type="warn">
+The schema checks the translations too. If `content/ru/examples/cron-schedule.mdx` has `level: продвинутый`, the error names that file. Values that code compares (`level`, `tags`, `date`) must stay the same in every language; only the text is translated.
+</Callout>
+
+### Front matter keys core reads itself
+
+Your schema can have any fields. A few names mean something to core:
+
+| Key | Used by |
+| --- | --- |
+| `title` | `<title>` of the entry page, the sidebar, the search, `llms.txt`, the social image, the feed |
+| `description` | `<meta name="description">`, the search, `llms.txt`, the social image, the feed |
+| `date` | `<pubDate>` in the feed |
+| `categories`, `tags` | `<category>` in the feed |
+| `icon` | A [Lucide](https://lucide.dev/icons) icon in the sidebar (`icon: Rocket`) |
+| `full` | Kept in the sidebar data; the docs use `full: true` for a wide page without a table of contents |
+
+An entry without `title` is named after its file (`cron-schedule`) in the sidebar and its slug in the feed.
+
+## Leaving entries out: filter
+
+`filter` gets every checked entry and returns `false` for the ones that must not exist:
+
+```ts
+content: {
+  schema: example,
+  filter: (entry: Entry<Example>) => !entry.data.draft,
+},
+```
+
+A filtered entry is gone everywhere: `content.entries()` does not return it, its page answers 404, and it is not in the sidebar, the search, `llms.txt`, the feed, the social images or the sitemap.
+
+The blog uses it for drafts and posts dated in the future:
+
+```ts
+filter: (entry: Entry<PostFrontmatter>) =>
+  process.env.CONSIFY_DRAFTS === "1" || isPublished(entry.data),
+```
+
+<Callout type="warn">
+The filter runs after the schema, so `entry.data` is already checked and converted. But a file that fails the schema stops the site even if the filter would drop it: a draft must still be valid.
+</Callout>
+
+## The order: sort
+
+Without `sort`, entries come in the order of their paths (alphabetical). `sort` is a normal compare function:
+
+```ts
+content: {
+  schema: example,
+  // newest first
+  sort: (a: Entry<Example>, b: Entry<Example>) => b.data.date.getTime() - a.data.date.getTime(),
+},
+```
+
+The order is used by `content.entries()` and by the feed. The sidebar has its own order, from `meta.json` (see [the sidebar](/docs/v0/features/content-services)).
+
+<Callout type="info">
+Inside `content`, `entry.data` is typed `any` unless you write the type of the parameter. Write `(a: Entry<Example>, b: Entry<Example>)`, as above: then a typo in `b.data.dtae` is a type error.
+</Callout>
+
+## Listing entries: content.entries()
+
+`load` of any page of the feature gets `content`. `content.entries()` returns every entry **in the language of the page**: checked, filtered and sorted.
+
+```tsx
+import { defineFeature, type Entry, type PageProps, page } from "@consify/core";
+
+function ExampleList({ data }: PageProps<Entry<Example>[]>) {
+  return (
+    <ul>
+      {data.map((entry) => (
+        <li key={entry.slug}>
+          <a href={entry.url}>{entry.data.title}</a> · {entry.readingTime} min
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export const examples = defineFeature({
+  id: "examples",
+  content: { schema: example },
+  pages: {
+    "/": page({
+      load: ({ content }) => content.entries<Example>(),
+      component: ExampleList,
+    }),
+  },
+});
+```
+
+- `load` runs on the server. What it returns is `data` of the component (see [Loading data](/docs/v0/features/data)).
+- `page()` does nothing at run time. It only connects the type of `load` to the type of `data`.
+- `entries<Example>()` tells TypeScript the type of `data`. It does not check anything: the schema does.
+- On `/ru/examples` the list has every Russian file, plus the English files that have no Russian version, with `fallback: true`. See [Translations](#translations).
+
+`load` can do anything with the list before returning it:
+
+```ts
+load: async ({ content }) => {
+  const all = await content.entries<Example>();
+  return {
+    beginner: all.filter((entry) => entry.data.level === "beginner"),
+    advanced: all.filter((entry) => entry.data.level === "advanced"),
+    total: all.length,
+  };
+},
+```
+
+<Callout type="warn">
+Return only what the page needs. `data` is sent to the browser inside the HTML. An entry is small (no text, only front matter), so a list of hundreds is fine; the compiled text of every entry is not.
+</Callout>
+
+## A page for every entry: entry: true
+
+A page with `entry: true` is the page of one entry. Its address names the entry:
+
+```tsx
+pages: {
+  "/": page({ load: ({ content }) => content.entries<Example>(), component: ExampleList }),
+  "/:slug": { entry: true, component: ExamplePage },
+},
+```
+
+Now `/en/examples/cron-schedule` shows `cron-schedule.mdx`. You write no `load`, no `paths`, no 404 check.
+
+### "/:slug" or "/*"
+
+| Address | Takes | Use it when |
+| --- | --- | --- |
+| `"/:slug"` | one segment: `cron-schedule` | all files are directly in the folder, and there is no `index.mdx` |
+| `"/*"` | any number of segments, or none: `queues/lanes`, `""` | there are sub-folders, or an `index.mdx` (the docs use it) |
+
+Core takes the slug from `*` when the address has it, else from the first parameter, whatever its name.
+
+<Callout type="warn">
+`"/:slug"` cannot hold `queues/lanes` or the empty slug of `index.mdx`. With such files the build fails or the links lead to 404. Use `"/*"` as soon as the folder has sub-folders or an `index.mdx`. And with `"/*"`, do not also define a `"/"` page: `index.mdx` is that page.
+</Callout>
+
+### What core does for an entry page
+
+1. **Addresses.** It lists one address per entry and language, so a static site pre-renders them all and they go into the sitemap. You do not write `paths`. (If you do, your `paths` wins.)
+2. **Finding the entry.** On a request it reads the slug from the address and calls `content.entry(slug)`.
+3. **404.** No entry with that slug (or a filtered one) answers with the 404 page of the site.
+4. **`<head>`.** `title` and `description` from the front matter, the canonical address, `hreflang` links to the translations that exist, and the social image when `og` is on.
+5. **An untranslated copy.** When the entry is shown in the default language (`fallback: true`), the canonical address is the original one, `<html lang>` is the language of the text, and the address is left out of the sitemap, so search engines do not see a duplicate.
+6. **`data`.** The component gets the entry with its compiled text as `data`.
+
+### What data is: EntryPage
+
+`data` of an entry page is an `EntryPage<Data>`: every field of the entry, plus:
+
+| Field | What it is |
+| --- | --- |
+| `code` | The compiled text, for `<Mdx code={data.code} />` |
+| `toc` | The headings: `{ title, url, depth }[]`, for a table of contents |
+| `alternates` | Language → address of this entry in that language, for the translations that exist |
+| `original` | The address of this entry in the default language |
+| `tree` | The sidebar, only when `content.tree` is on (see [the sidebar](/docs/v0/features/content-services)) |
+
+```tsx
+import { type EntryPage, Mdx, type PageProps } from "@consify/core";
+
+function ExamplePage({ data }: PageProps<EntryPage<Example>>) {
+  return (
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
+      <h1 className="text-3xl font-semibold">{data.data.title}</h1>
+      <p>{data.readingTime} min</p>
+      <Mdx code={data.code} className="prose mt-8" />
+    </main>
+  );
+}
+```
+
+`data.data` is not a typo: `data` is what the page got, and `data.data` is the front matter of the entry.
+
+### Changing the head of an entry page
+
+`meta` of the page is merged over what core made, key by key. Keys you do not return stay. The blog adds tags and keeps the title, description and image of the entry:
+
+```ts
+"/:slug": page({
+  entry: true,
+  load: (context) => postData(context, options),
+  meta: ({ data }) => ({
+    head: [
+      { property: "og:type", content: "article" },
+      { property: "article:published_time", content: data.post.date },
+    ],
+  }),
+  component: PostPage,
+}),
+```
+
+`title` of the page is used only for an entry without a `title` in its front matter. To change the title of every entry page, return `title` from `meta`.
+
+## Showing the text: Mdx
+
+`<Mdx>` from `@consify/core` runs the compiled text in the page:
+
+```tsx
+<Mdx code={data.code} />
+```
+
+| Prop | Default | What it does |
+| --- | --- | --- |
+| `code` | | `code` of an `EntryPage` or of `content.mdx()` |
+| `components` | | Components for this text only, added to the ones of the site, or replacing them |
+| `className` | `"prose"` | Classes of the wrapping `div`. `prose` is the typography of the site. Pass `""` when a parent already styles the text |
+
+Every MDX component of the site works in the text without an import: the built-in ones (`Callout`, `Tabs`, `Steps`…), `mdx.components` of the config, `custom/components/`, and the `components` of every feature.
+
+Replace a tag for one feature only, for example to open outside links in a new tab:
+
+```tsx
+import type { ComponentProps } from "react";
+
+function OutsideLink(props: ComponentProps<"a">) {
+  const outside = props.href?.startsWith("http");
+  return <a {...props} {...(outside ? { target: "_blank", rel: "noreferrer" } : {})} />;
+}
+
+<Mdx code={data.code} components={{ a: OutsideLink }} />
+```
+
+### How the text is compiled
+
+MDX is compiled on the server, with the same pipeline as the docs of the site. The browser only runs the result; it never downloads a compiler. The pipeline:
+
+- GitHub Markdown: tables, task lists, `~~strike~~`, autolinks;
+- ids for headings (this is where `toc` comes from);
+- images from `public/` with their sizes read;
+- code tabs, package manager tabs (`npm` → `pnpm`, `yarn`, `bun`);
+- data for the search (headings and paragraphs);
+- Mermaid diagrams, math when `mdx.math` is on;
+- code highlighting, with Twoslash when `mdx.twoslash` is on;
+- then the plugins of `mdx.plugins`.
+
+A `.md` file is compiled as plain Markdown: no JSX, no components, `<` is just a character. A `.mdx` file allows components.
+
+<Callout type="warn">
+`code` is JavaScript that the browser runs. It is safe because it is compiled from the files of your own `content/`. Never build `code` from text a visitor typed.
+</Callout>
+
+### A table of contents from toc
+
+```tsx
+<nav>
+  {data.toc.map((item) => (
+    <a key={item.url} href={item.url} style={{ paddingLeft: (item.depth - 2) * 12 }}>
+      {item.title}
+    </a>
+  ))}
+</nav>
+```
+
+`url` is `#the-heading-id`, `depth` is 2 for `##`, 3 for `###`.
+
+## An entry page that loads more: load with entry
+
+Sometimes the page of an entry needs more than the entry: related entries, authors, a link to the next one. Add `load`. On an entry page, `load` gets the entry as `entry`, and **what `load` returns becomes `data`** instead of the entry:
+
+```tsx
+"/:slug": page({
+  entry: true,
+  load: async ({ entry, content }) => {
+    const current = entry as EntryPage<Example>;
+    const all = await content.entries<Example>();
+    const related = all
+      .filter((other) => other.slug !== current.slug)
+      .filter((other) => other.data.tags.some((tag) => current.data.tags.includes(tag)))
+      .slice(0, 3);
+    return { ...current, related };
+  },
+  component: ExamplePage,
+}),
+```
+
+- `...current` keeps `code`, `toc`, `data` and the rest; without it the component would get only `related`.
+- `entry` is typed as optional because `load` of every page has the same context. On a page with `entry: true` it is always there: core answers 404 before `load` when there is no entry.
+- `<head>` is still made from the entry, not from what `load` returns.
+
+The blog does the same to show "Keep reading" under a post:
+
+```ts
+async function postData(context: LoadContext, options: BlogOptions) {
+  const { content, config, lang, url } = context;
+  const entry = context.entry as EntryPage<PostFrontmatter>;
+  const post = toPost(entry);
+  return {
+    ...entry,
+    post,
+    related: relatedPosts(post, (await content.entries<PostFrontmatter>()).map(toPost)),
+    share: options.share ? url(entry.url) : undefined,
+  };
+}
+```
+
+## Translations
+
+A translation is a file with **the same path** in the folder of another language: `content/ru/examples/retry-with-backoff.mdx`. Nothing else: no ids, no links between files.
+
+When a language has no file for an entry, core uses the file of the default language. `i18n.fallback` in `docs.config.ts` decides how:
+
+| | `notice` (default) | `show` | `hide` |
+| --- | --- | --- | --- |
+| In `content.entries()` of `ru` | yes, `fallback: true`, `lang: "en"` | yes, `fallback: false`, `lang: "en"` | no |
+| Page `/ru/examples/cron-schedule` | English text | English text | 404 |
+| Canonical address | `/en/examples/cron-schedule` | its own | |
+| `<html lang>` | `en` | `ru` | |
+| In the sitemap | no | yes | no |
+| `hreflang` links | the languages that have the file | every language | |
+| Sidebar | the page, with an `EN` mark | the page | no page |
+| Feed, search, `llms.txt` | yes | yes | no |
+
+With `notice`, core marks the entry, and **your page draws the note**. Core does not add text to your component. Use `entry.fallback`:
+
+```tsx
+// in a list
+{entry.fallback ? <span>{t("english")}</span> : null}
+```
+
+and on the page of the entry, the note of the site with a link to the original:
+
+```tsx
+import { FallbackNotice } from "@consify/core";
+
+{data.fallback ? <FallbackNotice original={data.original} /> : null}
+```
+
+`FallbackNotice` says "This page has not been translated yet. The English version is shown." in the language of the page, with a link to `original`. `className` adds classes to it: the demo passes `"mt-6"`.
+
+<Callout type="info">
+`FallbackNotice` is loaded the first time it is drawn, so a feature file can import it from `@consify/core` next to `defineFeature`, and Node still loads the file with `docs.config.ts`. `@consify/core/ui` exports it too, for page files that already import the layout parts from there.
+</Callout>
+
+`entry.lang` is the language of the file, `lang` of the page is the language of the address. On `/ru/examples` an untranslated entry has `lang: "en"`, so `entry.lang !== lang` also tells you it is not translated, in every `fallback` mode.
+
+`consify check` compares each translation with its original: the same code blocks, the same internal links, the same number of headings. `consify check --strict` also fails on a missing translation.
+
+## The low-level API
+
+`content.entries()` and entry pages cover most features. For everything else, `content` has lower-level methods. All of them work in the language of the page, fall back to the default language like entries do, and take paths relative to the folder of the feature:
+
+| Method | Returns |
+| --- | --- |
+| `list(dir?)` | Every file under `dir` (the whole folder by default), as `ContentFile[]`, sorted by path |
+| `read(path)` | The text of a file, `undefined` when there is none |
+| `json(path)` | A JSON file, parsed. `json<T>()` sets its type (not checked) |
+| `frontmatter(path)` | The front matter of an MDX file, without compiling it |
+| `mdx(path)` | An MDX file compiled for `<Mdx>`: `MdxFile` |
+| `in(lang)` | The same `content` in another language |
+| `entries()` | The entries (above) |
+| `entry(slug)` | One entry with its text (`EntryPage`), `undefined` when there is none |
+| `root` | The folder, for messages: `/site/content/en/examples` |
+
+A `ContentFile` is `{ path, slug, lang, fallback }`. Here `fallback` is `true` for any file taken from the default language, whatever `i18n.fallback` says. `Entry.fallback` is `false` in `show` mode; `ContentFile.fallback` is not.
+
+A path that leaves the folder (`../docs/secret.mdx`, `/etc/passwd`) throws `content: "../docs/secret.mdx" is outside of the content folder`.
+
+### Reading a JSON file
+
+Data that people edit next to the entries, translated like them:
+
+```json title="content/en/examples/levels.json"
+{
+  "beginner": { "label": "Beginner", "color": "green" },
+  "advanced": { "label": "Advanced", "color": "orange" }
+}
+```
+
+```ts
+"/": page({
+  load: async ({ content }) => ({
+    entries: await content.entries<Example>(),
+    levels: (await content.json<Record<string, { label: string; color: string }>>("levels.json")) ?? {},
+  }),
+  component: ExampleList,
+}),
+```
+
+On `/ru/examples`, `content/ru/examples/levels.json` is read when it exists, else the English one. `?? {}` covers a missing file.
+
+### Listing files of a sub-folder
+
+```ts
+load: async ({ content }) => {
+  const files = await content.list("snippets");
+  // [{ path: "snippets/cron.ts", slug: "snippets/cron", lang: "en", fallback: false }, ...]
+  return Promise.all(
+    files.map(async (file) => ({ name: file.path, code: (await content.read(file.path)) ?? "" })),
+  );
+},
+```
+
+### Front matter without compiling
+
+Compiling is the slow part. When you only need a few fields of one file, read its front matter:
+
+```ts
+const header = await content.frontmatter<{ title: string }>("cron-schedule.mdx");
+```
+
+It is not checked by the schema: it is the raw YAML.
+
+### A piece of text that is not an entry
+
+An introduction above the list, written in MDX and translated like everything else. Keep it out of the entries with `filter`, then compile it with `mdx()`:
+
+```tsx
+content: {
+  schema: example,
+  filter: (entry) => entry.path !== "_intro.mdx",
+},
+pages: {
+  "/": page({
+    load: async ({ content }) => ({
+      intro: await content.mdx("_intro.mdx"),
+      entries: await content.entries<Example>(),
+    }),
+    component: ({ data }) => (
+      <main>
+        {data.intro ? <Mdx code={data.intro.code} /> : null}
+        {/* the list */}
+      </main>
+    ),
+  }),
+},
+```
+
+The schema still checks `_intro.mdx` (it runs before the filter), so its front matter must fit it, or make the fields optional.
+
+`mdx()` returns an `MdxFile`: the fields of `ContentFile`, plus `frontmatter`, `code`, `toc`, `text` (the Markdown without the front matter), `languages` (every language the file exists in) and `structuredData` (for a search index).
+
+### Another language: in()
+
+`content` is always in the language of the page. `in()` switches it:
+
+```ts
+load: async ({ content, config }) => {
+  const own = await content.entries<Example>();
+  const original = await content.in(config.i18n.defaultLanguage).entries<Example>();
+  return { translated: own.filter((entry) => !entry.fallback).length, total: original.length };
+},
+```
+
+## What is cached
+
+| Where | What happens |
+| --- | --- |
+| `consify dev` | Nothing is kept. Every request reads the files again, and saving, adding or deleting a file in `content/` reloads the open page. The compiled text is kept per file text, so an unchanged file is not compiled twice |
+| A built server (`consify start`) | Entries, the sidebar and the search index are read once and kept while the server runs. To change content, build again |
+| A static site | Every page is rendered at build time. There is nothing to cache later |
+
+## The built server carries its content
+
+`consify build` puts the files of `content/` into the server bundle. The built server reads them from there, so you deploy only the build: no `content/` folder next to it. The files taken are `.md`, `.mdx`, `.json`, `.yml`, `.yaml` and `.txt`.
+
+<Callout type="warn">
+`readFile` of `load` reads a file of the project from the disk, not from the bundle. Use it only for files that exist where the server runs (it is what `apiReference()` does for its schema), and `content.read()` / `content.json()` for files of `content/`. A `.csv` or a picture in `content/` is not in the bundle: put pictures in `public/`, and convert data to JSON.
+</Callout>
+
+## Common mistakes
+
+| What you see | Why | Fix |
+| --- | --- | --- |
+| `Invalid content of "examples"` | A file does not fit the schema | Fix the file named in the message, or relax the schema (`.optional()`, `.default()`) |
+| Every file fails on `date` | `z.date()` gets text from YAML | `z.coerce.date()` |
+| The list is empty | The folder is not `content/<language>/<id>/`, or `folder` is wrong | Check the path; `content.root` shows where core looks |
+| A link to an entry leads to 404 | `"/:slug"` with a sub-folder or `index.mdx` | `"/*"` |
+| A page shows only extra fields, no text | `load` of an entry page did not keep the entry | `return { ...entry, more }` |
+| An error about `consify:instance` when the site starts | A feature file imports `@consify/core/ui` (`docsLayoutOptions`, `Footer`) | Move the page to its own file and load it with `lazy()` |
+| A new file does not appear on the built site | Content is taken at build time | Build again |
+
+Next: [the sidebar, search, `llms.txt`, images and RSS](/docs/v0/features/content-services) of your content, and a [step-by-step tutorial](/docs/v0/features/tutorial).

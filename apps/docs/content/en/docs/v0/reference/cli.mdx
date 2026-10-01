@@ -1,0 +1,47 @@
+---
+title: CLI
+description: The consify command
+---
+
+```bash
+consify <command> [options]
+```
+
+| Command | What it does |
+| --- | --- |
+| `dev` | Development server with hot reload. Default port 5173 |
+| `build` | Production build into `build/` |
+| `start [--socket <path>]` | Serves `build/server/index.js` (needs `deploy.mode: "server"`). Reads `PORT` (and `HOST`); `--socket <path>` (or `SOCKET_PATH`) binds a Unix socket instead — see [Deployment](/docs/v0/deployment) |
+| `typegen` | Generates the route types. Used before `tsc` |
+| `links [language]` | Prints the catalog of links (id, title, address) and marks the ones the header shows by default. The [ids](/docs/v0/configuration/navigation) go in `header.links` and `footer.columns` |
+| `locale <language>` | Writes `custom/locales/<language>.ts`, a language pack with every string to translate. `--force` replaces an existing file |
+| `lang add <language> [--copy]` | Prepares a new language: creates `content/<language>/` with a copy of every `meta.json` of the default language and writes `custom/locales/<language>.ts` (unless the language is built in or has a pack). `--copy` also copies every page (docs, blog, home). Never overwrites a file; refuses the default language and a bad code |
+| `lang status [language] [--missing]` | One row per language: translated pages per section, translated menus and interface strings. Lists files without an original. `--missing` lists the files a language lacks. See [Languages and versions](/docs/v0/writing/translations-and-versions) |
+| `deploy [target]` | Writes the files a hosting target needs (a workflow, a config file, a Dockerfile, an nginx fragment...). No target, in a real terminal: asks instead. `deploy list` shows every target; `deploy check` looks for obvious problems in the current config (a missing `site.url`, a target that does not match `deploy.mode`). An existing file is only replaced with `--force`. `docker`/`nginx --ci` also write a GitHub Actions workflow that checks, builds and deploys on push over SSH. See [Deployment](/docs/v0/deployment) |
+| `doctor` | Checks the Node version, that every installed `@consify/*` package is the same version, and that `docs.config.ts` is valid |
+| `docs check` | Checks the content: translations, `meta.json`, front matter. `--languages en,ru`, `--strict` (a missing translation is an error, otherwise a warning) |
+| `skill sync` / `skill list` | Collects the skill of every enabled feature (plus consify's own) into `.claude/skills/`, for Claude Code. `list` only shows what would sync. An existing folder `sync` did not put there needs `--force`. See [Skills for Claude](/docs/v0/customizing/skills) |
+| `add <specifier>` | Installs a component, plugin, feature, skill or theme snippet from a registry — `@namespace/name`, a bare name (your default registry), or a full URL. An existing file needs `--force` to overwrite. See [Registry](/docs/v0/customizing/registry) |
+| `remove <specifier>` | Uninstalls something `consify add` installed. Refuses if another installed item depends on it, or if a file was locally modified, unless `--force` |
+| `list` (alias: `registry list`) | Lists what `consify add` has installed, and flags anything modified or missing since install |
+| `registry add-source <namespace> <url> [--header "Name: value"] [--default]` | Configures a private or third-party registry. `--header` may repeat; a value may reference `${ENV_VAR}`. `--default` makes it the one a bare name resolves against |
+| `registry remove-source <namespace>` | Forgets a configured registry. Items already installed from it are untouched |
+| `registry list-sources` | Lists the configured registries (never prints a resolved header value) |
+| `--version`, `-v` | Prints the version of every installed `@consify/*` package |
+
+Options after the command go to the tool that runs it: `consify dev --port 3000 --host`.
+
+The command runs the React Router CLI that comes with consify, so your project does not depend on `@react-router/dev`.
+
+## Scripts
+
+```json title="package.json"
+{
+  "scripts": {
+    "dev": "consify dev",
+    "build": "consify build",
+    "start": "consify start",
+    "typecheck": "consify typegen && tsc --noEmit"
+  }
+}
+```

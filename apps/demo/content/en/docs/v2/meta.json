@@ -1,0 +1,20 @@
+{
+  "title": "v2 (latest)",
+  "root": "version",
+  "pages": [
+    "index",
+    "installation",
+    "quickstart",
+    "---Learn---",
+    "concepts",
+    "guides",
+    "---Reference---",
+    "api",
+    "---Writing docs---",
+    "writing",
+    "---More---",
+    "deployment",
+    "migration",
+    "changelog"
+  ]
+}

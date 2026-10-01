@@ -1,0 +1,5 @@
+{
+  "title": "Блог",
+  "icon": "Newspaper",
+  "pages": ["index", "writing-posts", "components", "drafts-and-scheduling", "feed-and-seo"]
+}

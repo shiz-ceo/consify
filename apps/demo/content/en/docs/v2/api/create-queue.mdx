@@ -1,0 +1,25 @@
+---
+title: createQueue
+description: Create a typed queue
+---
+
+```ts
+function createQueue<Data>(name: string): Queue<Data>;
+```
+
+<TypeTable
+  type={{
+    name: { description: "Queue name. Producers and workers use the same name to meet.", type: "string", required: true },
+  }}
+/>
+
+## Example
+
+```ts twoslash
+import { createQueue } from "lattice";
+
+const q = createQueue<{ n: number }>("numbers");
+//    ^?
+```
+
+Returns a [`Queue`](./queue.mdx).

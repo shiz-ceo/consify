@@ -1,0 +1,54 @@
+---
+title: Consify
+description: A documentation site foundation you configure instead of maintain.
+---
+
+<Hero
+  title="Documentation you configure, not maintain"
+  description="Consify is a foundation for documentation sites. Your project is a config file and your pages. The core is a package that you update with one command."
+  actions={[
+    { label: "Get started", href: "/docs/v0/getting-started" },
+    { label: "How it works", href: "/docs/v0/concepts", variant: "secondary" },
+  ]}
+/>
+
+<Features
+  items={[
+    { icon: "FileCog", title: "Only config", description: "docs.config.ts, your content and a few lines of glue. No forked layout to keep in sync.", href: "/docs/v0/concepts" },
+    { icon: "Languages", title: "Languages and versions", description: "Translate page by page with a fallback and keep several versions side by side.", href: "/docs/v0/writing/translations-and-versions" },
+    { icon: "Newspaper", title: "A blog next to the docs", description: "One line in features: categories, search, RSS, social images and drafts that never reach the browser.", href: "/docs/v0/blog" },
+    { icon: "Palette", title: "Yours to change", description: "Tokens for the look, plugins for the Markdown, a file per section of your own, your header and footer.", href: "/docs/v0/customizing" },
+    { icon: "Server", title: "Server or static", description: "Run it on Node or export plain files for any static host.", href: "/docs/v0/deployment" },
+    { icon: "Sparkles", title: "Types where it matters", description: "Type-checked code blocks with hovers, and a validated config with clear errors.", href: "/docs/v0/writing/code-blocks" },
+  ]}
+/>
+
+## A project in three files
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { docs } from "@consify/docs";
+
+export default defineConfig({
+  site: { name: "My project", github: { repo: "me/my-project" } },
+  i18n: { languages: ["en", "ru"] },
+  features: [docs()],
+});
+```
+
+```ts title="vite.config.ts"
+import { consify } from "@consify/core/vite";
+import { defineConfig } from "vite";
+import config from "./docs.config.ts";
+
+export default defineConfig({ plugins: [consify(config)] });
+```
+
+```ts title="react-router.config.ts"
+import { defineRouterConfig } from "@consify/core/react-router";
+import config from "./docs.config.ts";
+
+export default defineRouterConfig(config);
+```
+
+Then write pages in `content/en/docs/`, run `bun run dev`, and you have a site. Read [How it works](/docs/v0/concepts) to see what happens in between, or [how consify was made](/blog/how-consify-was-made) to see why it looks like this.

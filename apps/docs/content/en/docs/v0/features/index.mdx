@@ -1,0 +1,265 @@
+---
+title: Features
+description: Sections of the site made with one function, defineFeature
+---
+
+A feature is a section of the site: a group of pages, files and strings that lives under one address. The documentation, the blog and the API reference are features. You can write your own with one function, `defineFeature`, in one file.
+
+A feature is the right tool when you need pages that are not MDX files: a status page, a changelog built from an API, a gallery, a pricing table, a playground. For a single block inside an MDX page, a [component](/docs/v0/customizing/custom-components) is enough.
+
+## The smallest feature
+
+This is a whole feature. It has one page.
+
+```tsx title="custom/features/hello.tsx"
+import { defineFeature } from "@consify/core";
+
+export const hello = defineFeature({
+  id: "hello",
+  title: "Hello",
+  pages: {
+    "/": () => <main className="mx-auto w-full max-w-2xl px-4 py-12">Hello, world</main>,
+  },
+});
+```
+
+What each line does:
+
+- `id: "hello"` names the feature. It also becomes its address (`/en/hello`), the id of its link and the name of its content folder.
+- `title: "Hello"` is the text of its link in the header and the title of its pages.
+- `pages` lists the pages. The key `"/"` is the front page of the feature. The value is a React component.
+
+## Connect it
+
+A feature does nothing until the site lists it. Import it in `docs.config.ts` and add it to `features`:
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { docs } from "@consify/docs";
+import { hello } from "./custom/features/hello.tsx";
+
+export default defineConfig({
+  site: { name: "Acme" },
+  i18n: { defaultLanguage: "en", languages: ["en", "ru"] },
+  features: [docs(), hello],
+});
+```
+
+Run `consify dev` and open `/en/hello`. The same page exists at `/ru/hello`, because the site has two languages. The header now has a link "Hello", and the browser tab says `Hello | Acme`.
+
+The order in `features` is the order of the links in the header (when the site does not choose its links itself, see "The link in the header" below).
+
+## Where the file goes
+
+Put each feature in its own file in `custom/features/`:
+
+<Files>
+  <Folder name="custom" defaultOpen>
+    <Folder name="features" defaultOpen>
+      <File name="hello.tsx" />
+      <File name="status.tsx" />
+    </Folder>
+  </Folder>
+  <File name="docs.config.ts" />
+</Files>
+
+- Use `.tsx`: pages are JSX.
+- One file is enough for a feature. When it grows, move parts (components, data) into other files next to it and import them as usual. Only the file that `docs.config.ts` imports has to export the feature.
+- The name of the file does not matter to consify. The `id` does.
+
+A feature you want to reuse in several projects, or publish, is a package. See [Feature packages](/docs/v0/features/packages).
+
+## What you write, what core does
+
+You describe what the section has. Core does the rest.
+
+| You write | Core does for you |
+| --- | --- |
+| `id: "hello"` | The address `/{lang}/hello` in every language of the site, the link id `hello`, the content folder `content/<language>/hello/` |
+| A page `"/"` | A route for every language. An address with a language the site does not have (`/xx/hello`) answers 404 |
+| A page `"/:service"` with `paths` | The addresses it lists are rendered at build time in every language and listed in `sitemap.xml` |
+| `title` | A link in the header, and the `<title>` of every page: `Hello \| Acme` |
+| Nothing | The header and the footer of the site around every page. The `<head>`: title, description, canonical address, Open Graph tags |
+| `messages` | `t("key")` in the language of the page, English when a string is not translated, and a way for the site to change any string |
+| `load` | Runs it on the server and gives its result to the page as `data` |
+| `files` | An address that answers with JSON, text or bytes, with the content type from its extension |
+| `content` | Reads, checks, translates and compiles MDX files, and adds a search, `llms.txt`, social images and a feed |
+
+`consify check` lists every address of every feature too: a `paths` function that throws or a wrong front matter is reported there, before a build.
+
+## How a request reaches your page
+
+<Steps>
+<Step>
+
+### Build
+
+consify reads `features` and makes a route for every page and every file: the key `"/:service"` of the feature `status` becomes the route `:lang/status/:service`.
+
+</Step>
+<Step>
+
+### Request
+
+A reader opens `/ru/status/api`. Core checks that `ru` is a language of the site (404 if not) and finds the page `"/:service"` with `params.service = "api"`.
+
+</Step>
+<Step>
+
+### Load
+
+If the page has `load`, it runs on the server. Its result becomes `data`. It can also answer 404 or redirect.
+
+</Step>
+<Step>
+
+### Render
+
+Core fills the `<head>` (title, description, links), draws the header and the footer, and puts your component between them with `data`, `lang`, `params` and `t`.
+
+</Step>
+</Steps>
+
+On a static site, steps 2 to 4 happen at build time, once for every address. See [Loading data](/docs/v0/features/data).
+
+## What a feature can have
+
+Every field except `id` is optional.
+
+| Field | What it is | Read more |
+| --- | --- | --- |
+| `id` | The name: lowercase letters, digits and `-`, starting with a letter | This page |
+| `path` | Another address than `id`; `""` is the front page of the site | [Pages](/docs/v0/features/pages) |
+| `folder` | Another content folder than `id` | [Content](/docs/v0/features/content) |
+| `title` | The link in the header and the title of the pages | [Strings](/docs/v0/features/strings) |
+| `description` | A few words for drop-down menus | [Strings](/docs/v0/features/strings) |
+| `messages` | Strings per language, for `t` | [Strings](/docs/v0/features/strings) |
+| `pages` | Pages by address | [Pages](/docs/v0/features/pages) |
+| `files` | Files by address: JSON, text, images | [Files](/docs/v0/features/files) |
+| `content` | MDX files the feature shows | [Content](/docs/v0/features/content) |
+| `links` | More places to link to than the front page | [Reference](/docs/v0/features/reference) |
+| `components` | MDX components for every `.mdx` of the site | [Reference](/docs/v0/features/reference) |
+| `search` | A search of its own | [Reference](/docs/v0/features/reference) |
+
+## A real feature
+
+Here is a complete feature from the demo site: a list of services, a page per service and a JSON file, in two languages. Every part of it is explained in the next pages.
+
+```tsx title="custom/features/status.tsx"
+import { defineFeature, page } from "@consify/core";
+import { Link } from "react-router";
+
+// A real site would read these from an API or a file of `content/`.
+const services = [
+  { id: "scheduler", name: "Scheduler", state: "operational" },
+  { id: "workers", name: "Workers", state: "operational" },
+  { id: "dashboard", name: "Dashboard", state: "degraded" },
+] as const;
+
+export const status = defineFeature({
+  id: "status",
+  title: ({ t }) => t("status"),
+  description: ({ t }) => t("hint"),
+  messages: {
+    en: {
+      status: "Status",
+      hint: "Live state of the services",
+      operational: "Operational",
+      degraded: "Degraded",
+      back: "All services",
+    },
+    ru: {
+      status: "Статус",
+      hint: "Состояние сервисов сейчас",
+      operational: "Работает",
+      degraded: "Сбои",
+      back: "Все сервисы",
+    },
+  },
+  pages: {
+    // /en/status: the list
+    "/": ({ lang, t }) => (
+      <main className="mx-auto w-full max-w-2xl px-4 py-12">
+        <h1 className="mb-8 text-3xl font-semibold">{t("status")}</h1>
+        <ul>
+          {services.map((service) => (
+            <li key={service.id}>
+              <Link to={`/${lang}/status/${service.id}`}>
+                {service.name}: {t(service.state)}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </main>
+    ),
+    // /en/status/scheduler, /en/status/workers, /en/status/dashboard
+    "/:service": page({
+      paths: () => services.map((service) => ({ service: service.id })),
+      load: ({ params, notFound }) =>
+        services.find((service) => service.id === params.service) ?? notFound(),
+      title: ({ data }) => data.name,
+      component: ({ data, lang, t }) => (
+        <main className="mx-auto w-full max-w-2xl px-4 py-12">
+          <Link to={`/${lang}/status`}>← {t("back")}</Link>
+          <h1 className="mt-4 text-3xl font-semibold">{data.name}</h1>
+          <p>{t(data.state)}</p>
+        </main>
+      ),
+    }),
+  },
+  files: {
+    // /en/status/status.json
+    "/status.json": () => ({ services }),
+  },
+});
+```
+
+## The link in the header
+
+A feature with a `title` offers a link to its front page. Its id is the id of the feature.
+
+- When `docs.config.ts` has no `header.links`, the header shows the links of every feature with a title, in the order of `features`.
+- When the site chooses its links in `header.links`, it lists ids, and your feature appears only if its id is there:
+
+```ts title="docs.config.ts"
+header: {
+  links: ["docs", "blog", "status"],
+},
+```
+
+`consify links` prints every id the features offer. A feature without a `title` has no link: its pages work, but the reader has to be sent there by a link of yours.
+
+## Rules for id
+
+- Lowercase letters, digits and `-`, starting with a letter: `status`, `api-v2`. `Status` or `2fa` stop the start with an error that names the id.
+- Two features cannot have the same `id`, and cannot have the same address (`path`). The error says which ones, and suggests setting `path`.
+- The ids `docs`, `blog` and `api` are taken when those features are on the site. `home` is the built-in front page.
+
+## Common mistakes
+
+<Callout type="warn">
+  **The page is 404.** The feature is not in `features` of `docs.config.ts`, or the address has no language: the page is `/en/hello`, not `/hello`.
+</Callout>
+
+<Callout type="warn">
+  **No link in the header.** The feature has no `title`, or the site sets `header.links` and does not list the id of the feature.
+</Callout>
+
+<Callout type="warn">
+  **The site breaks in the browser with an error about `node:fs` or `path`.** The feature file imports a Node module at the top. The file is loaded in the browser too. Read files with `readFile` and `content` in `load` instead, see [Loading data](/docs/v0/features/data).
+</Callout>
+
+## This section
+
+| Page | What it covers |
+| --- | --- |
+| [Pages](/docs/v0/features/pages) | Addresses and parameters, components, titles and `<head>`, layouts, redirects, links |
+| [Loading data](/docs/v0/features/data) | `load` and everything it gets, `page()`, `paths`, server and static sites, errors |
+| [Files](/docs/v0/features/files) | JSON, text, XML and images at an address of the feature |
+| [Strings and languages](/docs/v0/features/strings) | `messages`, `t`, placeholders, overrides, languages in addresses |
+| [Content](/docs/v0/features/content) | MDX files of a feature: front matter, entries, a page per file |
+| [Content services](/docs/v0/features/content-services) | Search, `llms.txt`, social images, feeds and sidebars from content |
+| [Tutorial](/docs/v0/features/tutorial) | A complete feature, step by step |
+| [Feature packages](/docs/v0/features/packages) | A feature as a package for several projects |
+| [Testing](/docs/v0/features/testing) | Testing `load`, `paths` and pages |
+| [Reference](/docs/v0/features/reference) | Every option and type |

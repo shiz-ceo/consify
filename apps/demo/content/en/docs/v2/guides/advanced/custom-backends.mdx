@@ -1,0 +1,38 @@
+---
+title: Custom backends
+description: Store jobs anywhere by implementing a small interface
+---
+
+A backend is an object with four methods. This is the full contract:
+
+```ts title="backend.ts"
+export interface Backend {
+  push(queue: string, payload: string): Promise<string>;
+  take(queue: string): Promise<{ id: string; payload: string } | null>;
+  complete(queue: string, id: string): Promise<void>;
+  fail(queue: string, id: string, error: string): Promise<void>;
+}
+```
+
+## Suggested layout
+
+<Files>
+  <Folder name="my-backend" defaultOpen>
+    <Folder name="src" defaultOpen>
+      <File name="index.ts" />
+      <File name="serialize.ts" />
+      <File name="backend.ts" />
+    </Folder>
+    <File name="package.json" />
+    <File name="README.md" />
+  </Folder>
+</Files>
+
+## Guarantees to keep
+
+1. `take` never returns the same job to two workers.
+2. `fail` puts the job back only if attempts remain.
+3. Operations are **atomic**: a crash between two steps must not lose a job.
+
+> [!CAUTION]
+> A backend that loses jobs on crash silently breaks every guarantee above. Test it with a kill-9 loop before you ship.

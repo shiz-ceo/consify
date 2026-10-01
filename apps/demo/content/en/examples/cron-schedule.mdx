@@ -1,0 +1,13 @@
+---
+title: A job on a schedule
+description: Run a job every night with a cron expression.
+level: beginner
+tags: [cron, jobs]
+date: 2026-08-10
+---
+
+```ts
+await reports.schedule("nightly", { cron: "0 3 * * *" });
+```
+
+The scheduler keeps one job per name, so a restart does not add a second one.

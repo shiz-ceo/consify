@@ -1,0 +1,80 @@
+---
+title: Docs
+description: Settings of the documentation section
+---
+
+The documentation section is a feature, like the blog: it is on when `docs()` is in the `features` list of the config. Writing pages is covered in [Writing](/docs/v0/writing).
+
+## Install
+
+```bash
+bun add @consify/docs
+```
+
+Update it together with the core (see [Updating](/docs/v0/concepts/updating)).
+
+## Options
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { docs } from "@consify/docs";
+
+export default defineConfig({
+  site: { name: "My docs", github: { repo: "owner/name", branch: "main" } },
+  features: [
+    docs({
+      versions: {
+        list: [
+          { id: "v2", label: "v2 (latest)", status: "latest" },
+          { id: "v1", status: "deprecated" },
+        ],
+        default: "v2",
+      },
+      toc: true,
+      breadcrumbs: true,
+      pagination: true,
+      llmsTxt: true,
+      og: true,
+      editOnGithub: { contentDir: "apps/docs/content" },
+    }),
+  ],
+});
+```
+
+Every option is optional.
+
+<TypeTable
+  type={{
+    id: { description: "The address (`/{lang}/<id>`), the content folder (`content/<language>/<id>`) and the link id. Set it for a second docs section.", type: "string", default: '"docs"' },
+    title: { description: "The text of its link in the header.", type: "string | Record<language, string>", default: 'the translated word "Documentation"' },
+    versions: { description: "Several versions of the documentation. See [Versions](/docs/v0/configuration/versions).", type: "object" },
+    toc: { description: "The table of contents on the right of a page.", type: "boolean", default: "true" },
+    breadcrumbs: { description: "The path above the title of a page.", type: "boolean", default: "true" },
+    pagination: { description: "Previous and next links under a page.", type: "boolean", default: "true" },
+    llmsTxt: { description: "`/{lang}/docs/llms.txt` and `llms-full.txt`, the docs as plain text for language models, and the link `docs:llms`.", type: "boolean", default: "true" },
+    og: { description: "A generated image for social networks per page, `/{lang}/docs/og/<page>.png`.", type: "boolean", default: "true" },
+    editOnGithub: { description: "An Edit this page link. Needs `site.github`. The link is `<contentDir>/<language>/docs/<page path>`. Pass `{ contentDir }` when the folder with the language folders is not `content` in the repository.", type: "boolean | { contentDir?: string }", default: "true" },
+  }}
+/>
+
+The options are checked when `docs()` is called, so a typo in an option name stops the start with a message that names `docs()` and the option.
+
+## Addresses
+
+| Address | What it is |
+| --- | --- |
+| `/{lang}/docs/...` | The pages, one per `.mdx` file of `content/<language>/docs/` |
+| `/{lang}/docs` | Redirects to the default version when the docs have versions |
+| `/{lang}/docs/search.json` | The search of the docs |
+| `/{lang}/docs/llms.txt`, `llms-full.txt` | The docs as plain text (`llmsTxt`) |
+| `/{lang}/docs/og/<page>.png` | The social image of a page (`og`) |
+
+## A second section
+
+`docs()` can be listed more than once. Each call with its own `id` is a separate section, with its own folder, sidebar, search and link in the header:
+
+```ts title="docs.config.ts"
+features: [docs(), docs({ id: "guides", title: { en: "Guides", ru: "Руководства" } })],
+```
+
+The second section lives in `content/<language>/guides/` and opens at `/{lang}/guides`.

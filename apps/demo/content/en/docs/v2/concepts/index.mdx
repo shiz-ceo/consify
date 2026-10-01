@@ -1,0 +1,23 @@
+---
+title: Overview
+description: The three ideas behind Lattice
+---
+
+Lattice has three building blocks:
+
+```mermaid
+graph LR
+  P[Producer] -->|add job| Q[(Queue)]
+  Q -->|next job| W[Worker]
+  W -->|success| D[Done]
+  W -->|error| R{Retries left?}
+  R -->|yes| Q
+  R -->|no| X[Dead-letter queue]
+```
+
+- A [job](./jobs.mdx) is a piece of typed data plus options.
+- A [queue](./queues.mdx) stores jobs until a worker is free.
+- A [worker](./workers.mdx) processes jobs and reports success or failure.
+
+> [!TIP]
+> Producers and workers can live in different processes, on different machines. They only share the job type and the queue name.

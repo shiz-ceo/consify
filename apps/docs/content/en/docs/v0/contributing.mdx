@@ -1,0 +1,108 @@
+---
+title: Contributing
+description: How the core is organized
+icon: GitBranch
+---
+
+The repository is a Bun workspace:
+
+| Folder | What |
+| --- | --- |
+| `packages/core` | `@consify/core`: config, `defineFeature`, content, layout, theme, the front page, search, SEO, build |
+| `packages/cli` | `@consify/cli`: the `consify` command (dev, build, check, deploy, doctor, skills, the registry) |
+| `packages/create-consify` | `@consify/create`: the project generator (`bun create @consify`) |
+| `integrations/docs` | `@consify/docs`: the documentation feature (pages, versions, sidebar, `llms.txt`, social images) |
+| `integrations/blog` | `@consify/blog`: the blog feature |
+| `integrations/api-reference` | `@consify/api-reference`: the API reference feature |
+| `apps/starter` | The minimal template |
+| `apps/demo` | A full example site (a fictional job queue) |
+| `apps/docs` | This documentation |
+
+```bash
+bun install
+bun run docs        # this site, http://localhost:3500
+bun run demo        # the demo, http://localhost:3300
+bun run check       # lint, typecheck, tests
+bun run docs:check  # consify check --strict on this site
+```
+
+Each package is built by `bun run build` in its folder. `bun run build:packages` in the root builds all of them.
+
+## The layout of the core
+
+```
+packages/core/src/
+├─ config/     the schema of docs.config.ts
+├─ feature/    defineFeature, page(), the load context, addresses
+├─ content/    the content of a feature: entries, MDX, search index, llms.txt, social images
+├─ builtin/    what every site has: the front page, 404 and redirects, search, sitemap, robots.txt
+├─ runtime/    the pages and files of features at run time (loaders, meta)
+├─ shared/     layout, UI, links, messages, slots
+├─ build/      the Vite plugin and the React Router adapter (scaffold, routes, pre-render)
+├─ mdx/        the Markdown pipeline
+├─ plugins/    definePlugin
+├─ locales/    the interface strings
+└─ theme/      the stylesheet and the design tokens
+```
+
+A feature is one value made by `defineFeature`: its id, title, pages, files, links, MDX components and content. The routes, the header, the pre-render list and the sitemap are built from the built-in parts and the `features` of the config. Core reads the content of a feature (front matter, sidebar, search, `llms.txt`, social images); the feature only draws it.
+
+The docs, the blog and the API reference are not part of the core. Each is a package that exports a factory (`docs()`, `blog()`, `apiReference()`) returning `defineFeature(...)`, and a project lists it in `features`.
+
+## Adding a section
+
+A section that only one project needs is one file in `custom/features/` of that project (see [Your own sections](/docs/v0/features)). To ship one as a package, create a folder in `integrations/` the way `integrations/blog` is made:
+
+- `src/index.ts` exports the factory. It must stay loadable by Node: no JSX, no CSS, no `@consify/core/ui`. Pages are `lazy(() => import("./page.tsx"))`, MDX components `lazyComponents(() => import("./mdx.tsx"), [...])`.
+- The UI lives in the files next to it (`page.tsx`, `mdx.tsx`).
+- `skills/<name>/SKILL.md` at the package root, for `consify skill sync`.
+- `package.json` with `@consify/core` as a peer dependency, and `"consify": { "prebundle": [...] }` for browser dependencies Vite should pre-bundle.
+
+## Tests
+
+Tests are in the `test` folder of each package and run with `bun test`. The core tests the config, `defineFeature` and its addresses, the site, links, the theme and the strings. The CLI tests `check`, `deploy`, `lang`, the skills and the registry. The docs, the blog (publishing, filters, RSS) and the API reference have their own tests in `integrations/docs/test`, `integrations/blog/test` and `integrations/api-reference/test`. A load function is tested with `createLoadContext` from `@consify/core/node`.
+
+Run `bun run check` before you send a change, and `bun run docs:check` when you changed a page of this site.
+
+## End-to-end tests
+
+The `e2e/` workspace has browser tests with Playwright. `bun run e2e` builds the demo twice (the server build, then the static build with `DEMO_STATIC=1`) and runs Chromium tests: the `desktop` (1280x800) and `mobile` (Pixel 7) projects on the server build, and `desktop` on the static build.
+
+Install the browser once:
+
+```bash
+bunx playwright install chromium
+```
+
+```bash
+bun run e2e                       # build the demo and run every test
+bun run e2e -- --grep sitemap     # only the tests that match the text
+bun run e2e --skip-build          # reuse the builds
+```
+
+Results and traces are in `e2e/test-results`. The specs are in `e2e/tests`:
+
+| Spec | What it checks |
+| --- | --- |
+| `smoke` | every kind of page opens with no console errors |
+| `header` | the drop-down menu, links, the language switch, the theme, the mobile menu, no search in the header |
+| `docs` | the sidebar search, `⌘K`, the fallback notice, versions, the table of contents, the copy button |
+| `blog` | the blog pages |
+| `api` | Scalar, its search field, the groups are open |
+| `head` | the tags of `head` and the banner |
+| `themes` | every preset and several brand colors, measured on the painted page |
+| `seo` | sitemap, `robots.txt`, `llms.txt`, the feed, canonical, hreflang, social images |
+| `a11y` | axe (WCAG 2 A and AA), light and dark, on the main kinds of pages |
+| `static` | the static build: pages, search on a file index, the redirect page, the 404 page |
+
+The demo (`apps/demo`) sets `head`, `banner` and `deploy.mode` (from `DEMO_STATIC=1`) for these tests. The theme screenshots of the [gallery](/docs/v0/configuration/themes) are regenerated by `bun run e2e:themes` (run `bun run build:demo` first).
+
+## Continuous integration
+
+The `e2e` job in `.github/workflows/ci.yml` runs these tests and uploads the report and the traces when it fails.
+
+`.github/workflows/compat.yml` runs nightly and on demand. It runs the unit tests on Ubuntu, Windows and macOS, and installs the packed packages into a generated project with npm and pnpm on Node 22 and 24 (Ubuntu and Windows). To run that check locally with a given package manager:
+
+```bash
+CONSIFY_CHECK_MANAGER=npm bun run check:package
+```

@@ -1,0 +1,80 @@
+---
+title: Installation
+description: Add Lattice to a project
+icon: Download
+---
+
+## Requirements
+
+| Requirement | Version |
+| ----------- | ------- |
+| Node.js     | 20 or newer |
+| Bun         | 1.1 or newer (optional) |
+| TypeScript  | 5.4 or newer |
+
+## Install the package
+
+<Tabs groupId="package-manager" persist items={["bun", "npm", "pnpm", "yarn"]}>
+  <Tab value="bun">
+
+```bash
+bun add lattice
+```
+
+</Tab>
+  <Tab value="npm">
+
+```bash
+npm install lattice
+```
+
+</Tab>
+  <Tab value="pnpm">
+
+```bash
+pnpm add lattice
+```
+
+</Tab>
+  <Tab value="yarn">
+
+```bash
+yarn add lattice
+```
+
+</Tab>
+</Tabs>
+
+## Pick a backend
+
+The default backend keeps jobs **in memory**. That is perfect for tests and local work, but jobs are lost when the process exits. For production install a persistent backend:
+
+<Tabs items={["Redis", "Postgres"]}>
+  <Tab value="Redis">
+
+```bash
+bun add @lattice/redis
+```
+
+</Tab>
+  <Tab value="Postgres">
+
+```bash
+bun add @lattice/postgres
+```
+
+</Tab>
+</Tabs>
+
+> [!WARNING]
+> Never use the in-memory backend in production. A restart drops every waiting job.
+
+## Verify
+
+```ts title="check.ts"
+import { version } from "lattice";
+
+console.log(`Lattice ${version}`);
+```
+
+Continue with the [Quickstart](./quickstart.mdx).

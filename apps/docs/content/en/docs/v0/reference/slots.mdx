@@ -1,0 +1,60 @@
+---
+title: Slots API
+description: Props of the header and the footer, and the parts of the home page
+---
+
+```ts
+import type { ComponentType } from "react";
+import type { Consify } from "@consify/core/runtime";
+
+interface LayoutLink {
+  text: string;
+  url: string; // with the language; for a menu, the url of its first item
+  external: boolean;
+  description?: string;
+  /** Set for a drop-down menu. */
+  items?: LayoutLink[];
+}
+
+interface HeaderSlotProps {
+  consify: Consify; // the site: config, features, slots
+  lang: string;
+  /** The links the header shows by default. */
+  links: LayoutLink[];
+}
+
+interface FooterSlotProps {
+  consify: Consify;
+  lang: string;
+}
+
+interface Slots {
+  Header?: ComponentType<HeaderSlotProps>;
+  HeaderEnd?: ComponentType<HeaderSlotProps>;
+  Footer?: ComponentType<FooterSlotProps>;
+}
+```
+
+Import the types from `@consify/core`, and `SiteFooter`, the default footer, from `@consify/core/components`. The footer is the same component everywhere; there is no `variant` to branch on and no `editUrl` — a page adds its own extras (the docs' "Edit on GitHub") to its own content, not to the footer.
+
+Slots are set with `custom/header.tsx`, `custom/footer.tsx` or `slots: { header, headerEnd, footer }` in the config. See [Slots](/docs/v0/customizing/slots).
+
+## Hero
+
+<TypeTable
+  type={{
+    title: { description: "The heading.", type: "string", required: true },
+    description: { description: "Text under it.", type: "string" },
+    actions: { description: "Buttons. `variant` is `primary` or `secondary`. Links get the language.", type: "{ label, href, variant? }[]" },
+  }}
+/>
+
+## Features
+
+<TypeTable
+  type={{
+    items: { description: "Cards. `icon` is a Lucide icon name; `href` makes the card a link.", type: "{ title, description, icon?, href? }[]", required: true },
+  }}
+/>
+
+`Hero` and `Features` are the parts of the home page, `content/<language>/home.mdx`. They need no import there.

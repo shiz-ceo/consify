@@ -1,0 +1,80 @@
+---
+title: Документация
+description: Настройки раздела документации
+---
+
+Раздел документации — фича, как и блог: он включён, когда `docs()` есть в списке `features` конфига. Про написание страниц см. [Написание](/docs/v0/writing).
+
+## Установка
+
+```bash
+bun add @consify/docs
+```
+
+Обновляйте его вместе с ядром (см. [Обновление](/docs/v0/concepts/updating)).
+
+## Опции
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { docs } from "@consify/docs";
+
+export default defineConfig({
+  site: { name: "My docs", github: { repo: "owner/name", branch: "main" } },
+  features: [
+    docs({
+      versions: {
+        list: [
+          { id: "v2", label: "v2 (latest)", status: "latest" },
+          { id: "v1", status: "deprecated" },
+        ],
+        default: "v2",
+      },
+      toc: true,
+      breadcrumbs: true,
+      pagination: true,
+      llmsTxt: true,
+      og: true,
+      editOnGithub: { contentDir: "apps/docs/content" },
+    }),
+  ],
+});
+```
+
+Все опции необязательны.
+
+<TypeTable
+  type={{
+    id: { description: "Адрес (`/{lang}/<id>`), папка контента (`content/<язык>/<id>`) и id ссылки. Задайте его для второго раздела документации.", type: "string", default: '"docs"' },
+    title: { description: "Текст его ссылки в шапке.", type: "string | Record<language, string>", default: 'the translated word "Documentation"' },
+    versions: { description: "Несколько версий документации. См. [Версии](/docs/v0/configuration/versions).", type: "object" },
+    toc: { description: "Оглавление справа на странице.", type: "boolean", default: "true" },
+    breadcrumbs: { description: "Путь над заголовком страницы.", type: "boolean", default: "true" },
+    pagination: { description: "Ссылки на предыдущую и следующую страницы внизу.", type: "boolean", default: "true" },
+    llmsTxt: { description: "`/{lang}/docs/llms.txt` и `llms-full.txt`: документация в виде простого текста для языковых моделей, и ссылка `docs:llms`.", type: "boolean", default: "true" },
+    og: { description: "Сгенерированное изображение для соцсетей у каждой страницы, `/{lang}/docs/og/<page>.png`.", type: "boolean", default: "true" },
+    editOnGithub: { description: "Ссылка «Редактировать эту страницу». Нужен `site.github`. Ссылка строится как `<contentDir>/<язык>/docs/<путь страницы>`. Передайте `{ contentDir }`, если папка с языковыми папками в репозитории называется не `content`.", type: "boolean | { contentDir?: string }", default: "true" },
+  }}
+/>
+
+Опции проверяются в момент вызова `docs()`, поэтому опечатка в названии опции останавливает запуск с сообщением, где указаны `docs()` и опция.
+
+## Адреса
+
+| Адрес | Что это |
+| --- | --- |
+| `/{lang}/docs/...` | Страницы, по одной на каждый файл `.mdx` в `content/<язык>/docs/` |
+| `/{lang}/docs` | Перенаправляет на версию по умолчанию, если у документации есть версии |
+| `/{lang}/docs/search.json` | Поиск по документации |
+| `/{lang}/docs/llms.txt`, `llms-full.txt` | Документация простым текстом (`llmsTxt`) |
+| `/{lang}/docs/og/<page>.png` | Изображение страницы для соцсетей (`og`) |
+
+## Второй раздел
+
+`docs()` можно указать несколько раз. Каждый вызов со своим `id` — отдельный раздел со своей папкой, боковой панелью, поиском и ссылкой в шапке:
+
+```ts title="docs.config.ts"
+features: [docs(), docs({ id: "guides", title: { en: "Guides", ru: "Руководства" } })],
+```
+
+Второй раздел лежит в `content/<язык>/guides/` и открывается по адресу `/{lang}/guides`.

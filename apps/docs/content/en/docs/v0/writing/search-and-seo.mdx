@@ -1,0 +1,31 @@
+---
+title: Search and SEO
+description: Search, sitemap, llms.txt and social images
+---
+
+## Search
+
+Search is on for every section that has content. Each section searches its own pages: the dialog is the one of the section the reader is on, with the same look everywhere. The field is at the top of the sidebar, and Cmd/Ctrl+K opens the dialog:
+
+- **Docs**: the dialog searches the pages. In `server` mode it asks `/{lang}/docs/search.json`; in `static` mode the same address is an index file that the browser downloads and searches itself.
+- **Blog**: on its pages, Cmd/Ctrl+K searches the posts (`/{lang}/blog/search.json`). The list page also has a search box that filters the posts, and a category filter.
+- **API reference**: the field opens the search of Scalar.
+- A section of your own is searched the same way when it has `content`. Without content it has no search unless it brings one (`search: { useSearch, open }`): see [Your own sections](/docs/v0/features).
+
+On small screens the sidebar opens from the sidebar button, and the field is in it. A section leaves the dialog with `content: { search: false }`.
+
+## Sitemap and robots
+
+`/sitemap.xml` lists every page of every section: the docs pages, the published blog posts, the pages of your own sections. It needs `site.url`. `/robots.txt` allows everything and points at the sitemap.
+
+## Meta tags
+
+Every page has a title, description, canonical link, links to the translations (`hreflang`) and Open Graph and Twitter tags. For a page made from a content file, core fills them from its front matter. Blog posts also have `article:*` tags and an RSS link in the head of the blog.
+
+## llms.txt
+
+`/{lang}/docs/llms.txt` lists the pages of the documentation, and `/{lang}/docs/llms-full.txt` contains all of it as one plain text. Language models and tools that read docs can use them. The header can link to it with the id `docs:llms`. Turn them off with `llmsTxt: false` in `docs()`. A section of your own gets the same files with `content: { llms: true }`.
+
+## Social images
+
+`/{lang}/docs/og/<page>.png` is a generated image with the title and the description of the page (`index.png` for an `index.mdx`). Blog posts get `/{lang}/blog/og/<slug>.png`. Turn the docs images off with `og: false` in `docs()`. A section of your own gets them with `content: { og: true }`.

@@ -1,0 +1,255 @@
+@import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+@import "fumadocs-ui/css/shadcn.css";
+@import "fumadocs-ui/css/preset.css";
+@import "fumadocs-twoslash/twoslash.css";
+@import "katex/dist/katex.css";
+
+/* Let Tailwind see the classes used by consify components. */
+@source "../";
+
+/*
+ * Design tokens (shadcn neutral palette). This is a public contract: token names are stable.
+ * Override them in `docs.config.ts` (theme.colors / theme.radius) or in your own stylesheet
+ * imported after this file.
+ */
+@layer base {
+  /*
+   * Colors follow the Scalar API reference, so the docs and the API page look like one site.
+   * Light: #fff / #f6f6f6 / #e7e7e7 surfaces, #1b1b1b text, #dfdfdf lines.
+   * Dark:  #000 / #0f0f0f surfaces, #e7e7e7 text, #2d2d2d lines.
+   */
+  :root {
+    --radius: 0.5rem;
+    --background: #fff;
+    --foreground: #1b1b1b;
+    --card: #f6f6f6;
+    --card-foreground: #1b1b1b;
+    --popover: #fff;
+    --popover-foreground: #1b1b1b;
+    --primary: #000;
+    --primary-foreground: #fff;
+    --secondary: #f6f6f6;
+    --secondary-foreground: #1b1b1b;
+    --muted: #f6f6f6;
+    --muted-foreground: #6b6b6b;
+    --accent: #f6f6f6;
+    --accent-foreground: #1b1b1b;
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: #dfdfdf;
+    --input: #dfdfdf;
+    --ring: #8e8e8e;
+    --sidebar: #fff;
+    --sidebar-foreground: #1b1b1b;
+    --sidebar-primary: #000;
+    --sidebar-primary-foreground: #fff;
+    --sidebar-accent: #f6f6f6;
+    --sidebar-accent-foreground: #1b1b1b;
+    --sidebar-border: #dfdfdf;
+    --sidebar-ring: #8e8e8e;
+  }
+
+  .dark {
+    --background: #000;
+    --foreground: #e7e7e7;
+    --card: #0f0f0f;
+    --card-foreground: #e7e7e7;
+    --popover: #0f0f0f;
+    --popover-foreground: #e7e7e7;
+    --primary: #fff;
+    --primary-foreground: #000;
+    --secondary: #0f0f0f;
+    --secondary-foreground: #e7e7e7;
+    --muted: #0f0f0f;
+    --muted-foreground: #a4a4a4;
+    --accent: #0f0f0f;
+    --accent-foreground: #e7e7e7;
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: #2d2d2d;
+    --input: #2d2d2d;
+    --ring: #797979;
+    --sidebar: #000;
+    --sidebar-foreground: #e7e7e7;
+    --sidebar-primary: #fff;
+    --sidebar-primary-foreground: #000;
+    --sidebar-accent: #0f0f0f;
+    --sidebar-accent-foreground: #e7e7e7;
+    --sidebar-border: #2d2d2d;
+    --sidebar-ring: #797979;
+  }
+
+  body {
+    font-family: var(--consify-font-sans, "Geist Variable", ui-sans-serif, system-ui, sans-serif);
+  }
+
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: var(
+      --consify-font-mono,
+      "Geist Mono Variable",
+      ui-monospace,
+      SFMono-Regular,
+      monospace
+    );
+  }
+}
+
+/* The canvas, the page and the overscroll area all use the page color, whatever loads later. */
+html,
+body {
+  background-color: var(--background);
+}
+
+html {
+  color-scheme: light;
+  scrollbar-gutter: stable;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+/*
+ * Pages without a docs sidebar (home, API, 404: SiteLayout). Below the `lg` breakpoint the
+ * layout keeps its sidebar, which then only holds the site links (the mobile menu). From `lg` up
+ * the links are in the header, so the empty sidebar column is removed.
+ */
+@media (min-width: 1024px) {
+  #nd-notebook-layout[data-site-layout] {
+    --fd-sidebar-width: 0px !important;
+    --fd-sidebar-col: 0px !important;
+  }
+
+  #nd-notebook-layout[data-site-layout] [data-sidebar-placeholder] {
+    display: none;
+  }
+}
+
+/* Highlighted code lines (`{2,4-6}` or `// [!code highlight]`): a violet band with an accent edge. */
+:root {
+  --consify-highlight: 139 92 246;
+}
+
+pre .line.highlighted {
+  --fd-counter-color: rgb(var(--consify-highlight));
+  background-color: rgb(var(--consify-highlight) / 0.14);
+}
+
+pre .line.highlighted::after {
+  border-left: 2px solid rgb(var(--consify-highlight));
+}
+
+.dark pre .line.highlighted {
+  background-color: rgb(var(--consify-highlight) / 0.18);
+}
+
+/* Border over images, GIFs and videos (see components/media.tsx): translucent, so it takes the tint of the media. */
+.consify-media-border {
+  border: 1px solid rgb(0 0 0 / 0.12);
+}
+
+.dark .consify-media-border {
+  border-color: rgb(255 255 255 / 0.14);
+}
+
+/*
+ * Mermaid diagrams (shared/ui/mermaid.tsx). The colors come from the theme variables that the
+ * component hands to Mermaid; this removes what those cannot: shadows, thick outlines, gray label
+ * plates, and lines that run through the titles of groups.
+ */
+.consify-mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Mermaid styles its shapes by the id of the diagram, so these need `!important` to win. */
+.consify-mermaid
+  svg
+  :is(.node, .actor, .statediagram-state, .note, .cluster)
+  :is(rect, polygon, circle, ellipse, path),
+.consify-mermaid svg rect.actor,
+.consify-mermaid svg rect.note {
+  filter: none !important;
+  stroke-width: 1px !important;
+}
+
+.consify-mermaid svg :is(.node rect, rect.actor, rect.note, .statediagram-state rect) {
+  rx: 10px !important;
+  ry: 10px !important;
+}
+
+.consify-mermaid svg .cluster rect {
+  rx: 14px !important;
+  ry: 14px !important;
+  stroke-dasharray: 5 4 !important;
+  fill: transparent !important;
+}
+
+.consify-mermaid svg :is(.edgePath path, .flowchart-link, .messageLine0, .messageLine1) {
+  stroke-width: 1.25px !important;
+}
+
+.consify-mermaid svg marker path {
+  fill: var(--color-fd-muted-foreground) !important;
+  stroke: none !important;
+}
+
+/* titles of groups and labels of arrows are cut out of the lines behind them */
+.consify-mermaid svg :is(.cluster-label, .edgeLabel) :is(span, p, div, text, tspan) {
+  paint-order: stroke;
+  stroke: var(--color-fd-card);
+  stroke-width: 6px;
+  stroke-linejoin: round;
+}
+
+.consify-mermaid svg :is(.edgeLabel, .labelBkg) {
+  background-color: transparent !important;
+  opacity: 1 !important;
+}
+
+.consify-mermaid svg .edgeLabel rect {
+  fill: var(--color-fd-card) !important;
+  opacity: 1 !important;
+}
+
+.consify-mermaid svg .edgeLabel text {
+  fill: var(--color-fd-muted-foreground) !important;
+}
+
+.consify-mermaid svg .edgeLabel :is(span, p) {
+  background: var(--color-fd-background) !important;
+  padding: 1px 6px;
+  border-radius: 6px;
+  color: var(--color-fd-muted-foreground) !important;
+  font-size: 0.85em;
+}
+
+.consify-mermaid svg .cluster-label :is(span, p, div) {
+  color: var(--color-fd-muted-foreground);
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
+/*
+ * Accessibility of code blocks (WCAG AA, 4.5:1): the red of the error lines of Twoslash and the
+ * dimmed lines of a diff are below it in the packages, so the colors are set here.
+ */
+:root {
+  --color-twoslash-error-foreground: #b91c1c;
+}
+
+.dark {
+  --color-twoslash-error-foreground: #fca5a5;
+}
+
+.shiki:not(.not-fumadocs-codeblock *) .diff.remove {
+  opacity: 1;
+}

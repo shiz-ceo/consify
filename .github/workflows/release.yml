@@ -1,0 +1,74 @@
+name: Release
+
+# Publishes `@consify/core`, `@consify/docs`, `@consify/blog`, `@consify/api-reference`,
+# `@consify/cli` and `@consify/create` to GitHub Packages when a tag like v0.1.0 is pushed. All
+# packages have the same version. The packages belong to the `consify` organization while this
+# repository is `shiz-ceo/consify`, and the built-in GITHUB_TOKEN only publishes packages of its own
+# repository, so publishing uses CONSIFY_PACKAGES_TOKEN: a personal access token (classic) with
+# `write:packages` of an owner of the organization, stored in the secrets of this repository.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://npm.pkg.github.com
+          scope: "@consify"
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+      - name: The tag matches the version of every package
+        run: |
+          for dir in packages/core packages/cli packages/create-consify integrations/docs integrations/blog integrations/api-reference; do
+            version="$(node -p "require('./$dir/package.json').version")"
+            test "v$version" = "${GITHUB_REF_NAME}" || { echo "tag ${GITHUB_REF_NAME} does not match $dir $version"; exit 1; }
+          done
+      - name: Build the packages
+        run: |
+          bun run build:packages
+          bun run prepare:template
+      # @consify/core first: the other packages depend on it
+      - name: Publish @consify/core
+        run: npm publish --access public
+        working-directory: packages/core/out
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.CONSIFY_PACKAGES_TOKEN }}
+      - name: Publish @consify/cli
+        run: npm publish --access public
+        working-directory: packages/cli/out
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.CONSIFY_PACKAGES_TOKEN }}
+      - name: Publish @consify/docs
+        run: npm publish --access public
+        working-directory: integrations/docs/out
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.CONSIFY_PACKAGES_TOKEN }}
+      - name: Publish @consify/blog
+        run: npm publish --access public
+        working-directory: integrations/blog/out
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.CONSIFY_PACKAGES_TOKEN }}
+      - name: Publish @consify/api-reference
+        run: npm publish --access public
+        working-directory: integrations/api-reference/out
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.CONSIFY_PACKAGES_TOKEN }}
+      - name: Publish @consify/create
+        run: npm publish --access public
+        working-directory: packages/create-consify
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.CONSIFY_PACKAGES_TOKEN }}
+      - name: GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

@@ -1,0 +1,106 @@
+---
+title: Header and footer links
+description: Choose the links of the header and the footer, and group them in drop-down menus
+---
+
+A section (the docs, the blog, the API reference, your own) only **offers** links. The site chooses which of them go to the header and the footer, in what order, and under what names.
+
+## The catalog
+
+Every link that a section offers has an `id`: the `id` of the feature for its main place, `<id>:<name>` for the others.
+
+| Id | Address | Default |
+| --- | --- | --- |
+| `docs` | The docs, the default version | header, footer |
+| `docs:llms` | `/{lang}/docs/llms.txt` | |
+| `blog` | The blog | header, footer |
+| `blog:rss` | The RSS feed | |
+| `api` | The API reference | header, footer |
+
+A [feature of your own](/docs/v0/features) adds its own ids: its main place when it has a `title`, `<id>:llms` when its content has `llms`, and what its `links` return. To see the catalog of your site:
+
+```bash
+consify links        # the default language
+consify links ru
+```
+
+It prints the id, title and address of every link, and marks the ones that are in the header by default.
+
+## Header
+
+Without `header.links` the header lists the main place of every section that has a title, in the order of `features`. To choose:
+
+```ts title="docs.config.ts"
+header: {
+  links: [
+    "docs",
+    { id: "blog", title: { en: "News", ru: "Новости" } },
+    {
+      title: { en: "Developers", ru: "Разработчикам" },
+      items: [
+        "api",
+        "status",
+        "docs:llms",
+        {
+          title: "GitHub",
+          description: { en: "Source code and issues", ru: "Исходный код и задачи" },
+          url: "https://github.com/example/lattice",
+        },
+      ],
+    },
+  ],
+},
+```
+
+## Link items
+
+The header and the footer take items of one format. A link is one of:
+
+- **An id** from the catalog: `"docs"`.
+- **An id with replaced fields**: `{ id: "blog", title: "News" }`.
+- **Your own address**: `{ title, url }`.
+
+<TypeTable
+  type={{
+    id: { description: "An id from the catalog. The fields you give replace the ones of the catalog.", type: "string" },
+    title: { description: "The text of the link. A string, or one string per language. Required with `url`.", type: "string | Record<language, string>" },
+    description: { description: "A line under the title, shown in drop-down menus.", type: "string | Record<language, string>" },
+    url: { description: "Your own address. `/x` gets the language, an absolute URL is kept as it is. Used instead of `id`.", type: "string" },
+    external: { description: "Open in a new tab. Set automatically for absolute URLs of other sites.", type: "boolean" },
+  }}
+/>
+
+Titles and descriptions of the catalog are localized with the interface strings of the section, so they are translated like the other strings of the site (see [Languages](/docs/v0/configuration/languages)).
+
+## Drop-down menus
+
+An item with `items` instead of `id` or `url` is a menu: its title, an optional description and a list of links. The header shows it as a drop-down with the description under each title, and the mobile menu shows the same list. A menu holds links only, not other menus.
+
+## Footer
+
+`footer.columns[].links` takes the same items, except menus:
+
+```ts title="docs.config.ts"
+footer: {
+  columns: [
+    { title: "Product", links: ["docs", "blog", "blog:rss"] },
+    { title: { en: "Community", ru: "Сообщество" }, links: [{ title: "GitHub", url: "https://github.com/example/lattice" }] },
+  ],
+},
+```
+
+Without `footer.columns` the footer has one column with the main places of the sections and a link to GitHub.
+
+## Ids elsewhere
+
+An id works wherever a link is resolved: the `href` of the buttons of the home page (`href: "blog"`), and the links of the footer.
+
+## Errors
+
+An id that is not in the catalog stops the start:
+
+```text
+unknown link "blgo" (available: docs, docs:llms, blog, blog:rss, ...)
+```
+
+Run `consify links` to see the ids.

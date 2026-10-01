@@ -1,0 +1,314 @@
+---
+title: Getting started
+description: From an empty folder to a running site, and how it keeps going
+icon: Map
+---
+
+## Requirements
+
+- [Bun](https://bun.sh) 1.2 or newer.
+- Node.js 24 or newer, which runs the build tools under the hood.
+- A GitHub account with a [personal access token](https://github.com/settings/tokens) that has
+  `read:packages` scope — consify's packages (`@consify/core`, `@consify/docs`, `@consify/blog`,
+  `@consify/api-reference`, `@consify/cli`, `@consify/create`) are published to GitHub Packages, not
+  the default npm registry, so a package manager needs both a `.npmrc` pointing the `@consify` scope
+  there and this token before it can install any of them.
+
+### GitHub Packages setup
+
+Add an `.npmrc` at the root of your project (the generator writes this for you — see below):
+
+```ini title=".npmrc"
+@consify:registry=https://npm.pkg.github.com
+```
+
+Then make the token available to your package manager, for example:
+
+```bash
+export NODE_AUTH_TOKEN=ghp_your_token_here
+```
+
+(`npm`/`pnpm`/`yarn` read `NODE_AUTH_TOKEN` or `//npm.pkg.github.com/:_authToken` in `.npmrc`; Bun
+reads the same `.npmrc` and honors `NODE_AUTH_TOKEN` too.) Without this, `bun install`/`npm install`
+cannot resolve any `@consify/*` package and installation fails outright.
+
+<Steps>
+<Step>
+
+### Create the project
+
+```bash
+bun create @consify my-docs
+cd my-docs
+bun run dev
+```
+
+Answer the four questions (folder, site name, languages, package manager), or pass them as flags to
+skip the prompts:
+
+```bash
+bun create @consify my-docs --name "My docs" --languages en,ru --pm bun --yes
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--name <text>` | Name of the site (default: the folder name) |
+| `--languages <list>` | Languages, the first is the main one (default: `en`) |
+| `--pm <bun\|npm\|pnpm\|yarn>` | Package manager (default: the one that ran the command) |
+| `--no-install` | Do not install dependencies |
+| `--no-skill` | Do not add the skills for Claude (`consify skill sync`) |
+| `--git` | Run `git init` |
+| `-y`, `--yes` | Use the defaults, ask nothing |
+
+You get a working project — `docs.config.ts`, `content/<language>/docs/`, `custom/` — with
+dependencies already installed and an `.npmrc` already written for you (the token from
+[GitHub Packages setup](#github-packages-setup) above is still yours to provide). Open
+`http://localhost:5173`.
+
+</Step>
+<Step>
+
+### Write your first page
+
+Every `.mdx` file in `content/<language>/docs/<version>/` is a page. Edit
+`content/en/docs/index.mdx` and the page updates. To add one:
+
+```mdx title="content/en/docs/v0/hello.mdx"
+---
+title: Hello
+description: My first page
+icon: Smile
+---
+
+Some **Markdown**, and a component:
+
+<Callout type="info">Components are available without imports.</Callout>
+```
+
+List it in the `meta.json` next to it (or leave `pages` out to show everything alphabetically):
+
+```json title="content/en/docs/v0/meta.json"
+{ "title": "v0 (latest)", "root": "version", "pages": ["index", "hello"] }
+```
+
+Need a blog or an API reference instead of (or next to) docs? Add `blog()` from `@consify/blog` or
+`apiReference()` from `@consify/api-reference` to `features` in `docs.config.ts` — see
+[Writing content](/docs/v0/writing) and [Configuration](/docs/v0/configuration).
+
+</Step>
+<Step>
+
+### Make it yours
+
+Everything else is `docs.config.ts` and `custom/`, no fork:
+
+- `site` — name, description, `url`, logo, GitHub link.
+- `theme.preset` (`neutral`, `ocean`, `forest`, `sunset`, `violet`, `paper`, `mono`) or
+  `theme.brand: "#..."` — one color becomes a full palette, checked for contrast:
+
+  ```ts title="docs.config.ts"
+  theme: {
+    radius: "0.75rem",
+    colors: { light: { primary: "oklch(0.55 0.2 260)" } },
+  },
+  ```
+
+  See [Themes](/docs/v0/configuration/themes).
+- `header.links` / `footer.columns` — which links show, and in what order or drop-down. A section
+  only *offers* links (its catalog); the site chooses. Run `consify links` to see what is on offer.
+  See [Header and footer links](/docs/v0/configuration/navigation).
+- `head` and `banner` for meta tags, scripts and an announcement bar — see
+  [Head and banner](/docs/v0/configuration/head).
+- `custom/components/*.tsx` for your own MDX components, `custom/header.tsx` and
+  `custom/footer.tsx` to replace those parts of the site — see
+  [Custom components](/docs/v0/customizing/custom-components).
+- `content/<language>/home.mdx` for the front page, with `<Hero />` and `<Features />`. Without it,
+  `/{lang}` opens the first section.
+- `custom/features/*.tsx` for a section of your own (a status page, a changelog): one file with
+  `defineFeature`, listed in `features` — see [Your own sections](/docs/v0/features).
+- `i18n.languages` for a second language:
+
+  ```ts title="docs.config.ts"
+  i18n: { languages: ["en", "ru"], labels: { en: "English", ru: "Русский" } },
+  ```
+
+  Translate a page by adding it to the folder of another language with the same path,
+  `content/ru/docs/v0/hello.mdx`. Untranslated pages fall back to the main language automatically.
+  Then, from the CLI:
+
+  ```bash
+  consify lang add ru --copy   # content/ru/, seeded from the main language
+  consify lang status          # what is translated, section by section
+  consify locale ru            # a language pack for the interface strings, if ru is not built in
+  ```
+
+  See [Languages and versions](/docs/v0/writing/translations-and-versions).
+
+</Step>
+<Step>
+
+### Check before you ship
+
+```bash
+consify doctor
+consify check
+```
+
+`doctor` checks the Node version, that every `@consify/*` package is the same version, and that
+`docs.config.ts` is valid. `check` looks at the content: the addresses of every section, front
+matter, `meta.json`, and that each translation has the same code blocks, links and headings as its
+original (`--strict` turns warnings into errors). Both are cheap to run before every deploy.
+
+</Step>
+<Step>
+
+### Build and deploy
+
+```bash
+bun run build
+```
+
+By default that produces a Node server (`bun run start`); set `deploy: { mode: "static" }` for
+plain files instead. From there:
+
+```bash
+consify deploy            # a terminal: asks which target, then its options
+consify deploy list        # just see what is available
+```
+
+Ready-made hosts (`github-pages`, `cloudflare-pages`, `netlify`, `vercel`) write the config file or
+workflow each one needs; from there it is a normal `git push`. Self-hosting writes an nginx fragment
+meant to be `include`d — never a whole `nginx.conf` — with HTTP/3 on by default, as a `docker`
+target (a container per site, never publishing a port directly) or plain `nginx` (a systemd unit,
+optionally on a Unix socket instead of a port, for several sites on one machine). Full walkthrough
+in [Deployment](/docs/v0/deployment).
+
+</Step>
+</Steps>
+
+## After that, it repeats
+
+Write a page, check translations with `consify lang status`, run `consify check` and
+`consify doctor`, push. Updating
+consify itself is `bun update @consify/core @consify/docs ...` (with whatever other `@consify/*`
+packages you have) — `doctor` says right away if the versions drifted apart.
+
+## Add it to an existing project
+
+Add the `.npmrc` from [GitHub Packages setup](#github-packages-setup) above first — an existing
+project does not get one written for it automatically:
+
+```bash
+bun add @consify/core @consify/docs react react-dom react-router
+bun add -d vite typescript @types/react @types/react-dom @types/node
+```
+
+Then create these files.
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { docs } from "@consify/docs";
+
+export default defineConfig({
+  site: { name: "My docs" },
+  features: [docs()],
+});
+```
+
+```ts title="vite.config.ts"
+import { consify } from "@consify/core/vite";
+import { defineConfig } from "vite";
+import config from "./docs.config.ts";
+
+export default defineConfig({ plugins: [consify(config)] });
+```
+
+```ts title="react-router.config.ts"
+import { defineRouterConfig } from "@consify/core/react-router";
+import config from "./docs.config.ts";
+
+export default defineRouterConfig(config);
+```
+
+```json title="package.json"
+{
+  "type": "module",
+  "scripts": {
+    "dev": "consify dev",
+    "build": "consify build",
+    "start": "consify start",
+    "typecheck": "consify typegen && tsc --noEmit"
+  }
+}
+```
+
+Add a first page (in the folder of your main language), and a `tsconfig.json` (copy the one from
+the starter):
+
+```mdx title="content/en/docs/index.mdx"
+---
+title: Welcome
+---
+
+Hello from consify.
+```
+
+```json title="content/en/docs/meta.json"
+{ "pages": ["index"] }
+```
+
+Add `.consify`, `build` and `.react-router` to `.gitignore`. They are generated.
+
+### Features
+
+The core (`@consify/core`) has only the front page. The documentation, the blog and the API
+reference are separate packages. Install the ones you need and list them in `features` (see
+[Docs](/docs/v0/configuration/docs), [Blog](/docs/v0/configuration/blog) and
+[API reference](/docs/v0/configuration/api-reference)). Their order is the order of their links in
+the header, unless `header.links` sets another. A site without `docs()` works too, for example a
+blog only. Sections of your own from `custom/features/` go into the same list.
+
+```bash
+bun add @consify/blog
+bun add @consify/api-reference
+```
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { docs } from "@consify/docs";
+import { apiReference } from "@consify/api-reference";
+import { blog } from "@consify/blog";
+
+export default defineConfig({
+  site: { name: "My docs" },
+  features: [docs(), blog(), apiReference({ input: "./openapi.json" })],
+});
+```
+
+<Callout type="info" title="Import paths">
+  Write the file extension in imports of your own files (`./docs.config.ts`). Vite warns about
+  extensionless imports in configuration files.
+</Callout>
+
+## The commands
+
+| Command | What it does |
+| --- | --- |
+| `consify dev` | Development server with hot reload |
+| `consify build` | Production build (and the pre-rendered pages) |
+| `consify start` | Serves a `server` build (`build/server`) |
+| `consify typegen` | Generates route types, used by `typecheck` |
+| `consify check` | Checks the content: addresses, front matter, translations, `meta.json` |
+
+Anything after the command is passed on to the underlying tool, for example `consify dev --port 3000`.
+
+## Where to go for depth
+
+<Cards>
+  <Card title="How it works" description="What lives where, and why there is no app/ folder." href="/docs/v0/concepts" />
+  <Card title="Configuration" description="Every option in docs.config.ts." href="/docs/v0/configuration" />
+  <Card title="Writing content" description="Components, code blocks, math, search and SEO." href="/docs/v0/writing" />
+  <Card title="Customizing" description="Your own sections, components and slots." href="/docs/v0/customizing" />
+  <Card title="Deployment" description="Static, server, and every self-host detail." href="/docs/v0/deployment" />
+  <Card title="CLI reference" description="Every consify command." href="/docs/v0/reference/cli" />
+</Cards>

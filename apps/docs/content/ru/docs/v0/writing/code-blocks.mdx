@@ -1,0 +1,71 @@
+---
+title: Блоки кода
+description: Заголовки, подсветка, диффы, вкладки и код с проверкой типов
+---
+
+Код подсвечивается с помощью [Shiki](https://shiki.style) в светлой или тёмной теме сайта.
+
+## Заголовок и номера строк
+
+````mdx
+```ts title="server.ts" lineNumbers
+````
+
+```ts title="server.ts" lineNumbers
+import { createServer } from "node:http";
+
+createServer((_, res) => res.end("ok")).listen(3000);
+```
+
+## Подсветка строк
+
+Перечислите номера строк в фигурных скобках или отметьте строку комментарием:
+
+````mdx
+```ts {2,4-5}
+````
+
+```ts {2,4-5}
+const a = 1;
+const b = 2; // highlighted
+const c = 3;
+const d = 4; // highlighted
+const e = 5; // highlighted
+```
+
+```ts
+const kept = true; // [!code highlight]
+```
+
+## Диффы
+
+```ts
+const mode = "server"; // [!code --]
+const mode = "static"; // [!code ++]
+```
+
+## Вкладки
+
+Блоки с одной и той же группой `tab` превращаются во вкладки:
+
+````mdx
+```ts tab="Producer"
+await queue.add(job);
+```
+
+```ts tab="Worker"
+worker.process(handler);
+```
+````
+
+## Код с проверкой типов
+
+Блок с меткой `twoslash` компилируется, и у каждого идентификатора появляется подсказка с типом. Компилируются только такие блоки, поэтому обычные блоки остаются быстрыми.
+
+````mdx
+```ts twoslash
+const n: number = 1;
+```
+````
+
+Используйте `// ^?` под строкой, чтобы вывести тип, `// @errors: 2322`, чтобы ожидать ошибку, и `// ---cut---`, чтобы скрыть подготовительный код выше. Опции компилятора задаются в [`twoslash`](/docs/v0/reference/config).

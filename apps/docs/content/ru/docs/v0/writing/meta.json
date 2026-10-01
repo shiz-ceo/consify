@@ -1,0 +1,12 @@
+{
+  "title": "Написание контента",
+  "icon": "PenLine",
+  "pages": [
+    "index",
+    "components",
+    "code-blocks",
+    "math-and-diagrams",
+    "translations-and-versions",
+    "search-and-seo"
+  ]
+}

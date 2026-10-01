@@ -1,0 +1,255 @@
+---
+title: Файлы
+description: JSON, текст, XML и картинки по адресу фичи
+---
+
+Файл — это адрес без страницы: `/en/status/status.json`, `/en/changelog/feed.xml`, `/en/status/api/badge.svg`. Ни шапки, ни подвала, ни React. Функция возвращает то, чем отвечает адрес.
+
+## files
+
+`files` — объект, как и `pages`: ключ — адрес относительно фичи, значение — функция.
+
+```tsx title="custom/features/status.tsx"
+import { defineFeature } from "@consify/core";
+
+const services = [
+  { id: "api", name: "API", state: "operational" },
+  { id: "dashboard", name: "Dashboard", state: "degraded" },
+];
+
+export const status = defineFeature({
+  id: "status",
+  pages: {
+    "/": () => <main className="mx-auto w-full max-w-2xl px-4 py-12">Status</main>,
+  },
+  files: {
+    // /en/status/status.json, /ru/status/status.json
+    "/status.json": () => ({ services }),
+  },
+});
+```
+
+Теперь `/en/status/status.json` отвечает так:
+
+```json
+{"services":[{"id":"api","name":"API","state":"operational"},{"id":"dashboard","name":"Dashboard","state":"degraded"}]}
+```
+
+У файла, как и у страницы, есть адрес на каждом языке: `/en/status/status.json` и `/ru/status/status.json`. Если содержимое зависит от языка, используйте `lang`, если нет — не обращайте на него внимания.
+
+## Функция файла
+
+Эта функция — `load` файла. Она получает тот же контекст, что и `load` страницы: `lang`, `params`, `t`, `content`, `readFile`, `config`, `request`, `url`, `notFound`, `redirect`. Каждое поле описано в [Загрузке данных](/docs/v0/features/data).
+
+```tsx
+files: {
+  "/status.json": async ({ lang, t, content, url }) => ({
+    title: t("status"),
+    language: lang,
+    link: url(`/${lang}/status`),
+    services: await content.json("services.json"),
+  }),
+},
+```
+
+Как и `load`, она выполняется только на сервере, может быть `async` и может ответить 404 через `notFound()`.
+
+Значением может быть и объект с `load` и `paths` — для файла с параметрами (см. ниже):
+
+```tsx
+files: {
+  "/status.json": { load: () => ({ services }) },
+},
+```
+
+## Что может вернуть файл
+
+| Возвращает | Ответ |
+| --- | --- |
+| Объект или массив | JSON (`application/json`), при любом расширении |
+| Строку | Текст, тип содержимого — по расширению |
+| `Uint8Array` или `ArrayBuffer` | Байты, тип содержимого — по расширению |
+| `Response` | Этот ответ как есть: статус, заголовки, тело |
+
+### Тип содержимого берётся из расширения
+
+Для строки и байтов ядро смотрит на расширение ключа:
+
+| Расширение | Тип содержимого |
+| --- | --- |
+| `.json` | `application/json; charset=utf-8` |
+| `.xml` | `application/xml; charset=utf-8` |
+| `.rss` | `application/rss+xml; charset=utf-8` |
+| `.txt` | `text/plain; charset=utf-8` |
+| `.md` | `text/markdown; charset=utf-8` |
+| `.html` | `text/html; charset=utf-8` |
+| `.css` | `text/css; charset=utf-8` |
+| `.js` | `text/javascript; charset=utf-8` |
+| `.svg` | `image/svg+xml` |
+| `.png` | `image/png` |
+| `.jpg`, `.jpeg` | `image/jpeg` |
+| `.webp` | `image/webp` |
+| `.gif` | `image/gif` |
+| любое другое | `text/plain; charset=utf-8` для строки, `application/octet-stream` для байтов |
+
+Давайте каждому файлу расширение. На статическом сайте тип определяет хостинг — по имени файла, а не по вашему коду.
+
+## Примеры
+
+### JSON API
+
+```tsx
+files: {
+  // /en/status/services.json
+  "/services.json": async ({ content }) => {
+    const services = (await content.json<{ id: string; state: string }[]>("services.json")) ?? [];
+    return {
+      updated: new Date().toISOString(),
+      down: services.filter((service) => service.state !== "operational").length,
+      services,
+    };
+  },
+},
+```
+
+### Текстовый файл
+
+```tsx
+files: {
+  // /en/status/summary.txt
+  "/summary.txt": ({ t }) =>
+    services.map((service) => `${service.name}: ${t(service.state)}`).join("\n"),
+},
+```
+
+### XML
+
+```tsx
+const escape = (text: string) =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+files: {
+  // /en/status/services.xml
+  "/services.xml": () =>
+    `<?xml version="1.0" encoding="UTF-8"?>\n<services>\n${services
+      .map((s) => `  <service id="${escape(s.id)}">${escape(s.name)}</service>`)
+      .join("\n")}\n</services>\n`,
+},
+```
+
+### Байты
+
+```tsx
+// a 1×1 transparent GIF
+const pixel = Uint8Array.from(
+  atob("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"),
+  (char) => char.charCodeAt(0),
+);
+
+files: {
+  // /en/status/pixel.gif, answered as image/gif
+  "/pixel.gif": () => pixel,
+},
+```
+
+### Response с заголовками
+
+Возвращайте `Response`, когда нужен свой статус или свои заголовки:
+
+```tsx
+files: {
+  "/status.json": () =>
+    Response.json(
+      { services },
+      { headers: { "Cache-Control": "public, max-age=60", "Access-Control-Allow-Origin": "*" } },
+    ),
+  "/health.txt": () =>
+    new Response("ok", { status: 200, headers: { "Content-Type": "text/plain" } }),
+},
+```
+
+<Callout type="warn">
+  На статическом сайте файл записывается на диск при сборке, а отдаёт его хостинг. Заголовки и статус вашего `Response` там теряются, остаётся только тело. Заголовки в этом случае задаются в настройках хостинга.
+</Callout>
+
+## Файлы с параметрами
+
+В ключе, как и у страницы, могут быть параметры. Значок для каждого сервиса:
+
+```tsx
+const badge = (label: string, color: string) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="20"><rect width="120" height="20" rx="3" fill="${color}"/><text x="60" y="14" fill="#fff" font-family="sans-serif" font-size="11" text-anchor="middle">${label}</text></svg>`;
+
+files: {
+  // /en/status/api/badge.svg, /en/status/dashboard/badge.svg
+  "/:service/badge.svg": {
+    paths: () => services.map((service) => ({ service: service.id })),
+    load: ({ params, notFound }) => {
+      const service = services.find((s) => s.id === params.service) ?? notFound();
+      return badge(service.name, service.state === "operational" ? "#16a34a" : "#d97706");
+    },
+  },
+},
+```
+
+`paths` работает так же, как у страниц: перечисленные адреса создаются при сборке. Без `paths` сервер создаёт файл, когда его запрашивают, а на статическом сайте файла нет. Расширение оставляйте в последнем сегменте (`/:service/badge.svg`), а не в параметре: `/:service.svg` не поддерживается.
+
+## Когда создаются файлы
+
+| Файл | Сервер | Статический сайт |
+| --- | --- | --- |
+| Без параметров | При сборке | При сборке |
+| С параметрами и `paths` | Перечисленные — при сборке, остальные — по запросу | Только перечисленные |
+| С параметрами, без `paths` | По запросу | Не существует |
+
+Файл, созданный при сборке, хранит данные сборки — и на сервере тоже. В `sitemap.xml` файлы не попадают, только страницы.
+
+## Ссылка на файл
+
+Файл — не страница, поэтому `Link` должен загрузить его как документ:
+
+```tsx
+import { Link } from "react-router";
+
+// in a page component that gets `lang`
+<Link reloadDocument to={`/${lang}/status/status.json`}>
+  status.json
+</Link>
+```
+
+Чтобы предложить файл как место, которое сайт может поставить в шапку или подвал, верните его из `links` фичи:
+
+```tsx
+links: ({ lang }) => [
+  { id: "status:json", title: "JSON", description: "The state as JSON", url: `/${lang}/status/status.json` },
+],
+```
+
+Тогда сайт указывает `"status:json"` в `header.links` или `footer.columns`.
+
+## Файлы или страницы?
+
+| | Страница | Файл |
+| --- | --- | --- |
+| Возвращает | React-компонент | JSON, текст, байты, `Response` |
+| Шапка и подвал | Да (зависит от `layout`) | Нет |
+| `<head>`, заголовок | Да | Нет |
+| В `sitemap.xml` | Да | Нет |
+| Адрес | Любой ключ | Любой ключ, лучше с расширением |
+| Для кого | Люди | Программы, ленты, картинки, другие сайты |
+
+Постоянному файлу, который никогда не меняется (PDF, картинка, `CNAME`), фича вообще не нужна: положите его в `public/`. Файл фичи — для того, что вычисляется: из данных, из контента, для каждого языка. В адресе файла фичи всегда есть язык и фича, а файл из `public/` отдаётся от корня сайта.
+
+## Частые ошибки
+
+<Callout type="warn">
+  **JSON отдаётся как текст.** Функция возвращает строку из `JSON.stringify`, а в ключе нет `.json`. Верните сам объект или добавьте `.json` к ключу.
+</Callout>
+
+<Callout type="warn">
+  **Ссылка на файл его не открывает.** `Link` без `reloadDocument` пытается открыть адрес как страницу сайта. Добавьте `reloadDocument`.
+</Callout>
+
+<Callout type="warn">
+  **На статическом сайте файла нет.** В его ключе есть параметр, а `paths` нет.
+</Callout>

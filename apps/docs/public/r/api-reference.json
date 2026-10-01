@@ -1,0 +1,7 @@
+{
+  "name": "api-reference",
+  "type": "feature",
+  "description": "An API reference for your consify site, generated from an OpenAPI schema with Scalar",
+  "packageName": "@consify/api-reference",
+  "exportName": "apiReference"
+}

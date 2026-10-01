@@ -1,0 +1,80 @@
+---
+title: Blog
+description: Settings of the blog
+---
+
+The blog is a feature: it is on when `blog()` is in the `features` list of the config. Writing posts is covered in [Blog](/docs/v0/blog).
+
+## Install
+
+```bash
+bun add @consify/blog
+```
+
+Update it together with the core (see [Updating](/docs/v0/concepts/updating)).
+
+## Options
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { blog } from "@consify/blog";
+
+export default defineConfig({
+  site: { name: "My docs" },
+  features: [
+    blog({
+      title: { en: "Blog", ru: "Блог" },
+      description: "News and how-tos.",
+      perPage: 12,
+      categories: [
+        { id: "releases", label: { en: "Releases", ru: "Релизы" } },
+        { id: "guides", label: "Guides" },
+      ],
+      authors: {
+        ada: { name: "Ada Novak", role: "Core maintainer", avatar: "/authors/ada.jpg", url: "https://github.com/ada" },
+      },
+      share: true,
+      rss: true,
+    }),
+  ],
+});
+```
+
+<TypeTable
+  type={{
+    id: { description: "The address (`/{lang}/<id>`), the content folder (`content/<language>/<id>`) and the link id. Set it for a second blog.", type: "string", default: '"blog"' },
+    title: { description: "Heading of the blog page and its link in the header.", type: "string | Record<language, string>", default: 'the translated word "Blog"' },
+    description: { description: "Text under the heading.", type: "string | Record<language, string>" },
+    perPage: { description: "Posts on a page of the list.", type: "number", default: "12" },
+    categories: { description: "The filter of the list. A post lists the `id`s it belongs to. Ids are lowercase letters, digits and `-`.", type: "{ id, label }[]", default: "[]" },
+    authors: { description: "People by id. A post lists the ids of its authors.", type: "Record<id, { name, role?, avatar?, url? }>", default: "{}" },
+    share: { description: "Share buttons on a post (X, LinkedIn, Bluesky, copy link).", type: "boolean", default: "true" },
+    rss: { description: "The feed at `/{lang}/blog/rss.xml`, and the link `blog:rss`.", type: "boolean", default: "true" },
+  }}
+/>
+
+The options are validated when `blog()` is called, so a typo in an option name or a wrong type stops the start with a message that names `blog()` and the option. An unknown category or author in a post stops the build with a message that names the file.
+
+The blog also brings the MDX components for posts (see [Blog components](/docs/v0/blog/components)). Its strings, such as `backToBlog`, can be overridden with [`i18n.messages`](/docs/v0/configuration/languages).
+
+## Addresses
+
+| Address | What it is |
+| --- | --- |
+| `/{lang}/blog` | The list of posts, with filters and search |
+| `/{lang}/blog/<slug>` | A post, one per `.mdx` file of `content/<language>/blog/` |
+| `/{lang}/blog/rss.xml` | The feed (`rss`) |
+| `/{lang}/blog/og/<slug>.png` | The social image of a post |
+| `/{lang}/blog/search.json` | The search of the posts |
+
+Drafts and posts dated in the future are left out. `CONSIFY_DRAFTS=1` shows them while you write (see [Drafts and scheduling](/docs/v0/blog/drafts-and-scheduling)).
+
+## A second blog
+
+Each call of `blog()` with its own `id` is a separate blog, with its own folder, list, feed and link in the header:
+
+```ts title="docs.config.ts"
+features: [blog(), blog({ id: "news", title: { en: "News", ru: "Новости" } })],
+```
+
+The second blog lives in `content/<language>/news/` and opens at `/{lang}/news`.

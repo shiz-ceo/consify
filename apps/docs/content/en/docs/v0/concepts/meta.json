@@ -1,0 +1,5 @@
+{
+  "title": "How it works",
+  "icon": "Compass",
+  "pages": ["index", "project-structure", "rendering-modes", "updating"]
+}

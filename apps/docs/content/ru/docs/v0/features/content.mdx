@@ -1,0 +1,671 @@
+---
+title: Контент и записи
+description: Где лежат файлы фичи, что такое запись и как core читает, проверяет, переводит и компилирует их за вас
+---
+
+Фича может показывать текст, который пишут люди: файлы Markdown и MDX в папке `content/` сайта. Сами вы эти файлы не читаете. Core находит их, проверяет front matter, выбирает нужный язык, компилирует MDX и отдаёт странице готовые данные. Фича только рисует.
+
+Здесь всё об этом, с нуля. Если хотите сначала что-то собрать, а потом читать, пройдите [пошаговое руководство](/docs/v0/features/tutorial) и вернитесь.
+
+## Что core делает за вас
+
+Вы пишете это:
+
+```tsx
+content: { schema: example },
+pages: {
+  "/": page({ load: ({ content }) => content.entries(), component: List }),
+  "/:slug": { entry: true, component: Item },
+},
+```
+
+А core делает вот что:
+
+| Работа | Кто делает |
+| --- | --- |
+| Находит файлы в `content/<language>/<folder>/` | core |
+| Читает front matter (блок YAML в начале файла) | core |
+| Проверяет его вашей схемой и останавливается с именем файла, если он неверный | core |
+| Убирает черновики и сортирует остальное (`filter`, `sort`) | core, вашими функциями |
+| Берёт файл языка по умолчанию, когда перевода нет | core |
+| Компилирует MDX на сервере (подсветка кода, заголовки, формулы, диаграммы) | core |
+| Даёт каждому файлу адрес и отвечает 404 на неизвестный | core |
+| Заполняет `<head>`: заголовок, описание, канонический адрес, языки, картинку для соцсетей | core |
+| Делает боковое меню, поиск, `llms.txt`, картинки для соцсетей и ленту | core, если их включить |
+| Рисует список и страницу | **вы** |
+
+## Где лежат файлы
+
+Файлы фичи лежат в `content/<language>/<folder>/`. Папка — это `id` фичи, если не задан `folder`:
+
+<Files>
+  <Folder name="content" defaultOpen>
+    <Folder name="en" defaultOpen>
+      <Folder name="examples" defaultOpen>
+        <File name="cron-schedule.mdx" />
+        <File name="priority-lanes.mdx" />
+        <File name="retry-with-backoff.mdx" />
+      </Folder>
+    </Folder>
+    <Folder name="ru" defaultOpen>
+      <Folder name="examples" defaultOpen>
+        <File name="retry-with-backoff.mdx" />
+      </Folder>
+    </Folder>
+  </Folder>
+  <File name="docs.config.ts" />
+</Files>
+
+```ts
+defineFeature({ id: "examples" });                      // content/<language>/examples/
+defineFeature({ id: "examples", folder: "recipes" });   // content/<language>/recipes/
+defineFeature({ id: "examples", path: "cookbook" });    // address /<language>/cookbook, files still in examples/
+```
+
+- `folder` меняет место файлов. `path` меняет адрес. Они не зависят друг от друга.
+- У каждого языка своя папка с тем же деревом внутри. У языка по умолчанию папка тоже есть: у сайта с одним языком есть только `content/en/`.
+- Вложенные папки можно: `content/en/examples/queues/lanes.mdx`.
+- Файл или папка, имя которых начинается с `.`, пропускаются.
+- Картинки сюда не кладут. Положите их в `public/` и пишите `![Chart](/examples/chart.png)`.
+
+## Что такое запись
+
+**Один файл `.md` или `.mdx` в папке — это одна запись.** Запись — это файл, описанный как данные: где он лежит, какой у него адрес, на каком языке он написан и что написано в его front matter.
+
+Для `content/en/examples/retry-with-backoff.mdx` запись на английском такая:
+
+```ts
+{
+  slug: "retry-with-backoff",
+  url: "/en/examples/retry-with-backoff",
+  path: "retry-with-backoff.mdx",
+  lang: "en",
+  fallback: false,
+  data: {
+    title: "Retry with backoff",
+    description: "Retry a failing job with exponential delays.",
+    level: "beginner",
+    tags: ["retries", "jobs"],
+    date: new Date("2026-08-01"),
+  },
+  readingTime: 1,
+}
+```
+
+| Поле | Что это |
+| --- | --- |
+| `slug` | Адрес записи внутри фичи. Делается из пути, см. ниже |
+| `url` | Полный адрес её страницы, с языком: `/en/examples/retry-with-backoff` |
+| `path` | Файл относительно папки фичи: `retry-with-backoff.mdx`, `queues/lanes.mdx` |
+| `lang` | Язык, на котором файл **написан**. Не всегда язык страницы, см. `fallback` |
+| `fallback` | `true`, когда перевода на этот язык нет и вместо него показан файл языка по умолчанию |
+| `data` | Front matter, проверенный вашей схемой (с подставленными значениями по умолчанию и преобразованиями) |
+| `readingTime` | Минуты на чтение текста: слова делить на 200, с округлением вверх, минимум 1 |
+
+Тип — `Entry<Data>` из `@consify/core`. `Data` — тип front matter.
+
+### Как получается slug
+
+Slug — это путь без расширения. Файл с именем `index` получает адрес своей папки:
+
+| Файл | `slug` | `url` (фича `examples`) |
+| --- | --- | --- |
+| `retry-with-backoff.mdx` | `retry-with-backoff` | `/en/examples/retry-with-backoff` |
+| `queues/lanes.mdx` | `queues/lanes` | `/en/examples/queues/lanes` |
+| `queues/index.mdx` | `queues` | `/en/examples/queues` |
+| `index.mdx` | `""` (пусто) | `/en/examples` |
+
+Slug никогда не переводится. У русского файла то же имя, поэтому его адрес — `/ru/examples/retry-with-backoff`.
+
+### Файлы, которые не записи
+
+Записи — только файлы `.md` и `.mdx`. `meta.json`, `authors.json` или `data.yml` в той же папке записью не являются, но прочитать их можно (см. [низкоуровневый API](#низкоуровневый-api)).
+
+<Callout type="warn">
+Каждый файл `.md` и `.mdx` в папке — запись, даже если вы задумали его как кусок другой страницы. Если у фичи есть страница записи, у такого файла появится свой адрес. Уберите его через `filter` (см. ниже) и читайте через `content.mdx()`.
+</Callout>
+
+## Front matter и схема
+
+Front matter (заголовок файла) — это блок YAML между двумя строками `---` в начале файла:
+
+```mdx title="content/en/examples/cron-schedule.mdx"
+---
+title: A job on a schedule
+description: Run a job every night with a cron expression.
+level: beginner
+tags: [cron, jobs]
+date: 2026-08-10
+---
+
+The text of the entry.
+```
+
+Без схемы `entry.data` — это просто объект из YAML с типом `Record<string, unknown>`, и никто его не проверяет. Опечатка вроде `levle: beginner` пройдёт незамеченной, пока не сломается страница.
+
+Со схемой core проверяет каждый файл. Схема — это объект Zod. `z` экспортируется из `@consify/core`, ставить Zod не нужно:
+
+```ts
+import { defineFeature, z } from "@consify/core";
+
+const example = z.object({
+  title: z.string(),
+  description: z.string(),
+  level: z.enum(["beginner", "advanced"]),
+  tags: z.array(z.string()).default([]),
+  date: z.coerce.date(),
+});
+
+type Example = z.output<typeof example>;
+
+export const examples = defineFeature({
+  id: "examples",
+  content: { schema: example },
+});
+```
+
+Что даёт схема:
+
+- **Проверку.** Файл без `description` или с `level: expert` останавливает сайт, и файл назван.
+- **Значения по умолчанию.** Файл без `tags` получает `tags: []`, и странице не нужно проверять `undefined`.
+- **Преобразования.** `z.coerce.date()` превращает текст `2026-08-10` в `Date`, и по нему можно сортировать.
+- **Тип.** `z.output<typeof example>` — тип `entry.data` после проверки. Передавайте его как `Entry<Example>`.
+
+<Callout type="warn">
+YAML читает `date: 2026-08-10` как текст `"2026-08-10"`, а не как дату. Пишите `z.coerce.date()`, а не `z.date()`: второй отвергнет каждый файл.
+</Callout>
+
+### Как выглядит неверный файл
+
+Пусть в `cron-schedule.mdx` написано `level: expert` и нет `description`. Core собирает все ошибки всех файлов и останавливается с одним сообщением:
+
+```text
+Invalid content of "examples":
+  - content/en/examples/cron-schedule.mdx: description: Invalid input: expected string, received undefined
+  - content/en/examples/cron-schedule.mdx: level: Invalid option: expected one of "beginner"|"advanced"
+```
+
+Каждая строка — `файл: поле: ошибка`. Сломанный YAML (пропущенная кавычка, неверный отступ) сообщается так же, только вместо поля стоит `front matter`.
+
+Это сообщение вы увидите:
+
+- в `consify dev` — на странице, которая читает записи;
+- в `consify check` — ещё до сборки;
+- в `consify build` — сборка упадёт.
+
+<Callout type="warn">
+Схема проверяет и переводы. Если в `content/ru/examples/cron-schedule.mdx` написано `level: продвинутый`, ошибка назовёт этот файл. Значения, которые сравнивает код (`level`, `tags`, `date`), во всех языках должны быть одинаковыми; переводится только текст.
+</Callout>
+
+### Ключи front matter, которые читает сам core
+
+В схеме могут быть любые поля. Несколько имён для core что-то значат:
+
+| Ключ | Где используется |
+| --- | --- |
+| `title` | `<title>` страницы записи, боковое меню, поиск, `llms.txt`, картинка для соцсетей, лента |
+| `description` | `<meta name="description">`, поиск, `llms.txt`, картинка для соцсетей, лента |
+| `date` | `<pubDate>` в ленте |
+| `categories`, `tags` | `<category>` в ленте |
+| `icon` | Иконка [Lucide](https://lucide.dev/icons) в боковом меню (`icon: Rocket`) |
+| `full` | Сохраняется в данных бокового меню; документация ставит `full: true` для широкой страницы без оглавления |
+
+Запись без `title` называется в боковом меню по имени файла (`cron-schedule`), а в ленте — по slug.
+
+## Как убрать записи: filter
+
+`filter` получает каждую проверенную запись и возвращает `false` для тех, которых не должно быть:
+
+```ts
+content: {
+  schema: example,
+  filter: (entry: Entry<Example>) => !entry.data.draft,
+},
+```
+
+Отфильтрованной записи нет нигде: `content.entries()` её не вернёт, её страница отвечает 404, её нет в боковом меню, поиске, `llms.txt`, ленте, картинках для соцсетей и карте сайта.
+
+Блог так убирает черновики и статьи с датой в будущем:
+
+```ts
+filter: (entry: Entry<PostFrontmatter>) =>
+  process.env.CONSIFY_DRAFTS === "1" || isPublished(entry.data),
+```
+
+<Callout type="warn">
+Фильтр работает после схемы, поэтому `entry.data` уже проверен и преобразован. Но файл, не прошедший схему, останавливает сайт, даже если фильтр бы его убрал: черновик тоже должен быть верным.
+</Callout>
+
+## Порядок: sort
+
+Без `sort` записи идут в порядке путей (по алфавиту). `sort` — обычная функция сравнения:
+
+```ts
+content: {
+  schema: example,
+  // newest first
+  sort: (a: Entry<Example>, b: Entry<Example>) => b.data.date.getTime() - a.data.date.getTime(),
+},
+```
+
+Этот порядок используют `content.entries()` и лента. У бокового меню свой порядок, из `meta.json` (см. [боковое меню](/docs/v0/features/content-services)).
+
+<Callout type="info">
+Внутри `content` у `entry.data` тип `any`, если не указать тип параметра. Пишите `(a: Entry<Example>, b: Entry<Example>)`, как выше: тогда опечатка в `b.data.dtae` станет ошибкой типов.
+</Callout>
+
+## Список записей: content.entries()
+
+`load` любой страницы фичи получает `content`. `content.entries()` возвращает каждую запись **на языке страницы**: проверенную, отфильтрованную и отсортированную.
+
+```tsx
+import { defineFeature, type Entry, type PageProps, page } from "@consify/core";
+
+function ExampleList({ data }: PageProps<Entry<Example>[]>) {
+  return (
+    <ul>
+      {data.map((entry) => (
+        <li key={entry.slug}>
+          <a href={entry.url}>{entry.data.title}</a> · {entry.readingTime} min
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export const examples = defineFeature({
+  id: "examples",
+  content: { schema: example },
+  pages: {
+    "/": page({
+      load: ({ content }) => content.entries<Example>(),
+      component: ExampleList,
+    }),
+  },
+});
+```
+
+- `load` выполняется на сервере. То, что он вернул, — это `data` компонента (см. [Загрузка данных](/docs/v0/features/data)).
+- `page()` во время работы ничего не делает. Он только связывает тип `load` с типом `data`.
+- `entries<Example>()` сообщает TypeScript тип `data`. Он ничего не проверяет: проверяет схема.
+- На `/ru/examples` в списке все русские файлы плюс английские, у которых нет русской версии, с `fallback: true`. См. [Переводы](#переводы).
+
+Перед тем как вернуть список, `load` может сделать с ним что угодно:
+
+```ts
+load: async ({ content }) => {
+  const all = await content.entries<Example>();
+  return {
+    beginner: all.filter((entry) => entry.data.level === "beginner"),
+    advanced: all.filter((entry) => entry.data.level === "advanced"),
+    total: all.length,
+  };
+},
+```
+
+<Callout type="warn">
+Возвращайте только то, что нужно странице. `data` уходит в браузер внутри HTML. Запись маленькая (без текста, только front matter), так что список из сотен записей — нормально; скомпилированный текст каждой записи — нет.
+</Callout>
+
+## Страница для каждой записи: entry: true
+
+Страница с `entry: true` — это страница одной записи. Её адрес называет запись:
+
+```tsx
+pages: {
+  "/": page({ load: ({ content }) => content.entries<Example>(), component: ExampleList }),
+  "/:slug": { entry: true, component: ExamplePage },
+},
+```
+
+Теперь `/en/examples/cron-schedule` показывает `cron-schedule.mdx`. Вы не пишете ни `load`, ни `paths`, ни проверку на 404.
+
+### "/:slug" или "/*"
+
+| Адрес | Принимает | Когда использовать |
+| --- | --- | --- |
+| `"/:slug"` | один сегмент: `cron-schedule` | все файлы лежат прямо в папке и нет `index.mdx` |
+| `"/*"` | любое число сегментов или ни одного: `queues/lanes`, `""` | есть вложенные папки или `index.mdx` (так сделана документация) |
+
+Core берёт slug из `*`, если он есть в адресе, иначе из первого параметра, как бы тот ни назывался.
+
+<Callout type="warn">
+`"/:slug"` не вмещает `queues/lanes` и пустой slug файла `index.mdx`. С такими файлами сборка падает или ссылки ведут на 404. Переходите на `"/*"`, как только в папке появились вложенные папки или `index.mdx`. И при `"/*"` не заводите ещё и страницу `"/"`: эта страница — `index.mdx`.
+</Callout>
+
+### Что core делает для страницы записи
+
+1. **Адреса.** Он перечисляет по адресу на каждую запись и язык, поэтому статический сайт отрисует их все заранее, и они попадут в карту сайта. `paths` писать не нужно. (Если напишете, победит ваш `paths`.)
+2. **Поиск записи.** На запрос он берёт slug из адреса и вызывает `content.entry(slug)`.
+3. **404.** Если записи с таким slug нет (или она отфильтрована), ответом будет страница 404 сайта.
+4. **`<head>`.** `title` и `description` из front matter, канонический адрес, ссылки `hreflang` на существующие переводы и картинка для соцсетей, если включён `og`.
+5. **Непереведённая копия.** Когда запись показана на языке по умолчанию (`fallback: true`), канонический адрес — адрес оригинала, `<html lang>` — язык текста, а сам адрес не попадает в карту сайта, чтобы поисковики не видели дубль.
+6. **`data`.** Компонент получает запись со скомпилированным текстом как `data`.
+
+### Что такое data: EntryPage
+
+`data` страницы записи — это `EntryPage<Data>`: все поля записи и ещё:
+
+| Поле | Что это |
+| --- | --- |
+| `code` | Скомпилированный текст, для `<Mdx code={data.code} />` |
+| `toc` | Заголовки: `{ title, url, depth }[]`, для оглавления |
+| `alternates` | Язык → адрес этой записи на том языке, для существующих переводов |
+| `original` | Адрес этой записи на языке по умолчанию |
+| `tree` | Боковое меню, только если включён `content.tree` (см. [боковое меню](/docs/v0/features/content-services)) |
+
+```tsx
+import { type EntryPage, Mdx, type PageProps } from "@consify/core";
+
+function ExamplePage({ data }: PageProps<EntryPage<Example>>) {
+  return (
+    <main className="mx-auto w-full max-w-3xl px-4 py-12">
+      <h1 className="text-3xl font-semibold">{data.data.title}</h1>
+      <p>{data.readingTime} min</p>
+      <Mdx code={data.code} className="prose mt-8" />
+    </main>
+  );
+}
+```
+
+`data.data` — не опечатка: `data` — то, что получила страница, а `data.data` — front matter записи.
+
+### Как поменять head страницы записи
+
+`meta` страницы накладывается поверх того, что сделал core, ключ за ключом. Ключи, которые вы не вернули, остаются. Блог добавляет теги и оставляет заголовок, описание и картинку записи:
+
+```ts
+"/:slug": page({
+  entry: true,
+  load: (context) => postData(context, options),
+  meta: ({ data }) => ({
+    head: [
+      { property: "og:type", content: "article" },
+      { property: "article:published_time", content: data.post.date },
+    ],
+  }),
+  component: PostPage,
+}),
+```
+
+`title` страницы используется только для записи, у которой нет `title` во front matter. Чтобы поменять заголовок всех страниц записей, возвращайте `title` из `meta`.
+
+## Показ текста: Mdx
+
+`<Mdx>` из `@consify/core` выполняет скомпилированный текст на странице:
+
+```tsx
+<Mdx code={data.code} />
+```
+
+| Свойство | По умолчанию | Что делает |
+| --- | --- | --- |
+| `code` | | `code` из `EntryPage` или из `content.mdx()` |
+| `components` | | Компоненты только для этого текста: добавляются к компонентам сайта или заменяют их |
+| `className` | `"prose"` | Классы оборачивающего `div`. `prose` — типографика сайта. Передайте `""`, если текст уже оформляет родитель |
+
+Каждый MDX-компонент сайта работает в тексте без импорта: встроенные (`Callout`, `Tabs`, `Steps`…), `mdx.components` из конфига, `custom/components/` и `components` каждой фичи.
+
+Замените тег только для одной фичи, например чтобы внешние ссылки открывались в новой вкладке:
+
+```tsx
+import type { ComponentProps } from "react";
+
+function OutsideLink(props: ComponentProps<"a">) {
+  const outside = props.href?.startsWith("http");
+  return <a {...props} {...(outside ? { target: "_blank", rel: "noreferrer" } : {})} />;
+}
+
+<Mdx code={data.code} components={{ a: OutsideLink }} />
+```
+
+### Как компилируется текст
+
+MDX компилируется на сервере тем же конвейером, что и документация сайта. Браузер только выполняет результат и никогда не скачивает компилятор. Конвейер:
+
+- GitHub Markdown: таблицы, списки задач, `~~зачёркивание~~`, автоссылки;
+- id у заголовков (отсюда берётся `toc`);
+- картинки из `public/` с прочитанными размерами;
+- вкладки кода, вкладки менеджеров пакетов (`npm` → `pnpm`, `yarn`, `bun`);
+- данные для поиска (заголовки и абзацы);
+- диаграммы Mermaid, формулы, если включён `mdx.math`;
+- подсветка кода, с Twoslash, если включён `mdx.twoslash`;
+- затем плагины из `mdx.plugins`.
+
+Файл `.md` компилируется как обычный Markdown: без JSX, без компонентов, `<` — просто символ. Файл `.mdx` разрешает компоненты.
+
+<Callout type="warn">
+`code` — это JavaScript, который выполняет браузер. Это безопасно, потому что он скомпилирован из файлов вашей собственной папки `content/`. Никогда не собирайте `code` из текста, который ввёл посетитель.
+</Callout>
+
+### Оглавление из toc
+
+```tsx
+<nav>
+  {data.toc.map((item) => (
+    <a key={item.url} href={item.url} style={{ paddingLeft: (item.depth - 2) * 12 }}>
+      {item.title}
+    </a>
+  ))}
+</nav>
+```
+
+`url` — это `#id-заголовка`, `depth` равен 2 для `##` и 3 для `###`.
+
+## Страница записи, которая загружает больше: load с entry
+
+Иногда странице записи нужно больше, чем сама запись: похожие записи, авторы, ссылка на следующую. Добавьте `load`. На странице записи `load` получает запись как `entry`, и **то, что вернул `load`, становится `data`** вместо записи:
+
+```tsx
+"/:slug": page({
+  entry: true,
+  load: async ({ entry, content }) => {
+    const current = entry as EntryPage<Example>;
+    const all = await content.entries<Example>();
+    const related = all
+      .filter((other) => other.slug !== current.slug)
+      .filter((other) => other.data.tags.some((tag) => current.data.tags.includes(tag)))
+      .slice(0, 3);
+    return { ...current, related };
+  },
+  component: ExamplePage,
+}),
+```
+
+- `...current` сохраняет `code`, `toc`, `data` и остальное; без него компонент получил бы только `related`.
+- `entry` описан как необязательный, потому что у `load` всех страниц один и тот же контекст. На странице с `entry: true` он есть всегда: если записи нет, core ответит 404 ещё до `load`.
+- `<head>` всё равно делается из записи, а не из того, что вернул `load`.
+
+Блог делает так же, чтобы показать «Читайте также» под статьёй:
+
+```ts
+async function postData(context: LoadContext, options: BlogOptions) {
+  const { content, config, lang, url } = context;
+  const entry = context.entry as EntryPage<PostFrontmatter>;
+  const post = toPost(entry);
+  return {
+    ...entry,
+    post,
+    related: relatedPosts(post, (await content.entries<PostFrontmatter>()).map(toPost)),
+    share: options.share ? url(entry.url) : undefined,
+  };
+}
+```
+
+## Переводы
+
+Перевод — это файл с **тем же путём** в папке другого языка: `content/ru/examples/retry-with-backoff.mdx`. И всё: ни id, ни ссылок между файлами.
+
+Когда у языка нет файла для записи, core берёт файл языка по умолчанию. Как именно — решает `i18n.fallback` в `docs.config.ts`:
+
+| | `notice` (по умолчанию) | `show` | `hide` |
+| --- | --- | --- | --- |
+| В `content.entries()` для `ru` | да, `fallback: true`, `lang: "en"` | да, `fallback: false`, `lang: "en"` | нет |
+| Страница `/ru/examples/cron-schedule` | английский текст | английский текст | 404 |
+| Канонический адрес | `/en/examples/cron-schedule` | свой | |
+| `<html lang>` | `en` | `ru` | |
+| В карте сайта | нет | да | нет |
+| Ссылки `hreflang` | языки, где файл есть | все языки | |
+| Боковое меню | страница с пометкой `EN` | страница | страницы нет |
+| Лента, поиск, `llms.txt` | да | да | нет |
+
+При `notice` core помечает запись, а **пометку рисует ваша страница**. Core не добавляет текст в ваш компонент. Используйте `entry.fallback`:
+
+```tsx
+// in a list
+{entry.fallback ? <span>{t("english")}</span> : null}
+```
+
+а на странице записи — пометку сайта со ссылкой на оригинал:
+
+```tsx
+import { FallbackNotice } from "@consify/core";
+
+{data.fallback ? <FallbackNotice original={data.original} /> : null}
+```
+
+`FallbackNotice` пишет на языке страницы «Эту страницу ещё не перевели. Показана версия: English.» и даёт ссылку на `original`. `className` добавляет ему классы: в демо это `"mt-6"`.
+
+<Callout type="info">
+`FallbackNotice` загружается, когда его рисуют в первый раз, поэтому файл фичи может импортировать его из `@consify/core` рядом с `defineFeature`, и Node по-прежнему загружает этот файл вместе с `docs.config.ts`. `@consify/core/ui` тоже его экспортирует — для файлов страниц, которые и так берут оттуда части раскладки.
+</Callout>
+
+`entry.lang` — язык файла, `lang` страницы — язык адреса. На `/ru/examples` у непереведённой записи `lang: "en"`, поэтому `entry.lang !== lang` тоже говорит, что она не переведена, при любом режиме `fallback`.
+
+`consify check` сравнивает каждый перевод с оригиналом: те же блоки кода, те же внутренние ссылки, то же число заголовков. `consify check --strict` ещё и падает на отсутствующем переводе.
+
+## Низкоуровневый API
+
+`content.entries()` и страниц записей хватает большинству фич. Для остального у `content` есть методы пониже. Все они работают на языке страницы, так же откатываются на язык по умолчанию, как записи, и принимают пути относительно папки фичи:
+
+| Метод | Возвращает |
+| --- | --- |
+| `list(dir?)` | Все файлы внутри `dir` (по умолчанию вся папка) как `ContentFile[]`, по порядку путей |
+| `read(path)` | Текст файла, `undefined`, если его нет |
+| `json(path)` | JSON-файл, разобранный. `json<T>()` задаёт его тип (без проверки) |
+| `frontmatter(path)` | Front matter MDX-файла, без компиляции |
+| `mdx(path)` | MDX-файл, скомпилированный для `<Mdx>`: `MdxFile` |
+| `in(lang)` | Тот же `content` на другом языке |
+| `entries()` | Записи (см. выше) |
+| `entry(slug)` | Одна запись с текстом (`EntryPage`), `undefined`, если её нет |
+| `root` | Папка, для сообщений: `/site/content/en/examples` |
+
+`ContentFile` — это `{ path, slug, lang, fallback }`. Здесь `fallback` равен `true` для любого файла, взятого из языка по умолчанию, что бы ни говорил `i18n.fallback`. `Entry.fallback` в режиме `show` равен `false`, а `ContentFile.fallback` — нет.
+
+Путь, который выходит за папку (`../docs/secret.mdx`, `/etc/passwd`), бросает ошибку `content: "../docs/secret.mdx" is outside of the content folder`.
+
+### Чтение JSON-файла
+
+Данные, которые люди правят рядом с записями и переводят так же:
+
+```json title="content/en/examples/levels.json"
+{
+  "beginner": { "label": "Beginner", "color": "green" },
+  "advanced": { "label": "Advanced", "color": "orange" }
+}
+```
+
+```ts
+"/": page({
+  load: async ({ content }) => ({
+    entries: await content.entries<Example>(),
+    levels: (await content.json<Record<string, { label: string; color: string }>>("levels.json")) ?? {},
+  }),
+  component: ExampleList,
+}),
+```
+
+На `/ru/examples` читается `content/ru/examples/levels.json`, если он есть, иначе английский. `?? {}` закрывает случай, когда файла нет.
+
+### Список файлов вложенной папки
+
+```ts
+load: async ({ content }) => {
+  const files = await content.list("snippets");
+  // [{ path: "snippets/cron.ts", slug: "snippets/cron", lang: "en", fallback: false }, ...]
+  return Promise.all(
+    files.map(async (file) => ({ name: file.path, code: (await content.read(file.path)) ?? "" })),
+  );
+},
+```
+
+### Front matter без компиляции
+
+Компиляция — медленная часть. Когда нужно лишь несколько полей одного файла, прочитайте его front matter:
+
+```ts
+const header = await content.frontmatter<{ title: string }>("cron-schedule.mdx");
+```
+
+Схема его не проверяет: это сырой YAML.
+
+### Кусок текста, который не запись
+
+Вступление над списком, написанное на MDX и переведённое, как всё остальное. Уберите его из записей через `filter`, затем скомпилируйте через `mdx()`:
+
+```tsx
+content: {
+  schema: example,
+  filter: (entry) => entry.path !== "_intro.mdx",
+},
+pages: {
+  "/": page({
+    load: async ({ content }) => ({
+      intro: await content.mdx("_intro.mdx"),
+      entries: await content.entries<Example>(),
+    }),
+    component: ({ data }) => (
+      <main>
+        {data.intro ? <Mdx code={data.intro.code} /> : null}
+        {/* the list */}
+      </main>
+    ),
+  }),
+},
+```
+
+Схема всё равно проверяет `_intro.mdx` (она работает до фильтра), так что его front matter должен ей подходить — или сделайте поля необязательными.
+
+`mdx()` возвращает `MdxFile`: поля `ContentFile`, а ещё `frontmatter`, `code`, `toc`, `text` (Markdown без front matter), `languages` (все языки, на которых файл есть) и `structuredData` (для поискового индекса).
+
+### Другой язык: in()
+
+`content` всегда на языке страницы. `in()` переключает его:
+
+```ts
+load: async ({ content, config }) => {
+  const own = await content.entries<Example>();
+  const original = await content.in(config.i18n.defaultLanguage).entries<Example>();
+  return { translated: own.filter((entry) => !entry.fallback).length, total: original.length };
+},
+```
+
+## Что кешируется
+
+| Где | Что происходит |
+| --- | --- |
+| `consify dev` | Ничего не хранится. Каждый запрос заново читает файлы, а сохранение, добавление или удаление файла в `content/` перезагружает открытую страницу. Скомпилированный текст хранится по тексту файла, так что неизменённый файл дважды не компилируется |
+| Собранный сервер (`consify start`) | Записи, боковое меню и поисковый индекс читаются один раз и хранятся, пока сервер работает. Чтобы поменять контент, соберите заново |
+| Статический сайт | Каждая страница отрисована при сборке. Потом кешировать нечего |
+
+## Собранный сервер несёт контент с собой
+
+`consify build` кладёт файлы `content/` в сборку сервера. Собранный сервер читает их оттуда, поэтому выкладывать нужно только сборку: папка `content/` рядом не нужна. Берутся файлы `.md`, `.mdx`, `.json`, `.yml`, `.yaml` и `.txt`.
+
+<Callout type="warn">
+`readFile` из `load` читает файл проекта с диска, а не из сборки. Используйте его только для файлов, которые есть там, где работает сервер (так делает `apiReference()` со своей схемой), а для файлов `content/` — `content.read()` и `content.json()`. Файла `.csv` или картинки из `content/` в сборке нет: картинки кладите в `public/`, а данные переводите в JSON.
+</Callout>
+
+## Частые ошибки
+
+| Что видно | Почему | Что делать |
+| --- | --- | --- |
+| `Invalid content of "examples"` | Файл не подходит под схему | Исправьте файл, названный в сообщении, или ослабьте схему (`.optional()`, `.default()`) |
+| Каждый файл падает на `date` | `z.date()` получает из YAML текст | `z.coerce.date()` |
+| Список пуст | Папка не `content/<language>/<id>/`, или неверный `folder` | Проверьте путь; `content.root` показывает, где ищет core |
+| Ссылка на запись ведёт на 404 | `"/:slug"` при вложенной папке или `index.mdx` | `"/*"` |
+| Страница показывает только добавленные поля, без текста | `load` страницы записи не сохранил запись | `return { ...entry, more }` |
+| Ошибка про `consify:instance` при запуске сайта | Файл фичи импортирует `@consify/core/ui` (`docsLayoutOptions`, `Footer`) | Вынесите страницу в отдельный файл и загружайте через `lazy()` |
+| Новый файл не появился на собранном сайте | Контент берётся при сборке | Соберите заново |
+
+Дальше: [боковое меню, поиск, `llms.txt`, картинки и RSS](/docs/v0/features/content-services) для вашего контента и [пошаговое руководство](/docs/v0/features/tutorial).

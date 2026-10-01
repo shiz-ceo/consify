@@ -1,0 +1,48 @@
+---
+title: A guide
+description: An example of a page with steps, tabs and code
+icon: Compass
+---
+
+A guide walks the reader from a goal to a working result.
+
+## Install
+
+<Tabs items={["bun", "npm", "pnpm"]}>
+  <Tab value="bun">
+```bash
+bun add my-library
+```
+  </Tab>
+  <Tab value="npm">
+```bash
+npm install my-library
+```
+  </Tab>
+  <Tab value="pnpm">
+```bash
+pnpm add my-library
+```
+  </Tab>
+</Tabs>
+
+## Use it
+
+```ts title="index.ts" {3}
+import { greet } from "my-library";
+
+console.log(greet("world"));
+```
+
+<Callout type="warn">
+  Show mistakes too: what the reader should not do, and what they will see if they do.
+</Callout>
+
+## Options
+
+<TypeTable
+  type={{
+    name: { description: "Who to greet.", type: "string", required: true },
+    shout: { description: "Write the greeting in capital letters.", type: "boolean", default: "false" },
+  }}
+/>

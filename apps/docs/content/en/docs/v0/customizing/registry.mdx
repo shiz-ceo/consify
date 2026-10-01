@@ -1,0 +1,118 @@
+---
+title: Registry
+description: Install and share components, features, skills and theme snippets with consify add
+icon: PackagePlus
+---
+
+`consify add` installs a **registry item** — a component, plugin, feature, skill or theme snippet
+published as JSON somewhere reachable over HTTP — into your project, the same way a shadcn/ui
+component gets copied into a project instead of imported from a package. Nothing is imported from
+`node_modules` at runtime; the files land in your own `custom/` folder, yours to read and edit.
+
+```bash
+consify add @shiz-ceo/pricing-card    # a namespaced item, from a configured registry
+consify add pricing-card              # a bare name, from your default registry
+consify add https://acme.dev/r/pricing-card.json   # a full URL, no registry configured needed
+```
+
+## The three ways to name one
+
+- **`@namespace/name`** — looks up `@namespace` in `consify.registries.json` and substitutes `name`
+  into that registry's template URL.
+- **A bare name** — resolves against whichever registry is marked `"default": true`. Fails with a
+  clear message if none is.
+- **A full URL** — used as-is, no registry configuration needed at all. The way to try an item
+  someone linked you before setting up a source for it properly.
+
+A freshly scaffolded project already has one registry configured, `@shiz-ceo`, pointing at consify's
+own official items and marked as the default — so a bare name works out of the box once that
+registry actually has something published under it.
+
+## Configuring a private registry
+
+```bash
+consify registry add-source @acme https://acme.dev/r/{name}.json
+consify registry add-source @internal https://ui.company.internal/r/{name}.json \
+  --header "Authorization: Bearer ${COMPANY_REGISTRY_TOKEN}" --default
+consify registry list-sources
+consify registry remove-source @acme
+```
+
+The URL must contain the literal `{name}` placeholder — `consify add` substitutes the bare item name
+into it. `--header` may be given more than once; a value containing `${VAR_NAME}` is read from your
+own environment at install time, never written to disk — `consify.registries.json` itself is safe to
+commit, it only ever stores which environment variable a header needs, not its value.
+`--default` makes that registry the one a bare name (no `@namespace`) resolves against; only one
+registry can be the default at a time, and adding a new default clears the old one automatically.
+
+Removing a source (`remove-source`) only forgets where to fetch from — it never touches anything
+already installed from it. Use `consify remove` for that.
+
+## The five item types
+
+| Type | Where it lands | Notes |
+| --- | --- | --- |
+| `component` | `custom/components/` | One or more files, typically a single `.tsx` |
+| `plugin` | `custom/plugins/` | A module calling `definePlugin` |
+| `feature` | Nowhere — it's an npm package | Installs `packageName` with your project's package manager (`bun add`, etc.), plus anything in `dependencies`, then prints the one line to add to `features` — see below |
+| `skill` | `custom/skills/<name>/` | A skill of your project, collected by `consify skill sync` like the skills of the `@consify/*` packages |
+| `theme` | `custom/` | Plain files, like `component`/`plugin` — typically just `custom/theme.css`, the file consify's own theme system loads after its own tokens |
+
+A `feature`-type item is always "install this package, then enable it" — never a file copy. A real
+feature like the blog is a package with its own pages, options and skills that only works correctly
+as a properly versioned, updatable npm package, so `consify add blog` runs
+`bun add @consify/blog` (or your project's package manager) and prints:
+
+```ts
+import { blog } from "@consify/blog";
+features: [..., blog()],
+```
+
+`docs.config.ts` is **not** edited for you — you paste that line in yourself. It still gets a
+`consify.registry-lock.json` entry (with an empty file list, since nothing was written to disk), so
+`consify list` shows it installed and `registryDependencies` bookkeeping still works.
+`consify remove` on a `feature` item only deletes that lockfile entry — it prints a reminder that the
+npm package itself was **not** removed (`bun remove @consify/blog` yourself, if you no longer need
+it), the same way it already leaves any other `dependencies` an item added untouched.
+
+An item can declare `dependencies` (npm packages, installed with whichever package manager your
+project already uses — for a `feature` item, in addition to `packageName` itself) and
+`registryDependencies` (other registry items, installed first, recursively) — installing one item
+that depends on two others installs all three, in the right order.
+
+Installing a `skill` item prints a reminder to run `consify skill sync` afterward — that's what
+actually copies the new skill into `.claude/skills/` for Claude Code to see it; `consify add` writes
+the file but never runs `sync` itself, since `sync` is its own explicit step (see
+[Skills for Claude](/docs/v0/customizing/skills)). A `feature` item brings no files of its own; the
+skills of its package, in `skills/<name>/`, are picked up by the same `consify skill sync`.
+
+## What's installed: the lockfile
+
+Every `consify add` writes to `consify.registry-lock.json`, next to `consify.registries.json`, — a
+content hash of every file at install time, so a later `consify add`/`consify remove` can tell
+"unmodified since install" from "you edited this" from "not ours at all". Commit it, like
+`bun.lock` — it's project state your team should share.
+
+```bash
+consify list          # or: consify registry list — the same command, listed under both names
+consify remove @shiz-ceo/pricing-card
+```
+
+`consify list` flags a file as `modified` if it no longer matches its recorded hash, or
+`missing files` if it was deleted by hand. `consify remove` deletes the files it installed (skipping
+— with a warning — anything locally modified, unless `--force`) and the lockfile entry; if another
+installed item still lists it as a dependency, it refuses unless you pass `--force` too. Neither
+command touches the npm `dependencies` an item added — pruning those is left to you.
+
+## Edge cases worth knowing
+
+- **`consify add` twice for the same specifier**: unmodified, it's a no-op; locally modified, it
+  refuses without `--force`; a `@ns/name` and the equivalent full URL are tracked as two *separate*
+  lockfile entries even though they resolve to the same place — the lockfile records how you asked
+  for it, not a canonicalized identity.
+- **A `consify.registries.json` that exists but fails to parse or validate** is an error for every
+  command that reads it, even one that doesn't need it (like `consify add <full-url>`) — a broken
+  config file is worth surfacing immediately.
+- **`@consify/core` installed without `@consify/cli`** (an old lockfile, or removed on purpose): `consify`
+  itself stops being a recognized command at the shell level, the same failure shape as removing any
+  CLI tool's package while keeping its library.

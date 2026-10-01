@@ -1,0 +1,21 @@
+node_modules
+.next
+out
+dist
+.turbo
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+.consify
+# build output of the apps (not the `build/` source folder of the core)
+/build
+apps/*/build
+.react-router
+.idea
+packages/create-consify/template
+
+# end-to-end tests
+e2e/test-results
+e2e/playwright-report

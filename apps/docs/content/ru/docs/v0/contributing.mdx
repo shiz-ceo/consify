@@ -1,0 +1,108 @@
+---
+title: Участие в разработке
+description: Как устроено ядро
+icon: GitBranch
+---
+
+Репозиторий — это рабочее пространство Bun:
+
+| Папка | Что это |
+| --- | --- |
+| `packages/core` | `@consify/core`: конфиг, `defineFeature`, контент, макет, тема, главная страница, поиск, SEO, сборка |
+| `packages/cli` | `@consify/cli`: команда `consify` (dev, build, check, deploy, doctor, скиллы, реестр) |
+| `packages/create-consify` | `@consify/create`: генератор проектов (`bun create @consify`) |
+| `integrations/docs` | `@consify/docs`: раздел документации (страницы, версии, боковое меню, `llms.txt`, картинки для соцсетей) |
+| `integrations/blog` | `@consify/blog`: раздел блога |
+| `integrations/api-reference` | `@consify/api-reference`: раздел справочника API |
+| `apps/starter` | Минимальный шаблон |
+| `apps/demo` | Полный пример сайта (вымышленная очередь задач) |
+| `apps/docs` | Эта документация |
+
+```bash
+bun install
+bun run docs        # this site, http://localhost:3500
+bun run demo        # the demo, http://localhost:3300
+bun run check       # lint, typecheck, tests
+bun run docs:check  # consify check --strict on this site
+```
+
+Каждый пакет собирается командой `bun run build` в его папке. `bun run build:packages` в корне собирает все.
+
+## Устройство ядра
+
+```
+packages/core/src/
+├─ config/     the schema of docs.config.ts
+├─ feature/    defineFeature, page(), the load context, addresses
+├─ content/    the content of a feature: entries, MDX, search index, llms.txt, social images
+├─ builtin/    what every site has: the front page, 404 and redirects, search, sitemap, robots.txt
+├─ runtime/    the pages and files of features at run time (loaders, meta)
+├─ shared/     layout, UI, links, messages, slots
+├─ build/      the Vite plugin and the React Router adapter (scaffold, routes, pre-render)
+├─ mdx/        the Markdown pipeline
+├─ plugins/    definePlugin
+├─ locales/    the interface strings
+└─ theme/      the stylesheet and the design tokens
+```
+
+Раздел (feature) — это одно значение, созданное `defineFeature`: его id, заголовок, страницы, файлы, ссылки, MDX-компоненты и контент. Маршруты, шапка, список предварительного рендеринга и sitemap строятся из встроенных частей и списка `features` конфига. Контент раздела читает ядро (front matter, боковое меню, поиск, `llms.txt`, картинки для соцсетей), а раздел только его рисует.
+
+Документация, блог и справочник API не входят в ядро. Каждый из них — пакет, который экспортирует функцию (`docs()`, `blog()`, `apiReference()`), возвращающую `defineFeature(...)`, а проект перечисляет её в `features`.
+
+## Добавление раздела
+
+Раздел, который нужен одному проекту, — это один файл в `custom/features/` этого проекта (см. [Свои разделы](/docs/v0/features)). Чтобы выпустить его пакетом, создайте папку в `integrations/` по образцу `integrations/blog`:
+
+- `src/index.ts` экспортирует функцию-фабрику. Node должен уметь его загрузить: никакого JSX, CSS и `@consify/core/ui`. Страницы подключаются через `lazy(() => import("./page.tsx"))`, MDX-компоненты — через `lazyComponents(() => import("./mdx.tsx"), [...])`.
+- Интерфейс лежит в файлах рядом (`page.tsx`, `mdx.tsx`).
+- `skills/<name>/SKILL.md` в корне пакета — для `consify skill sync`.
+- `package.json`, где `@consify/core` указан как peer-зависимость, а `"consify": { "prebundle": [...] }` перечисляет браузерные зависимости, которые Vite должен собрать заранее.
+
+## Тесты
+
+Тесты лежат в папке `test` каждого пакета и запускаются командой `bun test`. В ядре проверяются конфиг, `defineFeature` и его адреса, сайт, ссылки, тема и строки интерфейса. В CLI — `check`, `deploy`, `lang`, скиллы и реестр. У документации, блога (публикация, фильтры, RSS) и справочника API свои тесты в `integrations/docs/test`, `integrations/blog/test` и `integrations/api-reference/test`. Функцию `load` тестируют через `createLoadContext` из `@consify/core/node`.
+
+Перед отправкой изменений запустите `bun run check`, а если меняли страницы этого сайта — ещё и `bun run docs:check`.
+
+## Сквозные тесты
+
+В воркспейсе `e2e/` лежат браузерные тесты на Playwright. `bun run e2e` собирает демо дважды (серверная сборка, затем статическая с `DEMO_STATIC=1`) и запускает тесты в Chromium: проекты `desktop` (1280x800) и `mobile` (Pixel 7) на серверной сборке и `desktop` на статической.
+
+Браузер ставится один раз:
+
+```bash
+bunx playwright install chromium
+```
+
+```bash
+bun run e2e                       # build the demo and run every test
+bun run e2e -- --grep sitemap     # only the tests that match the text
+bun run e2e --skip-build          # reuse the builds
+```
+
+Результаты и трассировки лежат в `e2e/test-results`. Спеки находятся в `e2e/tests`:
+
+| Спека | Что проверяет |
+| --- | --- |
+| `smoke` | все виды страниц открываются без ошибок в консоли |
+| `header` | выпадающее меню, ссылки, переключатель языка, тема, мобильное меню, в шапке нет поиска |
+| `docs` | поиск в боковой панели, `⌘K`, уведомление о переводе, версии, оглавление, кнопка копирования |
+| `blog` | страницы блога |
+| `api` | Scalar, его поле поиска, группы открыты |
+| `head` | теги `head` и баннер |
+| `themes` | каждый пресет и несколько фирменных цветов, измеренные на нарисованной странице |
+| `seo` | карта сайта, `robots.txt`, `llms.txt`, лента, canonical, hreflang, социальные картинки |
+| `a11y` | axe (WCAG 2 A и AA), светлая и тёмная схемы, основные виды страниц |
+| `static` | статическая сборка: страницы, поиск по файловому индексу, страница-перенаправление, страница 404 |
+
+Демо (`apps/demo`) для этих тестов задаёт `head`, `banner` и `deploy.mode` (из `DEMO_STATIC=1`). Скриншоты тем для [галереи](/docs/v0/configuration/themes) пересоздаются командой `bun run e2e:themes` (сначала выполните `bun run build:demo`).
+
+## Непрерывная интеграция
+
+Задача `e2e` в `.github/workflows/ci.yml` запускает эти тесты и при падении выгружает отчёт и трассировки.
+
+`.github/workflows/compat.yml` запускается каждую ночь и по требованию. Он гоняет модульные тесты на Ubuntu, Windows и macOS и ставит упакованные пакеты в сгенерированный проект через npm и pnpm на Node 22 и 24 (Ubuntu и Windows). Чтобы запустить эту проверку локально с нужным менеджером пакетов:
+
+```bash
+CONSIFY_CHECK_MANAGER=npm bun run check:package
+```

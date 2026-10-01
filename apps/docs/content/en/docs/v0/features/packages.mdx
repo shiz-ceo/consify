@@ -1,0 +1,864 @@
+---
+title: A feature as a package
+description: Put a feature into its own npm package, reuse it in several sites, publish it
+---
+
+A feature in one file of `custom/features/` is enough for one site. When several sites need the same feature, put it into a **package**. A package is still one `defineFeature` call. It only adds what a package needs: options, a build, tests, a skill.
+
+`@consify/docs`, `@consify/blog` and `@consify/api-reference` are packages like this. They use the same `defineFeature` as your own file. Nothing is reserved for them, so you can read their code and do the same.
+
+This page assumes you know how a feature works. If not, start with [Features](/docs/v0/features) and [Pages](/docs/v0/features/pages).
+
+## A file or a package
+
+| Question | File in `custom/features/` | Package |
+| --- | --- | --- |
+| How many sites use it? | One | Several |
+| Does it need its own version and releases? | No | Yes |
+| Does it bring dependencies (a chart library, a parser)? | The site installs them | The package brings them |
+| Are there options that change per site? | Not needed | A factory function with options |
+| Tests | Optional | Needed |
+| JSX in the same file as `defineFeature` | Allowed | Not allowed (see below) |
+
+If you are not sure, start with a file. Moving it into a package later is simple: the `defineFeature` call stays the same.
+
+## The layout of a package
+
+<Files>
+  <Folder name="consify-status" defaultOpen>
+    <File name="package.json" />
+    <File name="tsconfig.json" />
+    <Folder name="src" defaultOpen>
+      <File name="index.ts" />
+      <File name="list.tsx" />
+      <File name="service.tsx" />
+      <File name="mdx.tsx" />
+      <File name="server.ts" />
+      <File name="status.css" />
+    </Folder>
+    <Folder name="skills" defaultOpen>
+      <Folder name="consify-status-authoring" defaultOpen>
+        <File name="SKILL.md" />
+      </Folder>
+    </Folder>
+    <Folder name="test" defaultOpen>
+      <File name="status.test.ts" />
+    </Folder>
+  </Folder>
+</Files>
+
+| File | What it holds |
+| --- | --- |
+| `package.json` | The name, `exports`, peer dependencies, `"consify": { "prebundle" }` |
+| `src/index.ts` | The factory function: `status(options)` returns `defineFeature(...)`. Also the strings and the public types. No JSX, no CSS |
+| `src/list.tsx`, `src/service.tsx` | Pages. Each is a default export, loaded with `lazy()` |
+| `src/mdx.tsx` | MDX components the feature adds to the site (optional), loaded with `lazyComponents()` |
+| `src/server.ts` | Code only the server may run: `node:*`, a heavy parser (optional) |
+| `src/status.css` | Styles of the pages, imported from a page module |
+| `skills/<name>/SKILL.md` | What an AI agent needs to know to use the package |
+| `test/*.test.ts` | Tests with `bun test`, see [Testing features](/docs/v0/features/testing) |
+
+Keep `src/` flat, one file per job. Put plain logic (parsing, sorting, filtering) into its own `.ts` file without React. Then tests can import it directly.
+
+## The main rule: index.ts has no JSX
+
+A project imports your package in `docs.config.ts`:
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { status } from "consify-status";
+
+export default defineConfig({
+  site: { name: "My docs" },
+  features: [status({ source: "./status.json", services: [{ id: "api", name: "API" }] })],
+});
+```
+
+`docs.config.ts` is read not only by Vite. Node reads it too: the CLI (`consify check`, `consify skill sync`) and tests load it directly. So `src/index.ts` and everything it imports **statically** must run in plain Node:
+
+- no JSX;
+- no CSS imports;
+- no `@consify/core/ui` (it reads the site from a module only Vite creates);
+- no browser-only code at the top level (`window`, `document`).
+
+<Callout type="warn" title="The error shows up only in the other project">
+A file in `custom/features/` may contain JSX, because consify loads it through Vite when Node fails. A package in `node_modules` is loaded by Node as is. A `.tsx` module, a CSS import or `@consify/core/ui` in `index.ts` of a package breaks `docs.config.ts` of every site that uses it, and every test of the package.
+</Callout>
+
+Three tools keep `index.ts` clean.
+
+### Pages: lazy()
+
+A page lives in its own `.tsx` file with a default export. `index.ts` loads it with `lazy` from React. The import runs only when the page is drawn, so Node never touches the `.tsx` file.
+
+```ts title="src/index.ts"
+import { defineFeature } from "@consify/core";
+import { lazy } from "react";
+
+// The page is loaded when it is shown: Node reads this module with docs.config.ts.
+const ListPage = lazy(() => import("./list.tsx"));
+
+export function status() {
+  return defineFeature({
+    id: "status",
+    pages: { "/": ListPage },
+  });
+}
+```
+
+A page module may import anything: JSX, CSS, `@consify/core/ui`, browser libraries. It gets its data types from `index.ts` with `import type` only:
+
+```tsx title="src/list.tsx"
+import "./status.css";
+import type { PageProps } from "@consify/core";
+import type { ListData } from "./index.ts";
+
+export default function ListPage({ data }: PageProps<ListData>) {
+  return <main>{data.services.length} services</main>;
+}
+```
+
+<Callout type="warn" title="Import pages only through lazy()">
+A page may import from `index.ts`: that module has no JSX. The other direction is the problem. A static `import Page from "./list.tsx"` in `index.ts`, or in any module `index.ts` imports, pulls the page, its JSX and its CSS into Node.
+</Callout>
+
+### MDX components: lazyComponents()
+
+A feature can add components to every `.mdx` file of the site (`components` of `defineFeature`). They are JSX too, so they go into their own module. `lazyComponents` makes one lazy component per name. The module is loaded once, when the first of them is drawn.
+
+```ts title="src/index.ts"
+import { defineFeature, lazyComponents } from "@consify/core";
+
+export function changelog() {
+  return defineFeature({
+    id: "changelog",
+    // <Release /> and <Breaking /> in every .mdx file of the site
+    components: lazyComponents(() => import("./mdx.tsx"), ["Release", "Breaking"]),
+  });
+}
+```
+
+```tsx title="src/mdx.tsx"
+import "./changelog.css";
+import type { ReactNode } from "react";
+
+/** `<Release version="1.2.0">…</Release>` in an .mdx file. */
+export function Release({ version, children }: { version: string; children: ReactNode }) {
+  return (
+    <section className="consify-changelog-release">
+      <h3>{version}</h3>
+      {children}
+    </section>
+  );
+}
+
+/** `<Breaking>…</Breaking>`: a change that needs work from the reader. */
+export function Breaking({ children }: { children: ReactNode }) {
+  return <div className="consify-changelog-breaking">{children}</div>;
+}
+```
+
+The components are **named** exports of `mdx.tsx`, and every name in the list must exist there. A name missing from the module is not caught at build time: the page that uses the component fails when it is drawn.
+
+### Server-only code: import.meta.env.SSR
+
+`index.ts` goes into the browser bundle too: the site needs the pages and their `load` functions to find routes. Code that only `load` uses would go to the browser with it. For light code this does not matter. For `node:*` modules or a heavy parser it does: the browser bundle breaks or grows.
+
+Put such code into `server.ts` and import it inside `load` behind `import.meta.env.SSR`:
+
+```ts title="src/index.ts"
+import { defineFeature, lazyComponents, page } from "@consify/core";
+import { lazy } from "react";
+
+const ListPage = lazy(() => import("./list.tsx"));
+
+export function changelog({ id = "changelog", source = "./CHANGELOG.md" } = {}) {
+  return defineFeature({
+    id,
+    title: "Changelog",
+    pages: {
+      "/": page({
+        load: async ({ readFile }) => {
+          // Vite leaves server.ts out of the browser bundle: the condition is `false` there
+          const { parseChangelog } = await (import.meta.env.SSR
+            ? import("./server.ts")
+            : Promise.reject(new Error("changelog(): the list is read on the server")));
+          return parseChangelog(await readFile(source));
+        },
+        component: ListPage,
+      }),
+    },
+    // <Release /> and <Breaking /> in every .mdx file of the site
+    components: lazyComponents(() => import("./mdx.tsx"), ["Release", "Breaking"]),
+  });
+}
+```
+
+```ts title="src/server.ts"
+// Only the server imports this module: it may use node:* and heavy libraries.
+import { createHash } from "node:crypto";
+
+export interface Release {
+  version: string;
+  id: string;
+  notes: string;
+}
+
+/** `## 1.2.0` headings of a changelog, with the text under each. */
+export function parseChangelog(text: string): Release[] {
+  return text
+    .split(/^## /m)
+    .slice(1)
+    .map((part) => {
+      const [version = "", ...rest] = part.split("\n");
+      const id = createHash("sha1").update(version).digest("hex").slice(0, 8);
+      return { version: version.trim(), id, notes: rest.join("\n").trim() };
+    });
+}
+```
+
+Vite replaces `import.meta.env.SSR` with `true` in the server build and with `false` in the browser build. In the browser build the `import("./server.ts")` branch is dead code, so Vite drops it and `server.ts` with it.
+
+<Callout type="warn" title="Where import.meta.env.SSR is not set">
+- Plain Node has no `import.meta.env` at all. Use this pattern only inside `load` (of a page or a file). `paths` also runs in Node (`consify check`), so it must not use it.
+- In `bun test` `import.meta.env.SSR` is `undefined`, so such a `load` rejects in a test. Test the functions of `server.ts` directly.
+- Pages may import **types** from `server.ts` (`import type`). A value import pulls the module into the browser.
+- Add `"vite/client"` to `types` of `tsconfig.json`, or TypeScript does not know `import.meta.env`.
+</Callout>
+
+Before you reach for `server.ts`, check the load context. `readFile` reads a file of the project, `content` reads MDX. Often that is all you need, and it works everywhere. See [Data and load](/docs/v0/features/data).
+
+## Options
+
+The factory function takes the options of one site. Check them with a zod schema. Stop with **one** error that names every wrong option, so a typo in `docs.config.ts` stops the start of the site with a clear message.
+
+`@consify/core` exports `z` (zod), so a package does not need its own zod dependency:
+
+```ts title="src/index.ts"
+import { defineFeature, z } from "@consify/core";
+
+const slug = /^[a-z][a-z0-9-]*$/;
+
+export const statusOptionsSchema = z.strictObject({
+  /** The address (`/{lang}/<id>`) and the link id. Set it for a second status page. */
+  id: z.string().regex(slug, "must be lowercase letters, digits and `-`").default("status"),
+  /** A JSON file of the project: `{ "api": "up", "workers": "down" }`. */
+  source: z.string().min(1),
+  services: z
+    .array(z.strictObject({ id: z.string().regex(slug), name: z.string().min(1) }))
+    .min(1, "list at least one service"),
+});
+
+/** What you pass to `status()`: defaults are optional. */
+export type StatusOptionsInput = z.input<typeof statusOptionsSchema>;
+
+export function status(input: StatusOptionsInput) {
+  const parsed = statusOptionsSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error(
+      `status(): ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+    );
+  }
+  const { id } = parsed.data;
+  return defineFeature({ id });
+}
+```
+
+With a wrong option the site stops like this:
+
+```text
+Error: status(): services: list at least one service; : Unrecognized key: "perPage"
+```
+
+Some rules that help:
+
+- Use `z.strictObject`. An unknown key is almost always a typo.
+- Give defaults with `.default(...)`. Export `z.input` as the type of the options (the defaults are optional there) and use `z.output` inside.
+- Write messages for people: `"must be lowercase letters, digits and \`-\`"`, not a regular expression.
+- Check what depends on several options in `.superRefine` (duplicate ids, a default that is not in the list). `@consify/blog` and `@consify/docs` do this.
+- Start the message with the name of the function: `status(): ...`. The reader sees at once where to look.
+
+## Several instances
+
+A site may need two copies of your feature: two blogs, two API references. Make this work from the start: take `id` as an option with a default, and derive **everything** from it.
+
+```ts title="docs.config.ts"
+features: [
+  blog(),
+  blog({ id: "news", title: "News" }),
+],
+```
+
+`id` of `defineFeature` sets three things at once:
+
+| From `id` | For `blog()` | For `blog({ id: "news" })` |
+| --- | --- | --- |
+| The address `/{lang}/<id>` | `/en/blog` | `/en/news` |
+| The content folder `content/<language>/<id>/` | `content/en/blog/` | `content/en/news/` |
+| The link id for `header.links` | `blog`, `blog:rss` | `news`, `news:rss` |
+
+Two features with the same `id` stop the config: `duplicate feature "blog"`. Two features with the same address stop it too.
+
+<Callout type="warn" title="Do not write the address by hand">
+A page that links to `/${lang}/blog` breaks in the second instance. Build addresses from `id`, and pass them to the page in `data`, as the example below does with `base`. The `url` of an entry is already right.
+</Callout>
+
+## Strings
+
+Put the strings of the feature into `messages`, one object per language. English is the reference: another language falls back to it for a missing key. A site can change any string in its `i18n.messages`.
+
+Export the strings and their type, so pages can read them:
+
+```ts title="src/index.ts"
+import type { MessagesOf } from "@consify/core";
+
+export const statusMessages = {
+  en: { status: "Status", up: "Operational", down: "Down" },
+  ru: { status: "Статус", up: "Работает", down: "Не работает" },
+} as const;
+
+export type StatusMessages = MessagesOf<typeof statusMessages>;
+```
+
+A page reads them in two ways:
+
+- `t` in its props: `t("status")`, `t("minRead", { minutes: "3" })`.
+- `useMessages<StatusMessages>()` from `@consify/core/ui` in any component deeper in the page: `messages.status`.
+
+## package.json
+
+```json title="package.json"
+{
+  "name": "consify-status",
+  "version": "0.1.0",
+  "description": "A status page for a consify site",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "lucide-react": "^1.47.0"
+  },
+  "devDependencies": {
+    "@consify/core": "^0.1.0",
+    "@types/bun": "^1",
+    "@types/react": "^19.2.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router": "^8.4.0",
+    "typescript": "^7",
+    "vite": "^8"
+  },
+  "peerDependencies": {
+    "@consify/core": "^0.1.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router": "^8.4.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "consify": {
+    "prebundle": [
+      "lucide-react"
+    ]
+  }
+}
+```
+
+| Field | Why |
+| --- | --- |
+| `name` | `@consify/<name>` or `consify-<name>`. See below |
+| `exports` | Only `"."` (and `./package.json`). A project imports the factory function, nothing else. Pages are loaded inside the package |
+| `peerDependencies` | `@consify/core`, `react`, `react-dom`, `react-router`. A site must have exactly one copy of each. As a normal dependency they could be installed twice, and React breaks with two copies |
+| `devDependencies` | The same packages again, so that tests and `tsc` work inside the package |
+| `dependencies` | Libraries only your feature uses: a chart library, icons, a parser |
+| `consify.prebundle` | Dependencies your pages load **in the browser**. See below |
+
+### The name
+
+A project finds its consify packages by the name. Only its dependencies whose name starts with `@consify/` or `consify-` are found. For such a package consify does three things:
+
+| What | Why it matters |
+| --- | --- |
+| Tailwind scans its folder (`@source` in `.consify/styles.css`) | Tailwind makes only the classes it finds. Without the scan the classes of your pages have no styles |
+| Its `consify.prebundle` is read | Vite knows the browser dependencies of your pages before the first visit |
+| `consify skill sync` copies its `skills/` | The AI agent of the project learns how to use the feature |
+
+<Callout type="warn" title="Another name gets none of this">
+A package called `status-page` works in `docs.config.ts`, but its Tailwind classes have no styles, its skill is not synced, and the first visit may reload the page. Rename it to `consify-status`.
+</Callout>
+
+### prebundle
+
+Vite prepares (pre-bundles) the browser dependencies at start. It does not see the dependencies of a package it compiles from source, so it finds them one by one while the first page loads. Each new one makes Vite re-optimize and reload the page in the middle of the first visit, and this breaks hydration.
+
+List the packages your pages import in the browser in `"consify": { "prebundle": [...] }`. List the exact import paths: `fumadocs-ui/components/toc`, not `fumadocs-ui`. consify resolves them from your package (`consify-status > lucide-react`), so the project does not need to install them.
+
+Look at what real packages list:
+
+| Package | `prebundle` |
+| --- | --- |
+| `@consify/api-reference` | `@scalar/api-reference-react` |
+| `@consify/blog` | `fumadocs-ui/components/inline-toc`, `fumadocs-ui/components/toc`, `fumadocs-ui/components/toc/default`, `lucide-react` |
+| `@consify/docs` | `fumadocs-core/source/client`, `fumadocs-core/search/client`, `fumadocs-core/search/client/fetch`, `fumadocs-core/search/client/orama-static` |
+
+## Pages and @consify/core/ui
+
+A page is a React component that gets `data`, `lang`, `params` and `t`. `layout` of the page says what core draws around it:
+
+| `layout` | What core draws |
+| --- | --- |
+| `site` (default) | The header and the footer of the site |
+| `sidebar` | The same, plus a button in the header that hides a panel your page draws itself |
+| `none` | Nothing. The page draws everything, usually with `docsLayoutOptions` and `Footer` |
+
+Page modules (never `index.ts`) can use `@consify/core/ui`:
+
+| Export | What it is |
+| --- | --- |
+| `SitePage` | The layout of the site around your content: header, footer. Props: `consify`, `lang`, `sidebar`, `page`, `children` |
+| `docsLayoutOptions(consify, lang, page?, withSidebar?)` | Options for Fumadocs' `DocsLayout`, the same header as on every page. For `layout: "none"` |
+| `headerLinks(consify, lang)` | The links of the header |
+| `Footer` | The footer of the site (the project's own or the default one). Props: `consify`, `lang` |
+| `FallbackNotice` | The note on a page shown without a translation. Prop `original`: the address of the original |
+| `SearchField` | The search field of the site, for a sidebar of your own |
+| `SiteLink` | A link that adds the language to site paths (`/docs` → `/en/docs`) and opens external links in a new tab |
+| `Redirecting` | A page that sends the reader to `to` (for static sites) |
+| `useMessages<T>()` | The strings in the language of the page, yours typed by `T` |
+| `useSidebarCollapsed()` | Whether the reader hid the sidebar (with `layout: "sidebar"`) |
+| `consify` | The site at runtime: `consify.config` and more |
+| `isStatic` | `deploy.mode` is `static` |
+| `requireLang(params)` | The language from the address, or a 404 |
+| `buildMeta(page)` | `<head>` tags: title, description, canonical, hreflang, Open Graph |
+| `absoluteUrl(path)` | The full URL of a path, with `site.url` |
+| `Hero`, `Features` | The big heading with buttons and the grid of cards of the front page |
+| `MdxImage` | The image of MDX content, with its frame |
+
+`Mdx`, the component that draws compiled MDX, comes from `@consify/core` itself. It has no JSX inside, so it is safe anywhere.
+
+A page with its own layout, like the docs page, draws the header and the footer itself:
+
+```tsx title="src/page.tsx"
+import type { PageProps } from "@consify/core";
+import { consify, docsLayoutOptions, Footer } from "@consify/core/ui";
+import { DocsLayout } from "fumadocs-ui/layouts/notebook";
+
+export default function Page({ data, lang }: PageProps<{ tree: never }>) {
+  return (
+    <>
+      <DocsLayout {...docsLayoutOptions(consify, lang, "status")} tree={data.tree}>
+        <main>…</main>
+      </DocsLayout>
+      <Footer consify={consify} lang={lang} />
+    </>
+  );
+}
+```
+
+## Styles
+
+- Use Tailwind classes and the theme tokens of Fumadocs: `bg-fd-accent`, `text-fd-muted-foreground`, `border-fd-border`. They follow the theme, the light and dark mode of the site.
+- Put your own CSS into a `.css` file and import it from a page module. Prefix every class with the package name (`.consify-status-up`), so it does not collide with the site.
+- Tailwind finds your classes only because the package name starts with `consify-` or `@consify/`.
+
+## A skill for AI agents
+
+A package can teach an AI agent (Claude Code) how to use it. Put `skills/<name>/SKILL.md` at the root of the package:
+
+```md title="skills/consify-status-authoring/SKILL.md"
+---
+name: consify-status-authoring
+description: Set up and maintain the status page of a consify site (consify-status). Use when asked to add a service to the status page or to set up status().
+---
+
+# consify-status-authoring
+
+The status page is `status()` in `features` of `docs.config.ts`.
+
+| Option | Default | |
+| --- | --- | --- |
+| `source` | — | A JSON file of the project with the state of each service |
+| `services` | — | `{ id, name }` of every service, in the order of the list |
+| `id` | `"status"` | The address `/{lang}/<id>` and the link id |
+```
+
+- `name` is the name of the folder. Use lowercase letters, digits and `-`. The usual name is `consify-<feature>-authoring`.
+- `description` says when to use the skill, and when not to.
+- Write only what is specific to your feature: its options, its files, its rules.
+
+`consify skill sync` in a project copies the skills of its consify packages into `.claude/skills/`. See [Skills for Claude](/docs/v0/customizing/skills).
+
+## Build and publish
+
+In a monorepo a package can export its TypeScript sources (`"./src/index.ts"`). A published package cannot: Node does not run TypeScript from `node_modules`, and Node reads `docs.config.ts`. So a published package ships JavaScript.
+
+The packages of the consify repository run `bun run build`. It runs `scripts/build-package.ts`, which makes `out/`:
+
+```text
+out/
+├─ package.json    the same as ../package.json, with `exports` pointing at `dist/`
+├─ dist/           compiled JavaScript, declarations, stylesheets
+├─ skills/         the skills for Claude the package ships
+├─ README.md
+└─ LICENSE
+```
+
+The steps of that script, which you can repeat with any tool:
+
+<Steps>
+<Step>
+
+Compile `src/` with `tsc` and a `tsconfig.build.json`. `rewriteRelativeImportExtensions` turns `./page.tsx` into `./page.js`:
+
+```json title="tsconfig.build.json"
+{
+  "extends": "./tsconfig.json",
+  "include": ["src"],
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "out/dist",
+    "rootDir": "src",
+    "declaration": true,
+    "allowImportingTsExtensions": false,
+    "rewriteRelativeImportExtensions": true
+  }
+}
+```
+
+</Step>
+<Step>
+
+Copy what `tsc` does not emit: the `.css` files of `src/` into `out/dist/`, and `skills/` into `out/skills/`.
+
+</Step>
+<Step>
+
+Write `out/package.json`: `exports` points at `dist/` (`{ "types": "./dist/index.d.ts", "default": "./dist/index.js" }`), `files` lists `dist` and `skills`, `scripts` and `devDependencies` are removed.
+
+</Step>
+<Step>
+
+Publish from `out/`:
+
+```bash
+cd out && npm publish
+```
+
+</Step>
+</Steps>
+
+Before you publish, try the package in a real site: `bun link` it (or install the tarball of `npm pack`), list it in `features`, and run `consify check`, `consify build` and `consify dev`.
+
+## A complete example
+
+`consify-status`: a list of services, a page per service and a JSON file, in every language of the site. It is modeled on `@consify/api-reference`, the smallest real package.
+
+<Steps>
+<Step>
+
+### index.ts
+
+The factory function, the strings, the options and the data types. No JSX.
+
+```ts title="src/index.ts"
+// What `docs.config.ts` imports. No JSX, no CSS, no @consify/core/ui here:
+// Node reads this module together with docs.config.ts.
+import { defineFeature, type MessagesOf, page, z } from "@consify/core";
+import { lazy } from "react";
+
+// The pages are loaded when they are shown.
+const ListPage = lazy(() => import("./list.tsx"));
+const ServicePage = lazy(() => import("./service.tsx"));
+
+export const statusMessages = {
+  en: {
+    status: "Status",
+    statusHint: "Live state of the services",
+    up: "Operational",
+    down: "Down",
+    back: "All services",
+  },
+  ru: {
+    status: "Статус",
+    statusHint: "Состояние сервисов сейчас",
+    up: "Работает",
+    down: "Не работает",
+    back: "Все сервисы",
+  },
+} as const;
+
+export type StatusMessages = MessagesOf<typeof statusMessages>;
+
+const slug = /^[a-z][a-z0-9-]*$/;
+
+export const statusOptionsSchema = z.strictObject({
+  /** The address (`/{lang}/<id>`) and the link id. Set it for a second status page. */
+  id: z.string().regex(slug, "must be lowercase letters, digits and `-`").default("status"),
+  /** The link in the header and the title of the pages. Default: "Status", translated. */
+  title: z.union([z.string().min(1), z.record(z.string(), z.string().min(1))]).optional(),
+  /** A JSON file of the project: `{ "api": "up", "workers": "down" }`. */
+  source: z.string().min(1),
+  services: z
+    .array(z.strictObject({ id: z.string().regex(slug), name: z.string().min(1) }))
+    .min(1, "list at least one service"),
+});
+
+/** What you pass to `status()`. */
+export type StatusOptionsInput = z.input<typeof statusOptionsSchema>;
+export type Service = z.output<typeof statusOptionsSchema>["services"][number] & {
+  state: "up" | "down";
+};
+
+/** What the list page shows. */
+export interface ListData {
+  base: string;
+  services: Service[];
+}
+
+/** What the page of a service shows. */
+export interface ServiceData extends Service {
+  base: string;
+}
+
+/**
+ * A status page: a list of services, a page per service and a JSON file.
+ *
+ * @example
+ * features: [status({ source: "./status.json", services: [{ id: "api", name: "API" }] })]
+ */
+export function status(input: StatusOptionsInput) {
+  const parsed = statusOptionsSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error(
+      `status(): ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`,
+    );
+  }
+  const { id, title, source, services } = parsed.data;
+
+  // Runs on the server only: `load` of a page or a file.
+  const read = async (file: (path: string) => Promise<string>): Promise<Service[]> => {
+    const states = JSON.parse(await file(source)) as Record<string, string>;
+    return services.map((s) => ({ ...s, state: states[s.id] === "up" ? "up" : "down" }));
+  };
+
+  return defineFeature({
+    id,
+    title: ({ lang, t }) =>
+      typeof title === "string" ? title : (title?.[lang] ?? t("status")),
+    description: ({ t }) => t("statusHint"),
+    messages: statusMessages,
+    pages: {
+      "/": page({
+        load: async ({ lang, readFile }): Promise<ListData> => ({
+          base: `/${lang}/${id}`,
+          services: await read(readFile),
+        }),
+        component: ListPage,
+      }),
+      "/:service": page({
+        paths: () => services.map((s) => ({ service: s.id })),
+        load: async ({ lang, params, readFile, notFound }): Promise<ServiceData> => {
+          const service = (await read(readFile)).find((s) => s.id === params.service);
+          return service ? { ...service, base: `/${lang}/${id}` } : notFound();
+        },
+        title: ({ data }) => data.name,
+        component: ServicePage,
+      }),
+    },
+    files: {
+      "/status.json": async ({ readFile }) => ({ services: await read(readFile) }),
+    },
+  });
+}
+```
+
+Note three things:
+
+- `paths` of `/:service` lists every service. Without it a static site cannot build these pages.
+- `base` is built from `id`, so a second instance (`status({ id: "uptime", ... })`) links to its own pages.
+- `readFile` is the only way the feature reads the disk. It works on a server, in a static build and in tests.
+
+</Step>
+<Step>
+
+### The pages
+
+```tsx title="src/list.tsx"
+import "./status.css";
+import type { PageProps } from "@consify/core";
+import { CircleCheck, CircleX } from "lucide-react";
+import { Link } from "react-router";
+import type { ListData, StatusMessages } from "./index.ts";
+
+/** The list of services. A default export: `lazy()` loads it. */
+export default function ListPage({ data, t }: PageProps<ListData, keyof StatusMessages>) {
+  return (
+    <main className="mx-auto w-full max-w-2xl px-4 py-12">
+      <h1 className="mb-8 text-3xl font-semibold">{t("status")}</h1>
+      <ul className="divide-y divide-fd-border rounded-lg border border-fd-border">
+        {data.services.map((service) => {
+          const Icon = service.state === "up" ? CircleCheck : CircleX;
+          return (
+            <li key={service.id}>
+              <Link
+                to={`${data.base}/${service.id}`}
+                className="flex items-center justify-between px-4 py-3 hover:bg-fd-accent"
+              >
+                <span>{service.name}</span>
+                <span className={`consify-status-${service.state} flex items-center gap-2`}>
+                  <Icon className="size-4" />
+                  {t(service.state)}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </main>
+  );
+}
+```
+
+```tsx title="src/service.tsx"
+import "./status.css";
+import type { PageProps } from "@consify/core";
+import { useMessages } from "@consify/core/ui";
+import { Link } from "react-router";
+import type { Service, ServiceData, StatusMessages } from "./index.ts";
+
+/** The page of one service. */
+export default function ServicePage({ data, t }: PageProps<ServiceData, keyof StatusMessages>) {
+  return (
+    <main className="mx-auto w-full max-w-2xl px-4 py-12">
+      <Link to={data.base} className="text-sm text-fd-muted-foreground">
+        ← {t("back")}
+      </Link>
+      <h1 className="mt-4 text-3xl font-semibold">{data.name}</h1>
+      <State state={data.state} />
+    </main>
+  );
+}
+
+/** A component deeper in the page reads the strings with `useMessages`, not with props. */
+function State({ state }: { state: Service["state"] }) {
+  const messages = useMessages<StatusMessages>();
+  return <p className={`mt-2 consify-status-${state}`}>{messages[state]}</p>;
+}
+```
+
+```css title="src/status.css"
+.consify-status-up {
+  color: var(--color-fd-primary);
+}
+.consify-status-down {
+  color: var(--color-fd-error, #dc2626);
+}
+```
+
+</Step>
+<Step>
+
+### package.json and tsconfig.json
+
+`package.json` is the one shown [above](#packagejson). `tsconfig.json` needs `vite/client` for `import.meta.env` and CSS imports:
+
+```json title="tsconfig.json"
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "types": ["bun", "vite/client"]
+  },
+  "include": ["src", "test"]
+}
+```
+
+</Step>
+<Step>
+
+### Tests
+
+The options, the link, every address, a `load`, a 404, the file and a second instance. The whole file is on [Testing features](/docs/v0/features/testing).
+
+```bash
+bun run typecheck
+bun test
+```
+
+</Step>
+<Step>
+
+### Use it in a site
+
+```bash
+bun add consify-status
+```
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { status } from "consify-status";
+
+export default defineConfig({
+  site: { name: "My docs" },
+  features: [
+    status({
+      source: "./status.json",
+      services: [
+        { id: "api", name: "API" },
+        { id: "workers", name: "Workers" },
+      ],
+    }),
+  ],
+});
+```
+
+```json title="status.json"
+{ "api": "up", "workers": "down" }
+```
+
+The site now has `/en/status`, `/en/status/api`, `/en/status/workers`, `/en/status/status.json`, the same in every other language, and a "Status" link in the header.
+
+</Step>
+</Steps>
+
+## Pitfalls
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| `docs.config.ts` fails to load: `Unknown file extension ".tsx"` or `".css"` | `index.ts` imports a page or a stylesheet | Load pages with `lazy()`, components with `lazyComponents()` |
+| `docs.config.ts` fails to load: an error about `consify:instance` or the `consify:` protocol | `index.ts` imports `@consify/core/ui` | Use it only in page modules |
+| The classes of the pages have no styles | The package name does not start with `consify-` or `@consify/` | Rename the package |
+| The first visit reloads the page, hydration errors | A browser dependency of a page is not in `consify.prebundle` | Add its exact import path |
+| Two copies of React, `Invalid hook call` | `react` or `@consify/core` is in `dependencies` | Move them to `peerDependencies` |
+| A static build has no page for `/:slug` | A page with a parameter has no `paths` and no `entry: true` | Add `paths` |
+| The second instance links to the pages of the first | An address is written by hand (`/${lang}/status`) | Build it from `id` |
+| `node:fs` in the browser bundle | `load` imports server code without `import.meta.env.SSR` | Move it into `server.ts`, or use `readFile` |
+| A page with an MDX component fails when drawn | Its name is in `lazyComponents` but not exported by the module | Export it by that name |
+
+## Checklist
+
+- `index.ts` exports a factory function with an `id` option and a default for it.
+- `index.ts` has no JSX, no CSS and no `@consify/core/ui`, and imports none statically.
+- Options are checked with zod, and one error names every wrong option.
+- Every page with `:param` or `*` has `paths` or `entry: true`.
+- Addresses are built from `id`.
+- `name` starts with `consify-` or `@consify/`, `exports` has only `"."`, core and React are peer dependencies.
+- Browser dependencies of the pages are in `consify.prebundle`.
+- `skills/<name>/SKILL.md` exists.
+- Tests cover the options, the links, the addresses, `load` and two instances.
+- The package works in a real site: `consify check`, `consify build`, `consify dev`, every language, light and dark.

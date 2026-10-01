@@ -1,0 +1,29 @@
+---
+title: Queue
+description: The queue interface
+---
+
+## `add(data, options?)`
+
+Adds a job. Resolves with the stored job.
+
+<TypeTable
+  type={{
+    data: { description: "Job data, checked against the queue's type.", type: "Data", required: true },
+    "options.retries": { description: "Retries after a failure.", type: "number", default: "3" },
+    "options.delay": { description: "Milliseconds to wait before the job is available.", type: "number" },
+    "options.priority": { description: "Scheduling priority.", type: '"low" | "normal" | "high"', default: '"normal"' },
+  }}
+/>
+
+## `stats()`
+
+Returns counters for the queue.
+
+```ts twoslash
+import { createQueue } from "lattice";
+const q = createQueue<string>("x");
+// ---cut---
+const { waiting, active, failed } = await q.stats();
+//      ^?
+```

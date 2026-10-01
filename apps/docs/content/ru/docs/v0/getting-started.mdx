@@ -1,0 +1,313 @@
+---
+title: Начало работы
+description: От пустой папки до работающего сайта — и что происходит дальше
+icon: Map
+---
+
+## Требования
+
+- [Bun](https://bun.sh) версии 1.2 или новее.
+- Node.js версии 24 или новее — на нём под капотом работают инструменты сборки.
+- Аккаунт GitHub с [personal access token](https://github.com/settings/tokens) со scope
+  `read:packages` — пакеты consify (`@consify/core`, `@consify/docs`, `@consify/blog`,
+  `@consify/api-reference`, `@consify/cli`, `@consify/create`) публикуются в GitHub Packages, а не в
+  стандартный реестр npm, поэтому менеджеру пакетов нужны и `.npmrc`, указывающий на него для scope
+  `@consify`, и этот токен, прежде чем он сможет что-то из них установить.
+
+### Настройка GitHub Packages
+
+Добавьте `.npmrc` в корень проекта (генератор делает это сам — см. ниже):
+
+```ini title=".npmrc"
+@consify:registry=https://npm.pkg.github.com
+```
+
+Затем сделайте токен доступным менеджеру пакетов, например:
+
+```bash
+export NODE_AUTH_TOKEN=ghp_your_token_here
+```
+
+(`npm`/`pnpm`/`yarn` читают `NODE_AUTH_TOKEN` или `//npm.pkg.github.com/:_authToken` в `.npmrc`; Bun
+читает тот же `.npmrc` и тоже учитывает `NODE_AUTH_TOKEN`.) Без этого `bun install`/`npm install` не
+сможет разрешить ни один пакет `@consify/*`, и установка провалится.
+
+<Steps>
+<Step>
+
+### Создайте проект
+
+```bash
+bun create @consify my-docs
+cd my-docs
+bun run dev
+```
+
+Ответьте на четыре вопроса (папка, имя сайта, языки, менеджер пакетов) или передайте их флагами,
+чтобы пропустить вопросы:
+
+```bash
+bun create @consify my-docs --name "My docs" --languages en,ru --pm bun --yes
+```
+
+| Параметр | Значение |
+| --- | --- |
+| `--name <text>` | Название сайта (по умолчанию имя папки) |
+| `--languages <list>` | Языки, первый основной (по умолчанию `en`) |
+| `--pm <bun\|npm\|pnpm\|yarn>` | Менеджер пакетов (по умолчанию тот, что запустил команду) |
+| `--no-install` | Не ставить зависимости |
+| `--no-skill` | Не добавлять скиллы для Claude (`consify skill sync`) |
+| `--git` | Выполнить `git init` |
+| `-y`, `--yes` | Взять значения по умолчанию, ничего не спрашивать |
+
+На выходе — рабочий проект: `docs.config.ts`, `content/<язык>/docs/`, `custom/`, зависимости уже
+установлены, `.npmrc` уже написан за вас (токен из
+[настройки GitHub Packages](#настройка-github-packages) выше всё равно нужен вам самим). Откройте
+`http://localhost:5173`.
+
+</Step>
+<Step>
+
+### Напишите первую страницу
+
+Каждый `.mdx`-файл в `content/<язык>/docs/<версия>/` — это страница. Отредактируйте
+`content/en/docs/index.mdx`, и страница обновится. Чтобы добавить новую:
+
+```mdx title="content/en/docs/v0/hello.mdx"
+---
+title: Hello
+description: My first page
+icon: Smile
+---
+
+Some **Markdown**, and a component:
+
+<Callout type="info">Components are available without imports.</Callout>
+```
+
+Впишите её в `meta.json` рядом (или не указывайте `pages`, чтобы показать всё по алфавиту):
+
+```json title="content/en/docs/v0/meta.json"
+{ "title": "v0 (latest)", "root": "version", "pages": ["index", "hello"] }
+```
+
+Нужен блог или справочник API вместо документации (или вместе с ней)? Добавьте `blog()` из
+`@consify/blog` или `apiReference()` из `@consify/api-reference` в `features` в `docs.config.ts` — см.
+[Написание контента](/docs/v0/writing) и [Конфигурацию](/docs/v0/configuration).
+
+</Step>
+<Step>
+
+### Настройте под себя
+
+Всё остальное — это `docs.config.ts` и `custom/`, без форка:
+
+- `site` — имя, описание, `url`, логотип, ссылка на GitHub.
+- `theme.preset` (`neutral`, `ocean`, `forest`, `sunset`, `violet`, `paper`, `mono`) или
+  `theme.brand: "#..."` — один цвет превращается в полную палитру с проверенным контрастом:
+
+  ```ts title="docs.config.ts"
+  theme: {
+    radius: "0.75rem",
+    colors: { light: { primary: "oklch(0.55 0.2 260)" } },
+  },
+  ```
+
+  См. [Темы](/docs/v0/configuration/themes).
+- `header.links` / `footer.columns` — какие ссылки показывать и в каком порядке или выпадающем
+  меню. Раздел только *предлагает* ссылки (свой каталог); сайт сам выбирает. Команда `consify links`
+  покажет, что доступно. См. [Ссылки в шапке и подвале](/docs/v0/configuration/navigation).
+- `head` и `banner` — мета-теги, скрипты и баннер-объявление сверху. См.
+  [Head и баннер](/docs/v0/configuration/head).
+- `custom/components/*.tsx` — свои MDX-компоненты, `custom/header.tsx` и `custom/footer.tsx` —
+  замена этих частей сайта. См. [Свои компоненты](/docs/v0/customizing/custom-components).
+- `content/<язык>/home.mdx` — главная страница с `<Hero />` и `<Features />`. Без неё `/{lang}`
+  открывает первый раздел.
+- `custom/features/*.tsx` — свой раздел (страница статуса, журнал изменений): один файл с
+  `defineFeature`, указанный в `features`. См. [Свои разделы](/docs/v0/features).
+- `i18n.languages` для второго языка:
+
+  ```ts title="docs.config.ts"
+  i18n: { languages: ["en", "ru"], labels: { en: "English", ru: "Русский" } },
+  ```
+
+  Переведите страницу, добавив её в папку другого языка с тем же путём,
+  `content/ru/docs/v0/hello.mdx`. Непереведённые страницы автоматически показывают основной язык.
+  Дальше — из CLI:
+
+  ```bash
+  consify lang add ru --copy   # content/ru/, seeded from the main language
+  consify lang status          # what is translated, section by section
+  consify locale ru            # a language pack for the interface strings, if ru is not built in
+  ```
+
+  См. [Языки и версии](/docs/v0/writing/translations-and-versions).
+
+</Step>
+<Step>
+
+### Проверьте перед публикацией
+
+```bash
+consify doctor
+consify check
+```
+
+`doctor` проверяет версию Node, что все пакеты `@consify/*` одной версии, и что `docs.config.ts`
+валиден. `check` смотрит на контент: адреса всех разделов, front matter, `meta.json` и то, что у
+каждого перевода те же блоки кода, ссылки и заголовки, что у оригинала (`--strict` превращает
+предупреждения в ошибки). Обе команды дёшево запускать перед каждым деплоем.
+
+</Step>
+<Step>
+
+### Соберите и задеплойте
+
+```bash
+bun run build
+```
+
+По умолчанию это сервер на Node (`bun run start`); для статики укажите
+`deploy: { mode: "static" }`. Дальше:
+
+```bash
+consify deploy            # a terminal: asks which target, then its options
+consify deploy list        # just see what is available
+```
+
+Готовые хостинги (`github-pages`, `cloudflare-pages`, `netlify`, `vercel`) пишут нужный им конфиг
+или workflow — дальше обычный `git push`. Self-host пишет фрагмент nginx, предназначенный для
+`include`, а не для замены всего `nginx.conf`, с HTTP/3 по умолчанию — как цель `docker` (контейнер
+на сайт, порт наружу никогда не публикуется) или обычный `nginx` (systemd-юнит, опционально на
+Unix-сокете вместо порта, если на машине несколько сайтов). Подробный разбор — в
+[Деплое](/docs/v0/deployment).
+
+</Step>
+</Steps>
+
+## Дальше — по кругу
+
+Пишете страницу → проверяете переводы через `consify lang status` → `consify check` и
+`consify doctor` → пуш.
+Обновление самого consify — `bun update @consify/core @consify/docs ...` (и что там ещё у вас есть
+из `@consify/*`) — `doctor` сразу скажет, если версии разъехались.
+
+## Добавление в существующий проект
+
+Сначала добавьте `.npmrc` из [настройки GitHub Packages](#настройка-github-packages) выше —
+существующему проекту он не пишется автоматически:
+
+```bash
+bun add @consify/core @consify/docs react react-dom react-router
+bun add -d vite typescript @types/react @types/react-dom @types/node
+```
+
+Затем создайте следующие файлы.
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { docs } from "@consify/docs";
+
+export default defineConfig({
+  site: { name: "My docs" },
+  features: [docs()],
+});
+```
+
+```ts title="vite.config.ts"
+import { consify } from "@consify/core/vite";
+import { defineConfig } from "vite";
+import config from "./docs.config.ts";
+
+export default defineConfig({ plugins: [consify(config)] });
+```
+
+```ts title="react-router.config.ts"
+import { defineRouterConfig } from "@consify/core/react-router";
+import config from "./docs.config.ts";
+
+export default defineRouterConfig(config);
+```
+
+```json title="package.json"
+{
+  "type": "module",
+  "scripts": {
+    "dev": "consify dev",
+    "build": "consify build",
+    "start": "consify start",
+    "typecheck": "consify typegen && tsc --noEmit"
+  }
+}
+```
+
+Добавьте первую страницу (в папке основного языка) и `tsconfig.json` (скопируйте его из стартового
+шаблона):
+
+```mdx title="content/en/docs/index.mdx"
+---
+title: Welcome
+---
+
+Hello from consify.
+```
+
+```json title="content/en/docs/meta.json"
+{ "pages": ["index"] }
+```
+
+Добавьте `.consify`, `build` и `.react-router` в `.gitignore`. Эти папки генерируются автоматически.
+
+### Разделы
+
+У ядра (`@consify/core`) есть только главная страница. Документация, блог и справочник API —
+отдельные пакеты. Установите нужные и перечислите их в `features` (см.
+[Документация](/docs/v0/configuration/docs), [Блог](/docs/v0/configuration/blog) и
+[Справочник API](/docs/v0/configuration/api-reference)). В том же порядке идут их ссылки в шапке,
+если `header.links` не задаёт другой. Сайт без `docs()` тоже работает, например только блог. Свои
+разделы из `custom/features/` добавляются в тот же список.
+
+```bash
+bun add @consify/blog
+bun add @consify/api-reference
+```
+
+```ts title="docs.config.ts"
+import { defineConfig } from "@consify/core";
+import { docs } from "@consify/docs";
+import { apiReference } from "@consify/api-reference";
+import { blog } from "@consify/blog";
+
+export default defineConfig({
+  site: { name: "My docs" },
+  features: [docs(), blog(), apiReference({ input: "./openapi.json" })],
+});
+```
+
+<Callout type="info" title="Пути импорта">
+  Указывайте расширение файла в импортах своих файлов (`./docs.config.ts`). Vite предупреждает об импортах
+  без расширения в конфигурационных файлах.
+</Callout>
+
+## Команды
+
+| Команда | Что делает |
+| --- | --- |
+| `consify dev` | Сервер разработки с горячей перезагрузкой |
+| `consify build` | Продакшен-сборка (вместе с предварительно отрендеренными страницами) |
+| `consify start` | Запускает сборку `server` (`build/server`) |
+| `consify typegen` | Генерирует типы маршрутов, которые использует `typecheck` |
+| `consify check` | Проверяет контент: адреса, front matter, переводы, `meta.json` |
+
+Всё, что идёт после команды, передаётся нижележащему инструменту, например `consify dev --port 3000`.
+
+## Куда дальше за подробностями
+
+<Cards>
+  <Card title="Как это работает" description="Что где лежит и почему нет папки app/." href="/docs/v0/concepts" />
+  <Card title="Конфигурация" description="Все опции docs.config.ts." href="/docs/v0/configuration" />
+  <Card title="Написание контента" description="Компоненты, блоки кода, формулы, поиск и SEO." href="/docs/v0/writing" />
+  <Card title="Кастомизация" description="Свои разделы, компоненты и слоты." href="/docs/v0/customizing" />
+  <Card title="Деплой" description="Статика, сервер и все детали self-host." href="/docs/v0/deployment" />
+  <Card title="Справочник CLI" description="Все команды consify." href="/docs/v0/reference/cli" />
+</Cards>

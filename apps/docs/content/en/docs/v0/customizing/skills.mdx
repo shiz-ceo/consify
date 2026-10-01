@@ -1,0 +1,94 @@
+---
+title: Skills for Claude
+description: Skills of the consify packages and of your project, collected into .claude/skills/
+icon: Bot
+---
+
+consify ships with more than one skill for Claude Code: an orchestrator (`consify`) plus one for
+each thing that has something specific to teach — writing docs pages, writing blog posts, keeping
+an API reference in sync, changing the theme, translating, upgrading, auditing docs against code, and
+building a whole feature package. `consify skill sync` collects the ones of the packages your project
+uses, and the skills of the project itself, into `.claude/skills/`.
+
+```bash
+consify skill sync    # writes .claude/skills/ from the consify packages and custom/skills/
+consify skill list    # see what would sync, without writing anything
+```
+
+## What gets synced
+
+- Six **core skills** from `@consify/core`, always: the **orchestrator** (`consify`), **theme**
+  (`consify-theme`), **translate** (`consify-translate`, a translation glossary that persists across
+  requests), **upgrade** (`consify-upgrade`, matches the changelog against your actual project when
+  moving to a newer version), **content-audit** (`consify-content-audit`, finds docs that may be
+  stale against the code — only when asked), and **extension-engineering**
+  (`consify-extension-engineering`, for building a whole feature package, not a small section).
+- The skills of every other `@consify/*` package the project depends on: `@consify/docs` brings
+  `consify-docs-authoring`, `@consify/blog` brings `consify-blog-authoring`,
+  `@consify/api-reference` brings `consify-api-reference-authoring`.
+- The skills of your project, in `custom/skills/<name>/`. They win over a package skill with the
+  same name.
+
+A package keeps its skills in `skills/<name>/SKILL.md` at its root. Run `consify skill sync` again
+after adding or updating a `@consify/*` package: a skill can change between versions like anything
+else a package ships. The skill of a package you removed is removed from `.claude/skills/` too.
+
+An existing folder under `.claude/skills/` that `consify skill sync` did not put there is left alone
+unless you pass `--force` — it never overwrites something you wrote by hand without asking.
+
+## A skill of your project
+
+Put a folder in `custom/skills/`. Nothing to declare in the config:
+
+```
+custom/skills/
+└─ consify-changelog-authoring/
+   ├─ SKILL.md
+   └─ references/          (optional, for anything long enough to split out)
+```
+
+```md title="custom/skills/consify-changelog-authoring/SKILL.md"
+---
+name: consify-changelog-authoring
+description: Write a changelog entry — one line, why it matters, a link to the release. Use when asked to add a changelog entry.
+---
+
+# consify-changelog-authoring
+
+...
+```
+
+The `name` in the front matter is the folder name `consify skill sync` gives it under
+`.claude/skills/`: lowercase letters, digits and `-`. Everything else about the file is a normal
+[Claude Code skill](https://docs.claude.com/en/docs/claude-code/skills) — a short `SKILL.md`,
+`references/` for anything it would be better to load only when needed.
+
+A skill installed from a registry with `consify add` lands in `custom/skills/<name>/` as well — see
+[Registry](/docs/v0/customizing/registry).
+
+## A skill of a feature package
+
+A [feature](/docs/v0/features) published as a package ships its skill the same way the
+`@consify/*` packages do, in `skills/<name>/` at the root of the package:
+
+```
+package.json
+src/index.ts
+skills/
+└─ consify-changelog-authoring/
+   └─ SKILL.md
+```
+
+A small section that lives in one project needs no package: its skill goes in `custom/skills/`.
+Building a whole feature package meant to be reused or published — the same kind of thing
+`@consify/blog` is — is a bigger job with its own skill to guide it: **consify-extension-engineering**.
+
+## Writing a good one
+
+- Say when to use it and when not to, in the `description` — that is what decides whether Claude
+  reaches for it.
+- Keep it about what is *specific* to your feature: your front matter fields, your file locations,
+  your review rules. The **consify** skill already covers the interview, translation and
+  verification steps that apply to every kind of content; point back to it instead of repeating them.
+- If a piece of content needs the user to say yes to something first (adding a component, a new
+  category, a new section) — say so explicitly, the same way the built-in skills do.

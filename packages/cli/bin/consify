@@ -1,0 +1,11 @@
+#!/usr/bin/env node
+// Runs the CLI: `dist/` once published, `src/` in the repository.
+import { existsSync } from "node:fs";
+
+async function loadProgram() {
+  const published = new URL("../dist/cli/program.js", import.meta.url);
+  return existsSync(published) ? import(published.href) : import("../src/cli/program.ts");
+}
+
+const { buildProgram } = await loadProgram();
+await buildProgram().parseAsync(process.argv);

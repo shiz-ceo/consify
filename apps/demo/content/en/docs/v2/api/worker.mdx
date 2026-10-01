@@ -1,0 +1,23 @@
+---
+title: createWorker
+description: Process jobs from a queue
+---
+
+```ts
+function createWorker<Data>(
+  queue: Queue<Data>,
+  handler: (job: Job<Data>) => Promise<void>,
+  options?: WorkerOptions,
+): Worker;
+```
+
+<TypeTable
+  type={{
+    concurrency: { description: "How many jobs run at the same time.", type: "number", default: "1" },
+  }}
+/>
+
+The returned `Worker` has a single method, `close()`, which stops taking jobs and waits for active ones.
+
+> [!WARNING]
+> If `handler` never settles, `close()` never resolves. Use timeouts inside long handlers.
