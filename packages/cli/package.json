@@ -1,6 +1,6 @@
 {
   "name": "@consify/cli",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "The consify CLI: dev/build/start, deploy, doctor, skills, and the component/feature registry",
   "license": "MIT",
   "keywords": [
@@ -47,7 +47,7 @@
     "@consify/core": "workspace:*"
   },
   "peerDependencies": {
-    "@consify/core": "^0.1.0"
+    "@consify/core": "^1.0.0"
   },
   "engines": {
     "node": ">=22"

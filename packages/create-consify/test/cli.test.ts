@@ -97,13 +97,13 @@ describe("the files of a project", () => {
     const json = JSON.parse(
       renderPackageJson({
         name: "x",
-        consifyVersion: "0.1.0",
+        consifyVersion: "1.0.0",
         dependencies: { react: "19.3.0" },
         devDependencies: { vite: "8.3.0" },
       }),
     );
     expect(json.scripts.dev).toBe("consify dev");
-    expect(json.dependencies["@consify/core"]).toBe("^0.1.0");
+    expect(json.dependencies["@consify/core"]).toBe("^1.0.0");
     expect(json.devDependencies.vite).toBe("8.3.0");
   });
 });

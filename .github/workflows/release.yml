@@ -1,7 +1,7 @@
 name: Release
 
 # Publishes `@consify/core`, `@consify/docs`, `@consify/blog`, `@consify/api-reference`,
-# `@consify/cli` and `@consify/create` to GitHub Packages when a tag like v0.1.0 is pushed. All
+# `@consify/cli` and `@consify/create` to GitHub Packages when a tag like v1.0.0 is pushed. All
 # packages have the same version. The packages belong to the `consify` organization while this
 # repository is `shiz-ceo/consify`, and the built-in GITHUB_TOKEN only publishes packages of its own
 # repository, so publishing uses CONSIFY_PACKAGES_TOKEN: a personal access token (classic) with

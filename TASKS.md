@@ -502,10 +502,10 @@
 Сделано (не закоммичено):
 - **Сборка ядра в JS (17.6):** `packages/core/scripts/build.ts` собирает `out/` (`dist/` с `.js` и `.d.ts`, стили, `bin`, README, LICENSE, `package.json` с `exports` на `dist`). В репозитории пакет по-прежнему работает из `src/`. Файлы маршрутов в `feature.ts` теперь без расширения (`resolveRouteFile` подбирает `.tsx`/`.ts`/`.js`), чтобы работать и из `src/`, и из `dist/`. `docsLayoutOptions` получил явный тип результата (иначе `.d.ts` не собирались).
 - **Проверка установки вне монорепозитория:** `bun run check:package`: сборка, `bun pm pack`, проект, созданный `create-consify`, установка tarball, `build` и `typecheck`. Проходит.
-- **Метаданные пакета:** `LICENSE` (MIT, держатель `Shiz-Ceo`; лицензию владелец не подтверждал), `license`, `repository`, `homepage`, `bugs`, `keywords`, `engines` (`node >=22`, не проверено на 22), `publishConfig`, README пакета, версия 0.1.0.
-- **`create-consify`** (`packages/create-consify`): вопросы (папка, имя, языки, менеджер, установка), флаги, шаблон из `apps/starter` + скилл, `package.json` с `consify ^0.1.0`. Шаблон собирается `bun run prepare:template` (в git не хранится). 9 тестов.
+- **Метаданные пакета:** `LICENSE` (MIT, держатель `Shiz-Ceo`; лицензию владелец не подтверждал), `license`, `repository`, `homepage`, `bugs`, `keywords`, `engines` (`node >=22`, не проверено на 22), `publishConfig`, README пакета, версия 1.0.0.
+- **`create-consify`** (`packages/create-consify`): вопросы (папка, имя, языки, менеджер, установка), флаги, шаблон из `apps/starter` + скилл, `package.json` с `consify ^1.0.0`. Шаблон собирается `bun run prepare:template` (в git не хранится). 9 тестов.
 - **Стартер:** страницы Welcome и A guide показывают компоненты (Callout, Cards, Steps, Tabs, TypeTable), код с подсветкой.
-- **CI и репозиторий:** `.github/workflows/ci.yml` (check, docs:check, сборки, check:package), `release.yml` (публикация по тегу `v*`, нужен секрет `NPM_TOKEN`), шаблоны issue и PR, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md` (в нём плейсхолдер `<contact email>`), `CHANGELOG.md` 0.1.0.
+- **CI и репозиторий:** `.github/workflows/ci.yml` (check, docs:check, сборки, check:package), `release.yml` (публикация по тегу `v*`, нужен секрет `NPM_TOKEN`), шаблоны issue и PR, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md` (в нём плейсхолдер `<contact email>`), `CHANGELOG.md` 1.0.0.
 - **tsconfig** приложений: `rootDirs` и `.react-router/types` в `include` (пропала красная ошибка в `+routes.ts`).
 
 Осталось / решить:

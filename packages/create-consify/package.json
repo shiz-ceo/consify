@@ -1,6 +1,6 @@
 {
   "name": "@consify/create",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Create a documentation site with consify",
   "type": "module",
   "license": "MIT",

@@ -85,7 +85,7 @@ export function status(input: StatusOptionsInput = {}) {
   },
   "dependencies": { "zod": "…", "some-browser-lib": "…" },
   "peerDependencies": {
-    "@consify/core": "^0.1.0",
+    "@consify/core": "^1.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router": "^8.4.0"

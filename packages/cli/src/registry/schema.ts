@@ -77,7 +77,7 @@ const featureItemSchema = z
     ...baseItemFields,
     /** The npm package to install, e.g. "@consify/blog". */
     packageName: z.string().regex(packageNamePattern, "must be an npm package name"),
-    /** An npm range, e.g. "^0.1.0" — defaults to "*" (latest) when omitted. */
+    /** An npm range, e.g. "^1.0.0" — defaults to "*" (latest) when omitted. */
     packageVersion: z
       .string()
       .regex(versionRangePattern, "must be an npm version range")

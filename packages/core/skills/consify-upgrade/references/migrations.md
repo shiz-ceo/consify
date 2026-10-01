@@ -1,6 +1,6 @@
 # Known migrations
 
-consify has not been released yet (0.1.0 was never published), so there are no migrations to
+consify has not been released yet (1.0.0 was never published), so there are no migrations to
 apply. The catalog starts with the first release: from then on, every release with a breaking
 change adds one section here, oldest first, in the format below. Until then, match
 `CHANGELOG.md` entries against the project directly (step 3 of the skill).

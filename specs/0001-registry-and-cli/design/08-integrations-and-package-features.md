@@ -69,7 +69,7 @@ good experience, and the user confirmed this directly: "фичи бы требо
   type: "feature",
   description?: string,       // unchanged
   packageName: string,        // the npm package to install, e.g. "consify-blog"
-  packageVersion?: string,    // an npm range, e.g. "^0.1.0" — defaults to "*" (latest) if omitted
+  packageVersion?: string,    // an npm range, e.g. "^1.0.0" — defaults to "*" (latest) if omitted
   exportName: string,         // the named export to import and call, e.g. "blog"
   dependencies: string[],     // default [] — EXTRA packages beyond packageName itself, for the rare
                               // case a feature needs something not already a dependency of its own

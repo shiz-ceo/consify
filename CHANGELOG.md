@@ -22,7 +22,7 @@ All notable changes to `consify` are documented here. Format: [Keep a Changelog]
 - **Accessibility:** every text pair of every preset and brand color passes WCAG AA in both color schemes. The muted text color is darker (`#6b6b6b` on light), and code uses the `github-light-high-contrast` and `github-dark-default` themes; Twoslash error lines and removed diff lines were adjusted.
 - **Tests and CI:** end-to-end tests with Playwright (`bun run e2e`, the `e2e` job in CI) and the `compat.yml` workflow (unit tests on Ubuntu, Windows and macOS; the packed packages installed with npm and pnpm on Node 22 and 24).
 
-## [0.1.0] - not released yet
+## [1.0.0] - not released yet
 
 The first version.
 
