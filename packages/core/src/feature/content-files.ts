@@ -1,7 +1,7 @@
 import type { Feature } from "./types.ts";
 
 /** A file core serves for the content of a feature. */
-export type ContentFileKind = "search" | "llms" | "llms-full" | "og" | "rss" | "mdx";
+export type ContentFileKind = "search" | "llms" | "llms-full" | "og" | "rss" | "mdx" | "previews";
 
 /**
  * The files core adds to a feature with content, by address: its search index, `llms.txt`, the
@@ -14,6 +14,8 @@ export function contentFiles(feature: Pick<Feature, "content">): Record<string, 
   return {
     // the text of a page is a file of its own, not a part of the data of the page: see `lazyCode`
     "/_mdx/*": "mdx" as const,
+    // the cards of the links to the entries: a title and a first paragraph of each, and of each heading
+    ...(content.previews ? { "/_previews.json": "previews" as const } : {}),
     ...(content.search === false ? {} : { "/search.json": "search" as const }),
     ...(content.llms
       ? { "/llms.txt": "llms" as const, "/llms-full.txt": "llms-full" as const }
@@ -31,4 +33,9 @@ export function ogImagePath(featureUrl: string, slug: string): string {
 /** The address of the compiled text of an entry: `/en/docs/_mdx/v2/guide.js`, `…/_mdx/index.js` for `index.mdx`. */
 export function mdxFilePath(featureUrl: string, slug: string): string {
   return `${featureUrl}/_mdx/${slug || "index"}.js`;
+}
+
+/** The address of the cards of the links of a feature: `/en/docs/_previews.json`. */
+export function previewsPath(featureUrl: string): string {
+  return `${featureUrl}/_previews.json`;
 }

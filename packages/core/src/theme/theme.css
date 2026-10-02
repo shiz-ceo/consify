@@ -18,7 +18,7 @@
   /*
    * Colors follow the Scalar API reference, so the docs and the API page look like one site.
    * Light: #fff / #f6f6f6 / #e7e7e7 surfaces, #1b1b1b text, #dfdfdf lines.
-   * Dark:  #000 / #0f0f0f surfaces, #e7e7e7 text, #2d2d2d lines.
+   * Dark:  #000 / #0f0f0f surfaces, #e3e6ea text (a soft cool off-white, pure white would glare on black), #2d2d2d lines.
    */
   :root {
     --radius: 0.5rem;
@@ -52,29 +52,29 @@
 
   .dark {
     --background: #000;
-    --foreground: #e7e7e7;
+    --foreground: #e3e6ea;
     --card: #0f0f0f;
-    --card-foreground: #e7e7e7;
+    --card-foreground: #e3e6ea;
     --popover: #0f0f0f;
-    --popover-foreground: #e7e7e7;
-    --primary: #fff;
+    --popover-foreground: #e3e6ea;
+    --primary: #e3e6ea;
     --primary-foreground: #000;
     --secondary: #0f0f0f;
-    --secondary-foreground: #e7e7e7;
+    --secondary-foreground: #e3e6ea;
     --muted: #0f0f0f;
-    --muted-foreground: #a4a4a4;
+    --muted-foreground: #a4a8af;
     --accent: #0f0f0f;
-    --accent-foreground: #e7e7e7;
+    --accent-foreground: #e3e6ea;
     --destructive: oklch(0.704 0.191 22.216);
     --border: #2d2d2d;
     --input: #2d2d2d;
     --ring: #797979;
     --sidebar: #000;
-    --sidebar-foreground: #e7e7e7;
-    --sidebar-primary: #fff;
+    --sidebar-foreground: #e3e6ea;
+    --sidebar-primary: #e3e6ea;
     --sidebar-primary-foreground: #000;
     --sidebar-accent: #0f0f0f;
-    --sidebar-accent-foreground: #e7e7e7;
+    --sidebar-accent-foreground: #e3e6ea;
     --sidebar-border: #2d2d2d;
     --sidebar-ring: #797979;
   }
@@ -325,7 +325,326 @@ pre .line.highlighted::after {
   --shiki-dark: #161b22;
 }
 
-/* Popups of Twoslash hovers: the page does not scroll along with the popup. */
+/*
+ * Popups of Twoslash hovers. The popup is as wide as its code needs, up to 900px and never wider than
+ * the window: a long type opens wide instead of running out of a narrow box. The code scrolls
+ * sideways in its own box when even that is not enough, and the text under it keeps a readable
+ * width. The page does not scroll along with the popup.
+ */
 .fd-twoslash-popover {
+  width: max-content;
+  max-width: min(900px, calc(100vw - 16px));
+  max-height: min(60vh, 560px);
   overscroll-behavior: contain;
+}
+
+.fd-twoslash-popover .fd-codeblock {
+  overflow-x: auto;
+}
+
+.fd-twoslash-popover .twoslash-popup-docs,
+.fd-twoslash-popover .twoslash-popup-docs-tags {
+  max-width: 62ch;
+}
+
+/* The card of a link in the docs (LinkPreviews): a title, a text, the page it is from. */
+.consify-link-preview {
+  width: max-content;
+  max-width: min(360px, 92vw);
+  padding: calc(var(--spacing) * 3) calc(var(--spacing) * 3.5);
+  border: 1px solid var(--color-fd-border);
+  border-radius: var(--radius-xl);
+  background-color: var(--color-fd-popover);
+  color: var(--color-fd-popover-foreground);
+  box-shadow: var(--shadow-md);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  pointer-events: none;
+}
+
+.consify-link-preview[data-open] {
+  animation: var(--animate-fd-popover-in);
+}
+
+.consify-link-preview p {
+  margin: 0;
+}
+
+.consify-link-preview-title {
+  font-weight: 600;
+}
+
+.consify-link-preview-text {
+  margin-top: calc(var(--spacing) * 1) !important;
+  color: var(--color-fd-muted-foreground);
+}
+
+.consify-link-preview-page {
+  margin-top: calc(var(--spacing) * 2) !important;
+  font-size: var(--text-xs);
+  color: var(--color-fd-muted-foreground);
+}
+
+/*
+ * The table of the fields of an object (TypeTable): a name, a type and a default on one line, the
+ * description under it, the rows divided by lines; a row folds into its line. The full type of a
+ * field is a hint on the "i".
+ */
+.consify-types {
+  margin-block: calc(var(--spacing) * 5);
+  border: 1px solid var(--color-fd-border);
+  border-radius: var(--radius-xl);
+  background-color: var(--color-fd-card);
+  color: var(--color-fd-card-foreground);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.consify-types-title {
+  padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 4);
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-fd-border);
+}
+
+.consify-types-row + .consify-types-row {
+  border-top: 1px solid var(--color-fd-border);
+}
+
+.consify-types-row > :not(summary) {
+  margin-inline: calc(var(--spacing) * 4);
+}
+
+.consify-types-row[open] > :last-child {
+  margin-bottom: calc(var(--spacing) * 3);
+}
+
+.consify-types-line {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing) * 2);
+  padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 4);
+  cursor: pointer;
+  list-style: none;
+  border-radius: inherit;
+}
+
+.consify-types-line::-webkit-details-marker {
+  display: none;
+}
+
+.consify-types-line:hover {
+  background-color: color-mix(in srgb, var(--color-fd-muted) 40%, transparent);
+}
+
+.consify-types-line:focus-visible {
+  outline: 2px solid var(--color-fd-ring);
+  outline-offset: -2px;
+}
+
+.consify-types-head {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--spacing) * 0.5) calc(var(--spacing) * 2);
+  min-width: 0;
+}
+
+.consify-types-chevron {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-fd-muted-foreground);
+  transition: transform 150ms;
+}
+
+.consify-types-row[open] .consify-types-chevron {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consify-types-chevron {
+    transition: none;
+  }
+}
+
+.consify-types-name {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-fd-foreground);
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.consify-types-name.is-deprecated {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.consify-types-type {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-fd-muted-foreground);
+  background: none;
+  border: none;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
+
+a.consify-types-type {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.consify-types-default {
+  font-size: var(--text-xs);
+  color: var(--color-fd-muted-foreground);
+}
+
+.consify-types-default code {
+  font-family: var(--font-mono);
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.consify-types-deprecated {
+  border: 1px solid var(--color-fd-border);
+  border-radius: 999px;
+  padding: 0 calc(var(--spacing) * 1.5);
+  font-size: var(--text-xs);
+  color: var(--color-fd-muted-foreground);
+}
+
+.consify-types-info {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: help;
+  color: var(--color-fd-muted-foreground);
+}
+
+.consify-types-info svg {
+  width: 14px;
+  height: 14px;
+}
+
+.consify-types-info:hover,
+.consify-types-info[aria-expanded="true"] {
+  color: var(--color-fd-foreground);
+}
+
+.consify-types-info:focus-visible {
+  outline: 2px solid var(--color-fd-ring);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+.consify-types-text {
+  margin-top: 0;
+  color: var(--color-fd-muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.consify-types-text a {
+  color: var(--color-fd-foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.consify-types-text code,
+.consify-types-params code {
+  border: 1px solid var(--color-fd-border);
+  border-radius: var(--radius-md);
+  padding: 0 calc(var(--spacing) * 1);
+  font-size: 0.85em;
+  color: var(--color-fd-foreground);
+  background-color: var(--color-fd-background);
+}
+
+.consify-types-params {
+  margin-top: calc(var(--spacing) * 2);
+  margin-bottom: 0;
+  color: var(--color-fd-muted-foreground);
+  font-size: 0.8125rem;
+}
+
+.consify-types-params dt {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.consify-types-params dd {
+  margin: calc(var(--spacing) * 0.5) 0 0;
+}
+
+/* The hint with the full type of a field: above the "i", an arrow to it. */
+.consify-type-tip {
+  width: max-content;
+  max-width: min(32rem, calc(100vw - 16px));
+  padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2.5);
+  border: 1px solid var(--color-fd-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-fd-popover);
+  color: var(--color-fd-muted-foreground);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+
+.consify-type-tip::after {
+  content: "";
+  position: absolute;
+  left: var(--hover-arrow-x, 50%);
+  width: 10px;
+  height: 10px;
+  background-color: var(--color-fd-popover);
+  border: 1px solid var(--color-fd-border);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.consify-type-tip[data-side="above"]::after {
+  bottom: -6px;
+  border-top: none;
+  border-left: none;
+}
+
+.consify-type-tip[data-side="below"]::after {
+  top: -6px;
+  border-right: none;
+  border-bottom: none;
+}
+
+/* A word of a type or a value in a table or in a hint (highlight): the color of the same word in code. */
+.consify-tk {
+  color: var(--shiki-light);
+}
+
+.dark .consify-tk {
+  color: var(--shiki-dark);
+}
+
+/*
+ * The first thing in the text of a docs page starts right under the description: its own top margin
+ * (a heading has 2-3rem) is a gap on top of the one the description has. Fumadocs takes that margin off
+ * the first child of the text, but the text of consify is one level deeper (the wrapper of `<Mdx>`),
+ * and the first heading may be inside a block (`<Steps>`): every first child on the way down, from the
+ * top, loses its top margin (margins of a first child pass through its parents).
+ */
+[data-link-previews] > :first-child > :first-child,
+[data-link-previews] > :first-child > :first-child > :first-child,
+[data-link-previews] > :first-child > :first-child > :first-child > :first-child,
+[data-link-previews] > :first-child > :first-child > :first-child > :first-child > :first-child {
+  margin-top: 0;
 }

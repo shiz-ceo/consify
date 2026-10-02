@@ -171,6 +171,15 @@ export interface ContentOptions<Data = Record<string, unknown>> {
    */
   llms?: boolean;
   /**
+   * A card for a link to an entry: when the pointer is over a link to another entry (or to a
+   * heading of it) in the text of a page, the card shows its title and description (or the heading
+   * and its first paragraph). Needs a page that marks its text, as the docs do; the cards are
+   * made from `/{lang}/<id>/_previews.json`.
+   *
+   * @default false
+   */
+  previews?: boolean;
+  /**
    * A social image for every entry.
    *
    * @default false

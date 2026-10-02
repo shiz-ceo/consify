@@ -11,7 +11,9 @@ export { absoluteUrl, buildMeta, consify, isStatic, requireLang } from "./shared
 // The component itself; `FallbackNotice` of `@consify/core` is a lazy wrapper for the main entry.
 export { FallbackNotice } from "./shared/ui/fallback-notice.tsx";
 export { Features, type FeaturesProps, Hero, type HeroProps } from "./shared/ui/home-parts.tsx";
+export { LinkPreviews } from "./shared/ui/link-previews.tsx";
 export { MdxImage } from "./shared/ui/media.tsx";
 export { SearchField } from "./shared/ui/search-field.tsx";
 export { SiteLink } from "./shared/ui/site-link.tsx";
+export { SmoothAnchors } from "./shared/ui/smooth-anchors.tsx";
 export { useMessages } from "./shared/use-messages.ts";

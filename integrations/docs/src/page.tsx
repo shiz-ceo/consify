@@ -1,5 +1,13 @@
 import { format, Mdx, type PageProps } from "@consify/core";
-import { consify, docsLayoutOptions, FallbackNotice, Footer, useMessages } from "@consify/core/ui";
+import {
+  consify,
+  docsLayoutOptions,
+  FallbackNotice,
+  Footer,
+  LinkPreviews,
+  SmoothAnchors,
+  useMessages,
+} from "@consify/core/ui";
 import { useFumadocsLoader } from "fumadocs-core/source/client";
 import { Callout } from "fumadocs-ui/components/callout";
 import { DocsLayout } from "fumadocs-ui/layouts/notebook";
@@ -72,11 +80,19 @@ export default function Page({ data, lang }: PageProps<DocsPageData>) {
             </Callout>
           ) : null}
           <DocsTitle>{data.data.title}</DocsTitle>
-          <DocsDescription>{data.data.description}</DocsDescription>
+          {/* the text is a flex item with a gap of its own: the margin under the description is half of the usual */}
+          <DocsDescription className="mb-4">{data.data.description}</DocsDescription>
           <DocsBody>
-            <LinkBase value={base}>
-              <Mdx code={data.code} components={{ a: DocsLink }} className="" />
-            </LinkBase>
+            {/* the links in the text get a card (LinkPreviews); `contents`: the wrapper has no box */}
+            <div data-link-previews="" style={{ display: "contents" }}>
+              <LinkBase value={base}>
+                <Mdx code={data.code} components={{ a: DocsLink }} className="" />
+              </LinkBase>
+            </div>
+            <SmoothAnchors />
+            {data.previews ? (
+              <LinkPreviews src={data.previews} base={consify.config.deploy.basePath ?? ""} />
+            ) : null}
           </DocsBody>
           {pagination ? null : editLink}
         </DocsPage>

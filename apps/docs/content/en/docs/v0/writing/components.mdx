@@ -71,10 +71,15 @@ npm install @consify/core
 
 ## Type table
 
+The fields of an object, one row each: the name, the type and the default on a line, the description under it. All rows are open; the arrow on the right folds a row into its line. Inline Markdown works in the texts: `code`, **bold** and __bold__, *italic* and _italic_, ~~struck~~, [links](/docs/v0/writing/components) with a title, `<https://…>` and `\*` for a mark that is shown as it is; they nest. The types and the defaults are colored like code (the built-in types, the names of types, strings, numbers). A type too long for the line goes to `typeDescription`: it opens in a hint on the "i" next to the name. `title` puts a title above the table.
+
 <TypeTable
+  title="Options"
   type={{
     title: { description: "Text of the sidebar and the page header.", type: "string", required: true },
-    full: { description: "Use the full page width.", type: "boolean", default: "false" },
+    full: { description: "Use the full page width, `true` or `false`.", type: "boolean", default: "false" },
+    icon: { description: "A Lucide icon in the sidebar.", type: "string" },
+    transform: { description: "Changes the text of a page before it is shown.", typeDescription: "(page: { title: string; body: string }) => { title: string; body: string } | Promise<{ title: string; body: string }>" },
   }}
 />
 

@@ -8,6 +8,7 @@ import { redirect } from "react-router";
 import { llmsText, ogImage, rssText, searchResponse } from "../content/collection.ts";
 import { bundledSource } from "../content/files.ts";
 import { registerMdx } from "../content/mdx.ts";
+import { previewsResponse } from "../content/previews.ts";
 import { type ContentFileKind, mdxFilePath, ogImagePath } from "../feature/content-files.ts";
 import { createLoadContext, RedirectSignal } from "../feature/load-context.ts";
 import { encodePath, featureUrl } from "../feature/paths.ts";
@@ -190,6 +191,7 @@ export function contentFileLoader(id: string, kind: ContentFileKind) {
         },
       });
     }
+    if (kind === "previews") return previewsResponse(feature, content, config, lang);
     if (kind === "search") return searchResponse(feature, content, config, args.request);
     if (kind === "og") {
       const image = await ogImage(

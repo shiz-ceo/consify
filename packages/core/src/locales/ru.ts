@@ -11,6 +11,11 @@ export const ru = defineLocale({
     openOriginal: "Открыть адрес на языке: {language}",
     llmsHint: "Страницы текстом для ИИ-агентов",
     rssHint: "Читать в RSS-ридере",
+    typeTableDefault: "По умолчанию: {value}",
+    typeTableParameters: "Параметры",
+    typeTableReturns: "Возвращает",
+    typeTableDeprecated: "Устарело",
+    typeTableInfo: "Полный тип",
   },
   ui: {
     "Ask AI(AI chat button)": "Спросить ИИ",

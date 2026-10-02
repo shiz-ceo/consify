@@ -137,6 +137,7 @@ import { docs } from "@consify/docs";
     pagination: { description: "Ссылки на предыдущую и следующую страницы внизу.", type: "boolean", default: "true" },
     llmsTxt: { description: "`/{lang}/docs/llms.txt` и `llms-full.txt`.", type: "boolean", default: "true" },
     og: { description: "Сгенерированная картинка для соцсетей у каждой страницы.", type: "boolean", default: "true" },
+    linkPreview: { description: "Карточка у ссылки на другую страницу документации в тексте страницы (заголовок и описание, либо заголовок и первый абзац).", type: "boolean", default: "true" },
     editOnGithub: { description: "Ссылка «Редактировать эту страницу». `{ contentDir }` — папка с языковыми папками в репозитории (по умолчанию `content`).", type: "boolean | { contentDir?: string }", default: "true" },
   }}
 />

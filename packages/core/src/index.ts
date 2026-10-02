@@ -8,6 +8,7 @@ export { z } from "zod";
 export * from "./config/index.ts";
 export type { Head, HeadInput } from "./config/schema.ts";
 export { Mdx, type MdxProps } from "./content/mdx.ts";
+export { previewsPath } from "./feature/content-files.ts";
 export { defineFeature, isFeature, page } from "./feature/define.ts";
 export { lazyComponents } from "./feature/lazy.ts";
 export { featureUrl, fillUrl } from "./feature/paths.ts";
@@ -93,4 +94,4 @@ export const FallbackNotice = lazy(() =>
 );
 
 /** The version of `@consify/core`. */
-export const version = "1.0.6";
+export const version = "1.1.0";

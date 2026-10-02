@@ -34,9 +34,15 @@ schedule("nightly-report", {
 Limit how many jobs start per window:
 
 <TypeTable
+  title="Options"
   type={{
-    max: { description: "Jobs allowed per window.", type: "number" },
-    per: { description: "Window length in milliseconds.", type: "number" },
+    max: { description: "Jobs allowed per window, for example `{ max: 10 }`. It is a **hard** limit: the next job waits, see [retries](/en/docs/v2/guides/retries).", type: "number", default: "100" },
+    per: { description: "Window length in milliseconds. `per: 60_000` is one minute; a text such as `\"1m\"` is not accepted, and `{ per: 60 * 1000, max: 100, group: \"external-api-shared-limit\" }` shares the limit between queues.", type: "number | `${number}${\"ms\" | \"s\" | \"m\"}`", default: "60_000" },
+    group: { description: "A name that queues share a limit under. Either `group` or the name of the queue is the key of the limit.", type: "string", required: true },
+    mode: { description: "How a job over the limit is treated.", type: "\"delay\" | \"drop\" | \"fail\"", default: "\"delay\"" },
+    onLimit: { description: "Called when a job has to wait. Its result is the number of milliseconds to wait, or `undefined` to use the window.", type: "Hook", typeDescription: "(job: Job<Data>, window: { start: Date; used: number; max: number }) => number | undefined | Promise<number | undefined>" },
+    style: { description: "**Bold**, *italic*, ***both***, __bold__, _italic_, ~~struck~~, `code`, a [link](/en/docs/v2/guides/retries \"Retries and backoff\"), <https://example.com> and a \\* shown mark. They nest: **bold with `code` and a [link](/en/docs/v2/guides/retries)**, and *italic with **bold** inside*.", type: "Record<string, boolean>", default: "{}" },
+    legacy: { description: "Use `mode` instead. ~~Kept for old code~~.", type: "boolean", deprecated: true },
   }}
 />
 

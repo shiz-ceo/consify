@@ -6,6 +6,7 @@ import {
   type EntryPage,
   type MessagesOf,
   page,
+  previewsPath,
 } from "@consify/core";
 import { lazy } from "react";
 import { z } from "zod";
@@ -96,6 +97,14 @@ const docsOptionsSchema = z.strictObject({
    */
   og: flag,
   /**
+   * A card for a link to another page of the docs (or to a heading of it) in the text of a page:
+   * when the pointer is over the link, it shows the title and the description of the page, or the
+   * heading and its first paragraph. Links to other sites have none.
+   *
+   * @default true
+   */
+  linkPreview: flag,
+  /**
    * The "Edit this page on GitHub" link (it needs `site.github`). `{ contentDir }` sets the folder
    * that holds the language folders in the repository, `content` by default.
    *
@@ -143,6 +152,10 @@ function pageData(
     /** The feature: its search and header. */
     id,
     show: { toc: options.toc, breadcrumbs: options.breadcrumbs, pagination: options.pagination },
+    /** The file of the cards of the links (`undefined` without them) and the `basePath` it is under. */
+    previews: options.linkPreview
+      ? `${config.deploy.basePath ?? ""}${previewsPath(`/${lang}/${id}`)}`
+      : undefined,
     editUrl:
       options.editOnGithub && github
         ? `https://github.com/${github.repo}/blob/${github.branch}/${contentDir}/${entry.lang}/${id}/${entry.path}`
@@ -183,7 +196,13 @@ export function docs(input: DocsOptionsInput = {}) {
     title: options.title ?? (({ t }) => t("documentation")),
     description: ({ t }) => t("documentationHint"),
     messages: docsMessages,
-    content: { schema: frontmatter, tree: true, llms: options.llmsTxt, og: options.og },
+    content: {
+      schema: frontmatter,
+      tree: true,
+      llms: options.llmsTxt,
+      og: options.og,
+      previews: options.linkPreview,
+    },
     pages: {
       // a versioned docs feature opens its default version
       ...(defaultVersion === undefined

@@ -35,6 +35,7 @@ export default defineConfig({
       pagination: true,
       llmsTxt: true,
       og: true,
+      linkPreview: true,
       editOnGithub: { contentDir: "apps/docs/content" },
     }),
   ],
@@ -53,6 +54,7 @@ Every option is optional.
     pagination: { description: "Previous and next links under a page.", type: "boolean", default: "true" },
     llmsTxt: { description: "`/{lang}/docs/llms.txt` and `llms-full.txt`, the docs as plain text for language models, and the link `docs:llms`.", type: "boolean", default: "true" },
     og: { description: "A generated image for social networks per page, `/{lang}/docs/og/<page>.png`.", type: "boolean", default: "true" },
+    linkPreview: { description: "A card for a link to another page of the docs (or to a heading of it) in the text of a page. See [Link cards](#link-cards).", type: "boolean", default: "true" },
     editOnGithub: { description: "An Edit this page link. Needs `site.github`. The link is `<contentDir>/<language>/docs/<page path>`. Pass `{ contentDir }` when the folder with the language folders is not `content` in the repository.", type: "boolean | { contentDir?: string }", default: "true" },
   }}
 />
@@ -68,6 +70,15 @@ The options are checked when `docs()` is called, so a typo in an option name sto
 | `/{lang}/docs/search.json` | The search of the docs |
 | `/{lang}/docs/llms.txt`, `llms-full.txt` | The docs as plain text (`llmsTxt`) |
 | `/{lang}/docs/og/<page>.png` | The social image of a page (`og`) |
+| `/{lang}/docs/_previews.json` | The text of the link cards: a title and a first paragraph of every page and heading (`linkPreview`) |
+
+## Link cards
+
+When the pointer is over a link to another page of the docs in the text of a page, a card shows the title and the description of that page. A link to a heading (`./retries.mdx#permanent-failures`) shows the heading, its first paragraph and the page it is on. A page without a description is told by its first paragraph.
+
+Only the links in the text of the page have cards: not the sidebar, the headings, the tiles (`<Card>`), links to other sites, downloads and links that open in a new tab. A link to a page that is not in the docs has none. A touch screen has no hover, so it has no cards, and the keyboard gets the card when the link is focused (Escape closes it).
+
+The cards are one file per language, `/{lang}/docs/_previews.json`, made from the text of the files without compiling them. The browser loads it once, when the pointer is first over such a link: about 20 KB gzipped for 60 pages, 300 KB for 250 pages with many headings. Turn it off with `linkPreview: false`.
 
 ## A second section
 

@@ -51,3 +51,7 @@ const rows = await query;
 ```
 
 The joined field is always an array: there can be several customers with that name, or none. To get one object, add `unwind`. The rest of the page goes through this and the other ways.
+
+## See also
+
+A failed join is retried like any job: see [Retries and backoff](./retries.mdx), and [permanent failures](./retries.mdx#permanent-failures) for what is never retried. To join on a schedule, read the [rate limits](./scheduling.mdx#rate-limits). A link to another site, [the Lattice repository](https://github.com/example/lattice), has no card.

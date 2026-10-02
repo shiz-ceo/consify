@@ -10,6 +10,11 @@ export const coreMessages = {
   openOriginal: "Open the {language} address",
   llmsHint: "The pages as text for AI agents",
   rssHint: "Follow in a feed reader",
+  typeTableDefault: "Default is {value}",
+  typeTableParameters: "Parameters",
+  typeTableReturns: "Returns",
+  typeTableDeprecated: "Deprecated",
+  typeTableInfo: "The full type",
 } as const;
 
 export const en = defineLocale({ label: "English", messages: coreMessages });

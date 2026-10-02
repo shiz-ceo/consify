@@ -3,7 +3,7 @@
 // gains one consify-specific option (`--socket`) on top of forwarding everything else to
 // `@react-router/serve` unexamined.
 import { spawn } from "node:child_process";
-import { readdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import { copyFileSync, existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { Command } from "commander";
 import { resolvePackageJson } from "./resolve-package.ts";
@@ -53,6 +53,20 @@ export function pruneResourceData(dir: string): number {
   return removed;
 }
 
+/**
+ * A static host shows `404.html` for an address it has no file for (GitHub Pages, Cloudflare Pages,
+ * Netlify), and without it its own plain page. The site has no such file, but it has the page that
+ * runs the site in the browser for any address (`__spa-fallback.html`), which shows the 404 of the
+ * site when no page matches: the same file is `404.html`. Returns whether it was made.
+ */
+export function addNotFoundPage(dir: string): boolean {
+  const fallback = join(dir, "__spa-fallback.html");
+  const page = join(dir, "404.html");
+  if (!existsSync(fallback) || existsSync(page)) return false;
+  copyFileSync(fallback, page);
+  return true;
+}
+
 /** `dev`, `build`, `typegen`: forward every argument to `@react-router/dev`'s own CLI, unexamined. */
 export function registerSpawnCommands(program: Command): void {
   for (const sub of ["dev", "build", "typegen"] as const) {
@@ -68,6 +82,7 @@ export function registerSpawnCommands(program: Command): void {
           if (sub === "build") {
             try {
               pruneResourceData(join(cwd, "build", "client"));
+              addNotFoundPage(join(cwd, "build", "client"));
             } catch {
               // no `build/client`: nothing to clean
             }
