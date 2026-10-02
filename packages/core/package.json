@@ -1,6 +1,6 @@
 {
   "name": "@consify/core",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "The core of a customizable documentation site: config, layout, theme, features, Vite and React Router integration",
   "license": "MIT",
   "keywords": [

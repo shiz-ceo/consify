@@ -23,6 +23,10 @@ All notable changes to `consify` are documented here. Format: [Keep a Changelog]
 - **Tests and CI:** end-to-end tests with Playwright (`bun run e2e`, the `e2e` job in CI) and the `compat.yml` workflow (unit tests on Ubuntu, Windows and macOS; the packed packages installed with npm and pnpm on Node 22 and 24).
 
 
+## [1.2.2] - 2026-10-02
+
+- **Fix: switching the language ended on "page not found" on a static host.** The switcher built the address from the current path, and a host that serves `page/` after a full load gave it a trailing slash; a page with it asks for `page/_.data`, which the build does not have, so the page showed as missing until a reload. The address now has no trailing slash (the search and the hash are kept).
+
 ## [1.2.1] - 2026-10-02
 
 - **Search index per language, written after the pre-render.** `/{lang}/<section>/search.json` holds the pages of its own language only (it held every language before, the same index for each), so a reader finds pages they can read and a site with several languages indexes each page once. A static `consify build` no longer pre-renders the index: React Router gives a pre-rendered file 10 s, and a large site takes longer (about 40 s for 250 long pages), so the build stopped with "The operation was aborted due to timeout". The pre-render now gets an empty stand-in, and `consify build` asks the built server for every index afterwards and writes it over the stand-in, with no time limit. A static site built with `react-router build` directly keeps the stand-in: build it with `consify build`. New in `@consify/core/node`: `deferredPaths` and `isDeferredFile`. `@consify/cli` lists `react-router` as a peer dependency (the copy the build itself uses).

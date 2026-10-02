@@ -7,13 +7,16 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
   useMatches,
+  useNavigate,
   useParams,
   useRouteError,
 } from "react-router";
 import SiteSearchDialog from "../../builtin/search/search-bridge.tsx";
 import { MdxComponentsContext } from "../../content/mdx.ts";
 import { resolveHead } from "../../shared/head.ts";
+import { languagePath } from "../../shared/language-path.ts";
 import { createTranslations } from "../../shared/layout/layout-options.tsx";
 import { NotFound } from "../../shared/layout/not-found-view.tsx";
 import { SiteBanner } from "../../shared/layout/site-banner.tsx";
@@ -49,8 +52,12 @@ const themeCss = themeToCss(consify.config.theme);
 export function Layout({ children }: { children: React.ReactNode }) {
   const { lang } = useParams();
   const matches = useMatches();
+  const navigate = useNavigate();
+  const location = useLocation();
   const language =
     lang && consify.config.i18n.languages.includes(lang) ? lang : consify.i18n.defaultLanguage;
+  const switchLanguage = (to: string) =>
+    navigate(languagePath(location, to, consify.config.i18n.languages));
   // a feature without a search has no search dialog and no shortcut
   const page = matches
     .map((match) => (match.handle as { page?: string } | undefined)?.page)
@@ -76,7 +83,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="flex min-h-screen flex-col">
         <RootProvider
-          i18n={i18nProvider(translations, language)}
+          i18n={{ ...i18nProvider(translations, language), onLocaleChange: switchLanguage }}
           search={{ enabled: searchEnabled, SearchDialog: SiteSearchDialog }}
         >
           <SiteBanner lang={language} />
