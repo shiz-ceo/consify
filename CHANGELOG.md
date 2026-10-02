@@ -23,6 +23,10 @@ All notable changes to `consify` are documented here. Format: [Keep a Changelog]
 - **Tests and CI:** end-to-end tests with Playwright (`bun run e2e`, the `e2e` job in CI) and the `compat.yml` workflow (unit tests on Ubuntu, Windows and macOS; the packed packages installed with npm and pnpm on Node 22 and 24).
 
 
+## [1.0.6] - 2026-10-02
+
+- **Fix: a Twoslash popup scrolls sideways again.** 1.0.5 hid the horizontal scrollbar of the popup and wrapped long types. The popup scrolls both ways again (a long type does not wrap), and the page does not scroll along with it. The demo has a page with a long popup (`guides/joins`).
+
 ## [1.0.5] - 2026-10-02
 
 - **Fix: Markdown in the descriptions of `<TypeTable>`.** The table showed a description as plain text, so `` `{ domain: false }` `` came out with its backticks. Descriptions (and `typeDescription`, `returns`, parameters) now have code, **bold**, *italic* and links made.

@@ -1,0 +1,53 @@
+---
+title: Joins
+description: Put the documents of another collection into a row
+---
+
+## The quick path
+
+To give every order a customer, name the collection `from`, the field of the order `localField`, the field of the customer `foreignField` and the name of the new field `as`:
+
+```ts twoslash
+interface Customer {
+  name: string;
+  city: string;
+}
+interface Order {
+  customer: string;
+  total: number;
+}
+type Collection<Doc> = { readonly collection: string; readonly __doc?: Doc };
+
+interface Pipeline<Row> {
+  /**
+   * Joins the documents of another collection: for every row, the documents of `from` whose
+   * `foreignField` equals the `localField` of the row are put into the array `as`.
+   *
+   * The joined field is always an array: there can be several customers with a name, or none.
+   * Add `unwind` to get one object.
+   * @param stage - `from`, `localField`, `foreignField` and the name of the new field.
+   */
+  lookup<
+    Foreign extends object,
+    Local extends keyof Row & string,
+    Field extends keyof Foreign & string,
+    As extends string,
+  >(stage: {
+    from: Collection<Foreign>;
+    localField: Local;
+    foreignField: Field;
+    as: As;
+  }): Pipeline<Omit<Row, As> & { readonly [Key in As]: readonly Foreign[] }>;
+}
+declare const Orders: {
+  aggregate<Out>(build: (p: Pipeline<Order>) => Pipeline<Out>): Promise<Out[]>;
+};
+declare const Customer: Collection<Customer>;
+// ---cut---
+const query = Orders.aggregate((p) =>
+  p.lookup({ from: Customer, localField: "customer", foreignField: "name", as: "buyer" }),
+);
+const rows = await query;
+```
+
+The joined field is always an array: there can be several customers with that name, or none. To get one object, add `unwind`. The rest of the page goes through this and the other ways.

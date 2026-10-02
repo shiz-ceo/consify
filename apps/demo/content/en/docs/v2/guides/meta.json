@@ -1,1 +1,5 @@
-{ "title": "Guides", "icon": "Compass", "pages": ["scheduling", "retries", "testing", "advanced"] }
+{
+  "title": "Guides",
+  "icon": "Compass",
+  "pages": ["scheduling", "retries", "joins", "testing", "advanced"]
+}

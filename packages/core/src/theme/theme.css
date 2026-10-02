@@ -325,16 +325,7 @@ pre .line.highlighted::after {
   --shiki-dark: #161b22;
 }
 
-/*
- * Popups of Twoslash hovers: a long type wraps instead of running out of the popup, the popup
- * scrolls only down, and the page does not scroll with it.
- */
+/* Popups of Twoslash hovers: the page does not scroll along with the popup. */
 .fd-twoslash-popover {
-  overflow-x: hidden;
   overscroll-behavior: contain;
-}
-
-.fd-twoslash-popover .twoslash-popup-code {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }

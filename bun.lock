@@ -93,7 +93,7 @@
     },
     "integrations/api-reference": {
       "name": "@consify/api-reference",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "dependencies": {
         "@scalar/api-reference-react": "0.9.74",
         "next-themes": "0.4.6",
@@ -110,7 +110,7 @@
         "vite": "8.3.0",
       },
       "peerDependencies": {
-        "@consify/core": "^1.0.5",
+        "@consify/core": "^1.0.6",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "react-router": "^8.4.0",
@@ -118,7 +118,7 @@
     },
     "integrations/blog": {
       "name": "@consify/blog",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "dependencies": {
         "fumadocs-core": "16.15.13",
         "fumadocs-ui": "16.15.13",
@@ -137,7 +137,7 @@
         "vite": "8.3.0",
       },
       "peerDependencies": {
-        "@consify/core": "^1.0.5",
+        "@consify/core": "^1.0.6",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "react-router": "^8.4.0",
@@ -145,7 +145,7 @@
     },
     "integrations/docs": {
       "name": "@consify/docs",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "dependencies": {
         "fumadocs-core": "16.15.13",
         "fumadocs-ui": "16.15.13",
@@ -163,7 +163,7 @@
         "vite": "8.3.0",
       },
       "peerDependencies": {
-        "@consify/core": "^1.0.5",
+        "@consify/core": "^1.0.6",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "react-router": "^8.4.0",
@@ -171,7 +171,7 @@
     },
     "packages/cli": {
       "name": "@consify/cli",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "bin": {
         "consify": "./bin/consify",
       },
@@ -191,12 +191,12 @@
         "@types/node": "24",
       },
       "peerDependencies": {
-        "@consify/core": "^1.0.5",
+        "@consify/core": "^1.0.6",
       },
     },
     "packages/core": {
       "name": "@consify/core",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "dependencies": {
         "@fontsource-variable/geist": "5.3.0",
         "@fontsource-variable/geist-mono": "5.3.0",
@@ -220,7 +220,7 @@
         "tailwindcss": "4.3.3",
         "takumi-js": "2.14.0",
         "typescript": "6.0.3",
-        "unified": "11.0.5",
+        "unified": "11.0.6",
         "yaml": "2.9.1",
         "zod": "4.6.5",
       },
@@ -244,7 +244,7 @@
     },
     "packages/create-consify": {
       "name": "@consify/create",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "bin": {
         "create-consify": "./bin/create-consify.js",
       },

@@ -1,5 +1,5 @@
 {
   "title": "Руководства",
   "icon": "Compass",
-  "pages": ["scheduling", "retries", "testing", "advanced"]
+  "pages": ["scheduling", "retries", "joins", "testing", "advanced"]
 }
