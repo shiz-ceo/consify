@@ -1,9 +1,16 @@
 # Known migrations
 
-consify has not been released yet (1.0.0 was never published), so there are no migrations to
-apply. The catalog starts with the first release: from then on, every release with a breaking
-change adds one section here, oldest first, in the format below. Until then, match
-`CHANGELOG.md` entries against the project directly (step 3 of the skill).
+No release so far has a breaking change, so there is nothing to migrate: 1.0.0 to 1.2.0 are
+drop-in upgrades. Every release with a breaking change adds one section here, oldest first, in the
+format below. Match `CHANGELOG.md` entries against the project directly (step 3 of the skill).
+
+## Optional features (not migrations)
+
+- **1.2.0: anchors and snippets.** Both are off by default and change nothing until the project
+  turns them on. `docs({ anchors: true })` gives every heading an English id and a registry
+  (`consify anchors add`, then `check`); `docs({ snippets: true })` makes `<Snippet id />` read
+  shared code and text from `snippets/<version>/`. Offer them in the report as options, never apply
+  them as part of the upgrade.
 
 ## Format of an entry
 

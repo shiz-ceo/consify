@@ -298,8 +298,9 @@ export default defineConfig({
 | `consify build` | Production build (and the pre-rendered pages) |
 | `consify start` | Serves a `server` build (`build/server`) |
 | `consify typegen` | Generates route types, used by `typecheck` |
-| `consify check` | Checks the content: addresses, front matter, translations, `meta.json`, anchors |
+| `consify check` | Checks the content: addresses, front matter, translations, `meta.json`, anchors, snippets |
 | `consify anchors` | `check`, `sync` and `add`: English ids of the headings and their registry (`anchors.json`) |
+| `consify snippets` | `check` and `find`: the files of `snippets/` that pages put in place with `<Snippet id />`, and the code blocks repeated on several pages |
 
 Anything after the command is passed on to the underlying tool, for example `consify dev --port 3000`.
 

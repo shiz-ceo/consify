@@ -14,6 +14,12 @@ export {
   anchorRules,
 } from "./content/anchor-rules.ts";
 export { Mdx, type MdxProps } from "./content/mdx.ts";
+export {
+  type SnippetsConfig,
+  type SnippetsOptions,
+  snippetsDir,
+  withoutVersion,
+} from "./content/snippet-rules.ts";
 export { previewsPath } from "./feature/content-files.ts";
 export { defineFeature, isFeature, page } from "./feature/define.ts";
 export { lazyComponents } from "./feature/lazy.ts";

@@ -6,6 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { type Plugin, type PluginOption, searchForWorkspaceRoot } from "vite";
 import type { DocsConfig } from "../../config/index.ts";
 import { contentDir } from "../../content/files.ts";
+import { snippetDirs } from "../../content/snippet-rules.ts";
 import { generatedDir, packageDirs, scaffold } from "../router/scaffold.ts";
 
 /**
@@ -88,10 +89,12 @@ function linkedPackageDir(cwd: string): string | undefined {
  */
 export function consify(config: Readonly<DocsConfig>): PluginOption[] {
   const cwd = process.cwd();
-  scaffold(cwd);
+  const snippets = snippetDirs(config);
+  scaffold(cwd, snippets);
   const linked = linkedPackageDir(cwd);
   const basePath = config.deploy.basePath;
-  const content = join(cwd, contentDir);
+  // the folders read by the loaders: the content, and the snippets its pages put in place
+  const watched = [contentDir, ...snippets].map((dir) => join(cwd, dir));
   const packages = packageDirs(cwd);
 
   const wiring: Plugin = {
@@ -122,11 +125,14 @@ export function consify(config: Readonly<DocsConfig>): PluginOption[] {
         },
       },
     }),
-    // content is read by the loaders, not imported: reload the page when a file of it changes
+    // content is read by the loaders, not imported: reload the page when a file of it changes (a
+    // changed snippet makes the pages that use it compile again, see compileMdx)
     configureServer(server) {
-      server.watcher.add(content);
+      server.watcher.add(watched);
       const reload = (file: string) => {
-        if (file.startsWith(`${content}${sep}`)) server.ws.send({ type: "full-reload" });
+        if (watched.some((dir) => file.startsWith(`${dir}${sep}`))) {
+          server.ws.send({ type: "full-reload" });
+        }
       };
       server.watcher.on("change", reload);
       server.watcher.on("add", reload);

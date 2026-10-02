@@ -4,7 +4,9 @@ declare module "consify:instance" {
   export const consify: Consify;
 }
 
-// `consify:content` is an alias to `.consify/content.ts`: the text files of `content/`, for the server build.
+// `consify:content` is an alias to `.consify/content.ts`: the text files of `content/` and the files of
+// the snippets, for the server build.
 declare module "consify:content" {
   export const content: Record<string, () => Promise<unknown>>;
+  export const snippets: Record<string, () => Promise<unknown>>;
 }

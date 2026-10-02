@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import type { DocsConfig } from "../config/schema.ts";
 import type { AnchorsConfig } from "../content/anchor-rules.ts";
+import type { SnippetsConfig } from "../content/snippet-rules.ts";
 
 /** A text in one language for every language, or one per language code. */
 export type Localized<T = string> = T | Readonly<Record<string, T>>;
@@ -179,6 +180,13 @@ export interface ContentOptions<Data = Record<string, unknown>> {
    */
   anchors?: AnchorsConfig;
   /**
+   * Snippets: files of `snippets/<version>/` (`dir`) put on a page with `<Snippet id="…" />` when it
+   * is compiled, the same file for every language, or a variant of a language in
+   * `snippets/<version>/<lang>/`. `consify check` checks them. The docs set it with their `snippets`
+   * option.
+   */
+  snippets?: SnippetsConfig;
+  /**
    * A card for a link to an entry: when the pointer is over a link to another entry (or to a
    * heading of it) in the text of a page, the card shows its title and description (or the heading
    * and its first paragraph). Needs a page that marks its text, as the docs do; the cards are
@@ -214,6 +222,11 @@ export interface Content {
   list(dir?: string): Promise<ContentFile[]>;
   /** The text of a file, `undefined` when there is none. */
   read(path: string): Promise<string | undefined>;
+  /**
+   * The Markdown of an MDX file without its front matter, with its snippets (`<Snippet />`) in place:
+   * what `llms.txt` and the link cards are made of. `undefined` when there is no file.
+   */
+  markdown(path: string): Promise<string | undefined>;
   /** A JSON file parsed, `undefined` when there is none. Not checked: `T` is your promise. */
   json<T = unknown>(path: string): Promise<T | undefined>;
   /** The front matter of an MDX file, without compiling it. */

@@ -25,6 +25,8 @@ export default defineConfig({
       versions: { list: [{ id: "v0", label: "v0 (latest)", status: "latest" }] },
       // English ids of the headings, the same in both languages, and the registry of them (anchors.json)
       anchors: true,
+      // code shared by the pages of both languages: snippets/v0/, <Snippet id="…" /> on a page
+      snippets: true,
       // the language folders of the docs of consify live in this folder of the repository
       editOnGithub: { contentDir: "apps/docs/content" },
     }),

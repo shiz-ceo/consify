@@ -139,7 +139,9 @@ language. Relative links to files (`./other.mdx`) also work.
 
 | Command | Does |
 | --- | --- |
-| `consify check [--strict]` | Every address of every feature, front matter, translations (same code blocks, links, headings), `meta.json` |
+| `consify check [--strict]` | Every address of every feature, front matter, translations (same code blocks, links, headings), `meta.json`, anchors, snippets |
+| `consify anchors check`, `consify anchors sync`, `consify anchors add` | English ids of the headings and their registry, `anchors.json` (`docs({ anchors: true })`) |
+| `consify snippets check`, `consify snippets find [--min-lines N]` | Files of `snippets/<version>/` put on a page with `<Snippet id />` (`docs({ snippets: true })`); `find` lists code blocks repeated on several pages |
 | `consify lang add <lang> [--copy]`, `consify lang status [lang] [--missing]` | Languages |
 | `consify locale [lang]` | Interface strings file for a language |
 | `consify links [lang]` | Link ids the features offer, for `header.links` / `footer.columns` |

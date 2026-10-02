@@ -39,6 +39,13 @@ asks to translate something you are not starting from zero.
   onto its translation; never translate or reword an id. The ids are the addresses that links hold.
   `consify anchors add` copies them by position for a translation that has none (the number of
   headings must match the original). Run `consify check` after: it names an id that is wrong.
+- When the site has `snippets` on (`snippets` in `docs()`, a `snippets/` folder next to `content/`),
+  a page may have `<Snippet id="…" />` tags: copy each tag **as it is**, in the same place. Never
+  translate or change its `id`, `version` or other props, and do not replace it with the text it
+  shows. To translate what a snippet shows, write a variant of its file for the language:
+  `snippets/<version>/<lang>/<id>.<ext>` (the same path inside the folder of the version, under the
+  folder of the language). In a code snippet translate the comments only; the code stays byte for
+  byte (`consify check` warns otherwise). A snippet with no variant is shown as it is.
 - A missing translation does not break the site (the main language is shown as a fallback via
   `i18n.fallback`), but it must be named in the report — never leave it unsaid.
 
@@ -59,6 +66,7 @@ asks to translate something you are not starting from zero.
 - Mermaid source, formulas, code fence info (`title="..."`, `{2,4-5}`, `tab="..."`, `twoslash`).
 - `date`, `categories`, `tags`, `authors`, `cover`, `icon`.
 - The id of a heading, `[#id]`, and the id in a link to a heading (`./page.mdx#id`).
+- A `<Snippet … />` tag and all its props.
 - The `value` of every `<Tab>` and the `items` of `Tabs` (they must match each other).
 - Names of products and of the user's own API.
 

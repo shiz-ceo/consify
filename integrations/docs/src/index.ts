@@ -8,6 +8,7 @@ import {
   type MessagesOf,
   page,
   previewsPath,
+  snippetsDir,
 } from "@consify/core";
 import { lazy } from "react";
 import { z } from "zod";
@@ -129,6 +130,19 @@ const docsOptionsSchema = z.strictObject({
     ])
     .default(false),
   /**
+   * Snippets: a file of `snippets/<version>/` (`WITHOUT_VERSION/` for pages with no version) put on a
+   * page with `<Snippet id="db/connect" />` when it is compiled, the same file for every language,
+   * or a variant of a language in `snippets/<version>/<lang>/`. A code file becomes a code block
+   * (`title`, `highlight`, `twoslash`, a `#region` of it), an `.mdx` file becomes text with its
+   * components. `consify check` and `consify build` fail on a snippet that is not there. `{ dir }`
+   * is another folder of the project.
+   *
+   * @default false
+   */
+  snippets: z
+    .union([z.boolean(), z.strictObject({ dir: z.string().min(1).optional() })])
+    .default(false),
+  /**
    * The "Edit this page on GitHub" link (it needs `site.github`). `{ contentDir }` sets the folder
    * that holds the language folders in the repository, `content` by default.
    *
@@ -215,12 +229,14 @@ export function docs(input: DocsOptionsInput = {}) {
   const { id } = options;
   const defaultVersion = options.versions.default;
   const rules = anchorRules(options.anchors);
-  // a version has its own registry: the folder of the version, none when the docs are not versioned
+  // a version has its own registry and snippets: the folder of the version, none when the docs are
+  // not versioned
   const versionIds = new Set(options.versions.list.map((version) => version.id));
-  const anchorScope = (path: string) => {
+  const versionOf = (path: string) => {
     const first = path.split("/")[0] ?? "";
     return versionIds.has(first) ? first : "";
   };
+  const snippets = snippetsDir(options.snippets);
 
   return defineFeature({
     id,
@@ -233,7 +249,10 @@ export function docs(input: DocsOptionsInput = {}) {
       llms: options.llmsTxt,
       og: options.og,
       previews: options.linkPreview,
-      ...(rules ? { anchors: { ...rules, scope: anchorScope } } : {}),
+      ...(rules ? { anchors: { ...rules, scope: versionOf } } : {}),
+      ...(snippets
+        ? { snippets: { dir: snippets, version: versionOf, versions: [...versionIds] } }
+        : {}),
     },
     pages: {
       // a versioned docs feature opens its default version

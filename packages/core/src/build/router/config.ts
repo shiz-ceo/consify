@@ -1,5 +1,6 @@
 import type { Config } from "@react-router/dev/config";
 import type { DocsConfig } from "../../config/index.ts";
+import { snippetDirs } from "../../content/snippet-rules.ts";
 import { warnMissingLocales } from "../../locales/template.ts";
 import { prerenderPaths } from "./prerender.ts";
 import { appDirectory, scaffold } from "./scaffold.ts";
@@ -20,7 +21,7 @@ import { appDirectory, scaffold } from "./scaffold.ts";
  * export default defineRouterConfig(config);
  */
 export function defineRouterConfig(docsConfig: Readonly<DocsConfig>): Config {
-  scaffold(process.cwd());
+  scaffold(process.cwd(), snippetDirs(docsConfig));
   warnMissingLocales(docsConfig, process.cwd());
   const { mode, basePath } = docsConfig.deploy;
   return {

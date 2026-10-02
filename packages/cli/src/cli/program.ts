@@ -9,6 +9,7 @@ import { registerLinksCommand } from "../links-command.ts";
 import { registerLocaleCommand } from "../locale-command.ts";
 import { registerRegistryCommands } from "../registry/program.ts";
 import { registerSkillCommand } from "../skill-command.ts";
+import { registerSnippetsCommand } from "../snippets.ts";
 import { resolvePackageJson } from "./resolve-package.ts";
 import { registerSpawnCommands, registerStartCommand } from "./spawn-commands.ts";
 
@@ -39,6 +40,7 @@ export function buildProgram(): Command {
   registerDoctorCommand(program);
   registerCheckCommand(program);
   registerAnchorsCommand(program);
+  registerSnippetsCommand(program);
   registerLangCommand(program);
   registerLinksCommand(program);
   registerLocaleCommand(program);

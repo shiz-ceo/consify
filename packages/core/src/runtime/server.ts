@@ -2,7 +2,7 @@
 // (React Router removes `loader` from the browser bundle, and this module with it).
 /// <reference path="../build/router/instance.d.ts" />
 
-import { content as bundled } from "consify:content";
+import { content as bundled, snippets as bundledSnippets } from "consify:content";
 import { createHash } from "node:crypto";
 import { redirect } from "react-router";
 import { llmsText, ogImage, rssText, searchResponse } from "../content/collection.ts";
@@ -26,7 +26,9 @@ interface LoaderArgs {
  * Where a running site reads its content: the server build once it is built, the disk while it is
  * edited (a file saved there shows at once).
  */
-export const contentSource = import.meta.env.PROD ? bundledSource(bundled) : undefined;
+export const contentSource = import.meta.env.PROD
+  ? bundledSource(bundled, bundledSnippets)
+  : undefined;
 
 function loadContext(feature: Feature, lang: string, args: LoaderArgs): LoadContext {
   return createLoadContext({

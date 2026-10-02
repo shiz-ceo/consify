@@ -297,8 +297,9 @@ export default defineConfig({
 | `consify build` | Продакшен-сборка (вместе с предварительно отрендеренными страницами) |
 | `consify start` | Запускает сборку `server` (`build/server`) |
 | `consify typegen` | Генерирует типы маршрутов, которые использует `typecheck` |
-| `consify check` | Проверяет контент: адреса, front matter, переводы, `meta.json`, якоря |
+| `consify check` | Проверяет контент: адреса, front matter, переводы, `meta.json`, якоря, сниппеты |
 | `consify anchors` | `check`, `sync` и `add`: английские ид заголовков и их реестр (`anchors.json`) |
+| `consify snippets` | `check` и `find`: файлы `snippets/`, которые страницы вставляют тегом `<Snippet id />`, и блоки кода, повторённые на нескольких страницах |
 
 Всё, что идёт после команды, передаётся нижележащему инструменту, например `consify dev --port 3000`.
 

@@ -37,15 +37,24 @@ export const consify = createConsify(config, {
 }
 
 /**
- * Source of `.consify/content.ts`: the text files of `content/`, compiled into the server build so a
- * built server does not need the folder next to it.
+ * Source of `.consify/content.ts`: the text files of `content/`, and every file of the folders of
+ * snippets, compiled into the server build so a built server does not need the folders next to it.
  */
-export function renderContent(): string {
+export function renderContent(snippetDirs: readonly string[] = []): string {
+  const globs = snippetDirs.map((dir) => JSON.stringify(`/${dir}/**/*`));
+  const snippets =
+    globs.length === 0
+      ? "{}"
+      : `import.meta.glob(${globs.length === 1 ? globs[0] : `[${globs.join(", ")}]`}, {
+  query: "?raw",
+  import: "default",
+})`;
   return `${header}
 export const content = import.meta.glob("/content/**/*.{md,mdx,json,yml,yaml,txt}", {
   query: "?raw",
   import: "default",
 });
+export const snippets = ${snippets};
 `;
 }
 
@@ -98,8 +107,9 @@ export function renderStyles(dirs: readonly string[]): string {
 /**
  * Writes the thin files React Router needs into `.consify/`, so a project keeps only
  * `docs.config.ts`, `vite.config.ts` and `react-router.config.ts`. Safe to call repeatedly.
+ * `snippetDirs` are the folders of snippets of the features (`snippets`), for the server build.
  */
-export function scaffold(cwd: string = process.cwd()): void {
+export function scaffold(cwd: string = process.cwd(), snippetDirs: readonly string[] = []): void {
   // what an older version generated is not left behind to be compiled
   const own = new Set(["app", "routes", "instance.ts", "content.ts", "styles.css"]);
   const dir = join(cwd, generatedDir);
@@ -110,7 +120,7 @@ export function scaffold(cwd: string = process.cwd()): void {
   }
   const configFile = findConfigFile(cwd) ?? "docs.config.ts";
   writeIfChanged(join(cwd, generatedDir, "instance.ts"), renderInstance(configFile));
-  writeIfChanged(join(cwd, generatedDir, "content.ts"), renderContent());
+  writeIfChanged(join(cwd, generatedDir, "content.ts"), renderContent(snippetDirs));
   writeIfChanged(join(cwd, generatedDir, "styles.css"), renderStyles(packageDirs(cwd)));
   writeIfChanged(
     join(cwd, appDirectory, "root.tsx"),

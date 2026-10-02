@@ -7,6 +7,7 @@ import { copyFileSync, existsSync, readdirSync, readFileSync, rmSync, statSync }
 import { dirname, join } from "node:path";
 import type { Command } from "commander";
 import { hasAnchors, runAnchorsCheck } from "../anchors.ts";
+import { hasSnippets, runSnippetsCheck } from "../snippets.ts";
 import { resolvePackageJson } from "./resolve-package.ts";
 
 /** Resolves `pkg`'s bin script, preferring the project's own installed `consify`, then this package. */
@@ -78,14 +79,20 @@ export function registerSpawnCommands(program: Command): void {
       .argument("[args...]", "forwarded to @react-router/dev")
       .action(async (args: string[]) => {
         const cwd = process.cwd();
-        // the ids of the headings and their registry are checked before a build: a wrong anchor stops it
-        const skip = args.includes("--no-anchors-check");
-        const rest = args.filter((arg) => arg !== "--no-anchors-check");
-        if (sub === "build" && !skip && (await hasAnchors(cwd))) {
-          const code = await runAnchorsCheck(cwd, true);
+        // the ids of the headings and their registry, and the snippets, are checked before a build:
+        // a wrong anchor or a missing snippet stops it
+        const own = ["--no-anchors-check", "--no-snippets-check"];
+        const rest = args.filter((arg) => !own.includes(arg));
+        const steps = [
+          { flag: "--no-anchors-check", what: "anchors", on: hasAnchors, run: runAnchorsCheck },
+          { flag: "--no-snippets-check", what: "snippets", on: hasSnippets, run: runSnippetsCheck },
+        ];
+        for (const step of sub === "build" ? steps : []) {
+          if (args.includes(step.flag) || !(await step.on(cwd))) continue;
+          const code = await step.run(cwd, true);
           if (code !== 0) {
             console.error(
-              "The build is stopped: fix the anchors, or build with --no-anchors-check.",
+              `The build is stopped: fix the ${step.what}, or build with ${step.flag}.`,
             );
             process.exitCode = code;
             return;

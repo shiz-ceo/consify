@@ -129,4 +129,27 @@ describe("a docs page", () => {
     const data = await load(c, "en", "v1");
     expect(data.deprecated).toEqual({ version: "v1", latest: { label: "v2", url: "/en/docs/v2" } });
   });
+
+  test("puts the snippets of its version in place, in the language of the page", async () => {
+    const versions = { list: [{ id: "v1" }] };
+    write(
+      "ru",
+      "docs/v1/guide.mdx",
+      '---\ntitle: Guide\n---\n\n<Snippet id="db" title="db.ts" />\n',
+    );
+    const file = (path: string, text: string) => {
+      mkdirSync(dirname(join(cwd, path)), { recursive: true });
+      writeFileSync(join(cwd, path), text);
+    };
+    file("snippets/v1/db.ts", "const db = open(); // open it\n");
+    file("snippets/v1/ru/db.ts", "const db = open(); // открыть\n");
+    const feature = docs({ versions, snippets: true });
+    expect(feature.content?.snippets?.dir).toBe("snippets");
+    expect(feature.content?.snippets?.version("v1/guide.mdx")).toBe("v1");
+    expect(feature.content?.snippets?.version("intro.mdx")).toBe("");
+    expect(docs({ snippets: { dir: "./shared/" } }).content?.snippets?.dir).toBe("shared");
+    expect(docs().content?.snippets).toBeUndefined();
+    const data = await load(config(feature), "ru", "v1/guide");
+    expect(data.code).toContain("открыть");
+  });
 });

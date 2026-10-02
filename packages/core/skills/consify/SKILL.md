@@ -53,7 +53,7 @@ Run in order, stopping at the first failure (see [references/verification.md](re
 ```bash
 bun run build            # MDX/YAML errors, a front matter the feature's schema refuses: stops and names the file
 bun run typecheck        # if the project has the script
-bunx consify check --strict   # every address of every feature, front matter, translations, meta.json, anchors
+bunx consify check --strict   # every address of every feature, front matter, translations, meta.json, anchors, snippets
 consify lang status      # a quick table of what is translated per language
 ```
 

@@ -7,7 +7,6 @@ import type { DocsConfig } from "../config/index.ts";
 import type { Content, Feature } from "../feature/types.ts";
 import { plainText } from "../mdx/structure.ts";
 import { readEntries } from "./collection.ts";
-import { splitFrontmatter } from "./compile.ts";
 
 /** What the page shows for a link to an entry: `t` the title, `d` a text, `s` its headings. */
 export interface PagePreview {
@@ -67,7 +66,7 @@ export async function previewsResponse(
 ): Promise<Response> {
   const previews: Previews = {};
   for (const entry of await readEntries(feature, content, config, lang)) {
-    const text = splitFrontmatter((await content.read(entry.path)) ?? "").body;
+    const text = (await content.markdown(entry.path)) ?? "";
     const title = typeof entry.data.title === "string" ? entry.data.title : entry.slug;
     const description =
       typeof entry.data.description === "string" ? entry.data.description : undefined;

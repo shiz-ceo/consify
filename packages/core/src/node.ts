@@ -21,15 +21,27 @@ export {
   transliterate,
   validId,
 } from "./content/anchors.ts";
-export { compileMdx, splitFrontmatter } from "./content/compile.ts";
+export { type CompilePage, compileMdx, splitFrontmatter } from "./content/compile.ts";
 export {
   bundledSource,
   type ContentSource,
   contentDir,
   createContent,
   diskSource,
+  type SnippetStore,
   slugOf,
 } from "./content/files.ts";
+export {
+  checkSnippets,
+  mdxParser,
+  type SnippetDiagnostic,
+  type SnippetPage,
+  type SnippetsConfig,
+  type SnippetsInput,
+  snippetsDir,
+  withoutComments,
+  withoutVersion,
+} from "./content/snippets.ts";
 export { type Address, siteAddresses } from "./feature/addresses.ts";
 export { allFeatures } from "./feature/builtin.ts";
 export { createLoadContext, type LoadContextOptions } from "./feature/load-context.ts";

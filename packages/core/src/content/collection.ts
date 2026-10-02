@@ -250,7 +250,7 @@ export async function llmsText(
 ): Promise<string> {
   const text = llms(await source(feature, content, config), {
     renderPage: async (page) => {
-      const body = splitFrontmatter((await content.read(inLanguage(page.path))) ?? "").body;
+      const body = (await content.markdown(inLanguage(page.path))) ?? "";
       return `# ${page.data.title} (${page.url})\n\n${body}`;
     },
   });

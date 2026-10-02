@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import {
   rehypeCode,
@@ -21,6 +22,7 @@ import { rehypeCodeHtml } from "./code-html.ts";
 import { recmaHoistPopups } from "./hoist-popups.ts";
 import { transformerLineRanges } from "./line-highlight.ts";
 import { rehypeShikiClasses } from "./shiki-classes.ts";
+import { remarkSnippets } from "./snippets.ts";
 import { plainText } from "./structure.ts";
 
 /**
@@ -43,17 +45,31 @@ export interface MdxPipeline {
 }
 
 /**
- * The MDX pipeline of the site: GitHub Markdown, headings with ids (the table of contents), code
- * tabs, package manager tabs, search data, math, Mermaid, highlighted code with Twoslash, then the
- * plugins of `mdx.plugins` in the order they are listed.
+ * The MDX pipeline of the site: snippets (`<Snippet id />`) put in place, GitHub Markdown, headings
+ * with ids (the table of contents), code tabs, package manager tabs, search data, math, Mermaid,
+ * highlighted code with Twoslash, then the plugins of `mdx.plugins` in the order they are listed.
  */
 export function createMdxPipeline(config: Readonly<DocsConfig>, cwd: string): MdxPipeline {
   const { math, twoslash, plugins } = config.mdx;
   const shikiTransformers = plugins.flatMap((p) => p.shiki?.transformers ?? []);
   const shikiLangs = ["js", "jsx", "ts", "tsx", ...plugins.flatMap((p) => p.shiki?.langs ?? [])];
+  // a component `Snippet` of the site's own is left alone where the snippets are off
+  const ownSnippet =
+    "Snippet" in config.mdx.components ||
+    plugins.some((p) => p.components && "Snippet" in p.components) ||
+    ["tsx", "jsx"].some((ext) => existsSync(join(cwd, "custom/components", `Snippet.${ext}`)));
 
   return {
     remarkPlugins: [
+      // the first one: what a snippet brings is the page's own text for every plugin after it
+      [
+        remarkSnippets,
+        {
+          defaultLanguage: config.i18n.defaultLanguage,
+          languages: config.i18n.languages,
+          ownComponent: ownSnippet,
+        },
+      ],
       remarkGfm,
       remarkHeading,
       // images are served from `public/`: sizes are read from there, nothing is imported

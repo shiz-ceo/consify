@@ -429,6 +429,19 @@
     "llmstxt",
     "social-images"
   ],
+  "writing/snippets.mdx": [
+    "turn-it-on",
+    "the-folder",
+    "which-file-a-page-gets",
+    "the-props-of-snippet",
+    "code-snippets",
+    "regions",
+    "text-snippets",
+    "languages",
+    "what-is-checked",
+    "find-repeated-code",
+    "an-example"
+  ],
   "writing/translations-and-versions.mdx": [
     "translations",
     "adding-a-language",

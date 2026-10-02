@@ -5,6 +5,7 @@ import { basename, dirname, join, relative } from "node:path";
 import { contentDir, loadConfig, siteAddresses, splitFrontmatter } from "@consify/core/node";
 import type { Command } from "commander";
 import { anchorDiagnostics } from "./anchors.ts";
+import { snippetDiagnostics } from "./snippets.ts";
 
 export interface CheckOptions {
   /** A missing translation is an error, not a warning. */
@@ -171,6 +172,11 @@ export async function runCheck(options: CheckOptions, cwd: string): Promise<numb
     (found.level === "error" ? errors : warnings).push(`${found.where}: ${found.message}`);
   }
 
+  // 6. the snippets: every <Snippet> names a file that is there, the folder has no file nobody uses
+  for (const found of await snippetDiagnostics(cwd, config)) {
+    (found.level === "error" ? errors : warnings).push(`${found.where}: ${found.message}`);
+  }
+
   for (const warning of warnings) console.warn(`warning: ${warning}`);
   for (const error of errors) console.error(`error: ${error}`);
   console.log(
@@ -183,7 +189,9 @@ export async function runCheck(options: CheckOptions, cwd: string): Promise<numb
 export function registerCheckCommand(program: Command): void {
   program
     .command("check")
-    .description("Check the content: addresses, front matter, translations, meta.json")
+    .description(
+      "Check the content: addresses, front matter, translations, meta.json, anchors, snippets",
+    )
     .option("--strict", "a missing translation is an error (otherwise a warning)")
     .action(async (options: CheckOptions) => {
       process.exitCode = await runCheck(options, process.cwd());

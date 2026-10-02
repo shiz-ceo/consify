@@ -52,7 +52,21 @@ bunx consify check
 When the docs use `anchors`, it also tells a heading with no English id, an id that is not in
 `anchors.json`, a registry id that no page has any more (a heading was removed or renamed: links to it
 are lost, worth a human look) and a link to an id that does not exist. `consify anchors check` is that
-part alone.
+part alone. When the docs use `snippets`, it also tells a `<Snippet>` with no file and a snippet file
+no page uses.
+
+### 4. The same code in several places
+
+A code block copied onto several pages (or into every translation) falls out of date one copy at a
+time. List them:
+
+```bash
+bunx consify snippets find            # --min-lines 5 for the longer ones
+```
+
+Report the repeated blocks with their places, and suggest making each one a snippet (the command
+prints the file and the `<Snippet>` tag); if the docs do not have `snippets` on, say that it is one
+option in `docs()`. Do not move anything yourself: the audit only reports.
 
 ## Report
 

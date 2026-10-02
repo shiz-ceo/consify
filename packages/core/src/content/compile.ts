@@ -6,6 +6,8 @@ import { parse } from "yaml";
 import type { DocsConfig } from "../config/index.ts";
 import type { TocItem } from "../feature/types.ts";
 import { createMdxPipeline, type MdxPipeline } from "../mdx/options.ts";
+import type { SnippetsData } from "../mdx/snippets.ts";
+import type { SnippetStore } from "./files.ts";
 
 const frontmatterPattern = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
 
@@ -52,22 +54,33 @@ const pipelines = new WeakMap<object, MdxPipeline>();
 // per config: a changed config (a new plugin in dev) is a new object, and must not reuse the old output
 const caches = new WeakMap<object, Map<string, Promise<Compiled>>>();
 
+/** What the page is to its snippets: where they are, its language and version. */
+export interface CompilePage {
+  snippets?: (Omit<SnippetsData, "files"> & { files: SnippetStore }) | undefined;
+}
+
 /**
  * Compiles the body of an MDX (or `.md`) file with the pipeline of the site. The result is cached by
- * content, so a page is compiled once per change.
+ * content, so a page is compiled once per change; a page with a `<Snippet>` also when a file of the
+ * snippets changes.
  */
 export function compileMdx(
   config: Readonly<DocsConfig>,
   cwd: string,
   body: string,
   path: string,
+  page: CompilePage = {},
 ): Promise<Compiled> {
+  const { snippets } = page;
+  const uses = snippets !== undefined && body.includes("<Snippet");
   const key = createHash("sha1")
     .update(cwd)
     .update("\0")
     .update(path)
     .update("\0")
     .update(body)
+    .update("\0")
+    .update(uses ? `${snippets.dir}\0${snippets.version}\0${snippets.files.fingerprint()}` : "")
     .digest("hex");
   let cache = caches.get(config);
   if (!cache) {
@@ -83,7 +96,7 @@ export function compileMdx(
       pipelines.set(config, pipeline);
     }
     compiled = compile(
-      { value: body, path },
+      { value: body, path, data: snippets ? { snippets } : {} },
       {
         outputFormat: "function-body",
         format: path.endsWith(".md") ? "md" : "mdx",

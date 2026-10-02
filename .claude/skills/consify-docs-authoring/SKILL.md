@@ -54,6 +54,28 @@ If the project has `anchors` on in `docs()` (look in `docs.config.ts` for `ancho
   first. Look at the ids it made and improve them. `consify check` and `bun run build` stop on a
   heading with no id, an unknown id and a broken link to a heading.
 
+## Snippets
+
+If the project has `snippets` on in `docs()` (look in `docs.config.ts`, or for a `snippets/` folder
+next to `content/`), code or text that is the same on several pages, or in every language, lives in
+one file and the pages put it in place:
+
+- The file is `snippets/<version>/<id>.<ext>` (`snippets/WITHOUT_VERSION/` for a page with no
+  version); the id is its path inside the folder of the version without the extension, never with the
+  version or the language: `<Snippet id="db/connect" />`. It is a block on a line of its own.
+- A code file (`.ts`, `.sh`, `.json`…) is a code block. Its props are the meta of a fenced block:
+  `title="db.ts"`, `highlight="2,4-5"`, `lineNumbers`, `twoslash`, `noCopy`, `lang="…"`,
+  `meta="…"`; `id="db/connect#open"` shows the lines between `// #region open` and `// #endregion`.
+  The notations in its comments (`// [!code highlight]`, `// [!code ++]`, `// ---cut---`) work.
+- An `.mdx` file is text with components; it has **no headings** (write the heading on the page and
+  put the snippet under it), no front matter, no `export`. Its `import` lines go to the page.
+- A variant for a language is `snippets/<version>/<lang>/<id>.<ext>`: for a code snippet only its
+  comments differ. A page reads its language's variant, then the common file, then the variant of the
+  default language; `version="v1"` reads another version.
+- Before you copy a code block to a second page, make it a snippet. `consify snippets find` lists the
+  blocks that are already repeated (with a file and a tag for each). `consify check` and the build stop
+  on a snippet that is not there, a missing region, a loop or a heading in a snippet.
+
 ## Terms
 
 Pick one word for each concept and use it everywhere. Collect the terms from the code and the
