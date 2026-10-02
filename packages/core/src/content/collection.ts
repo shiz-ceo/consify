@@ -207,34 +207,53 @@ interface SearchServer {
 }
 
 /**
- * The search index of the entries: a server answers queries, a static site downloads the whole
- * index once (every language; the default tokenizer handles them all).
+ * The search index of the entries of one language: a server answers queries, a static site
+ * downloads the whole index once. Each language has its own index (`/en/docs/search.json`), made of
+ * the pages of that language only: a reader finds pages they can read, and a site with several
+ * languages does not index every page once per language (a static build gives one file 10 s).
  */
 export async function searchResponse(
   feature: Feature,
   content: Content,
   config: Readonly<DocsConfig>,
+  lang: string,
   request: Request,
 ): Promise<Response> {
-  const server = cached(config, `search:${content.in(config.i18n.defaultLanguage).root}`, () =>
-    import("fumadocs-core/search/server").then(
-      ({ createFromSource }): SearchServer =>
-        createFromSource(() => source(feature, content, config), {
-          buildIndex: async (page) => {
-            const file = await content
-              .in(page.locale ?? config.i18n.defaultLanguage)
-              .mdx(inLanguage(page.path));
-            return {
-              id: page.url,
-              url: page.url,
-              title: page.data.title,
-              ...(page.data.description ? { description: page.data.description } : {}),
-              ...(page.locale ? { locale: page.locale } : {}),
-              structuredData: file?.structuredData as never,
-            };
-          },
-        }),
-    ),
+  const server = cached(
+    config,
+    `search:${lang}:${content.in(config.i18n.defaultLanguage).root}`,
+    () =>
+      import("fumadocs-core/search/server").then(
+        ({ createFromSource }): SearchServer =>
+          /*
+           * The source seen as one language: its pages are those of `lang`, and with no `_i18n` the
+           * index is a plain one, which the static client searches without a locale filter.
+           */
+          createFromSource(
+            async () => {
+              const all = await source(feature, content, config);
+              return Object.assign(Object.create(all) as typeof all, {
+                _i18n: undefined,
+                getPages: () => all.getPages(lang),
+              });
+            },
+            {
+              buildIndex: async (page) => {
+                const file = await content
+                  .in(page.locale ?? config.i18n.defaultLanguage)
+                  .mdx(inLanguage(page.path));
+                return {
+                  id: page.url,
+                  url: page.url,
+                  title: page.data.title,
+                  ...(page.data.description ? { description: page.data.description } : {}),
+                  ...(page.locale ? { locale: page.locale } : {}),
+                  structuredData: file?.structuredData as never,
+                };
+              },
+            },
+          ),
+      ),
   );
   const api = await server;
   return config.deploy.mode === "static" ? api.staticGET() : api.GET(request);

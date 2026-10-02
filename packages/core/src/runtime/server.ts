@@ -26,6 +26,9 @@ interface LoaderArgs {
  * Where a running site reads its content: the server build once it is built, the disk while it is
  * edited (a file saved there shows at once).
  */
+/** A request of the pre-render of `react-router build` (it sets `IS_RR_BUILD_REQUEST` while it runs). */
+const isDeferredRender = (): boolean => process.env.IS_RR_BUILD_REQUEST === "yes";
+
 export const contentSource = import.meta.env.PROD
   ? bundledSource(bundled, bundledSnippets)
   : undefined;
@@ -194,7 +197,13 @@ export function contentFileLoader(id: string, kind: ContentFileKind) {
       });
     }
     if (kind === "previews") return previewsResponse(feature, content, config, lang);
-    if (kind === "search") return searchResponse(feature, content, config, args.request);
+    if (kind === "search") {
+      // The pre-render of a static site gives a file 10 s, too little to index a large site:
+      // there it gets an empty stand-in, and `consify build` writes the index after the build.
+      if (isStatic && isDeferredRender())
+        return new Response("{}", { headers: { "Content-Type": types.json as string } });
+      return searchResponse(feature, content, config, lang, args.request);
+    }
     if (kind === "og") {
       const image = await ogImage(
         feature,

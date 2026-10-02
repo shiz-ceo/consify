@@ -1,7 +1,7 @@
 // What the CLI and tests use: loading the config, the addresses of the site, content.
 
 export { loadConfig } from "./build/load-config.ts";
-export { prerenderPaths } from "./build/router/prerender.ts";
+export { deferredPaths, isDeferredFile, prerenderPaths } from "./build/router/prerender.ts";
 export { packageDirs } from "./build/router/scaffold.ts";
 export {
   type AnchorDiagnostic,

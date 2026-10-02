@@ -3,8 +3,19 @@
 // gains one consify-specific option (`--socket`) on top of forwarding everything else to
 // `@react-router/serve` unexamined.
 import { spawn } from "node:child_process";
-import { copyFileSync, existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { deferredPaths, loadConfig } from "@consify/core/node";
 import type { Command } from "commander";
 import { hasAnchors, runAnchorsCheck } from "../anchors.ts";
 import { hasSnippets, runSnippetsCheck } from "../snippets.ts";
@@ -22,15 +33,55 @@ function bin(cwd: string, pkg: string, name: string): string {
   return join(dirname(manifestPath), rel);
 }
 
-function spawnAndForward(command: string, args: readonly string[], then?: () => void): void {
+function spawnAndForward(
+  command: string,
+  args: readonly string[],
+  then?: () => void | Promise<void>,
+): void {
   const child = spawn(process.execPath, [command, ...args], { stdio: "inherit" });
   child.on("exit", (code, signal) => {
     if (signal) process.kill(process.pid, signal);
     else {
       process.exitCode = code ?? 0;
-      if (code === 0) then?.();
+      if (code === 0)
+        Promise.resolve(then?.()).catch((error: unknown) => {
+          console.error(error instanceof Error ? error.message : error);
+          process.exitCode = 1;
+        });
     }
   });
+}
+
+/**
+ * The files a static pre-render leaves as empty stand-ins (`deferredPaths`: the search index of each
+ * language), asked of the built server and written over them in `build/client`. The pre-render gives
+ * a file 10 s; here, outside the pre-render, a file takes as long as it needs. Returns the paths written.
+ */
+export async function renderDeferredFiles(cwd: string): Promise<string[]> {
+  const serverBuild = join(cwd, "build", "server", "index.js");
+  if (!existsSync(serverBuild)) return [];
+  const config = await loadConfig(cwd);
+  const paths = await deferredPaths(config, cwd);
+  if (paths.length === 0) return [];
+  process.env.NODE_ENV = process.env.NODE_ENV ?? "production";
+  const build: unknown = await import(pathToFileURL(serverBuild).href);
+  /* a peer of @consify/core, the copy the build itself imports (not a dependency of the CLI to type) */
+  const reactRouter = "react-router";
+  const { createRequestHandler } = (await import(reactRouter)) as {
+    createRequestHandler: (build: never, mode: string) => (request: Request) => Promise<Response>;
+  };
+  const handle = createRequestHandler(build as never, "production");
+  const base = config.deploy.basePath ?? "";
+  for (const path of paths) {
+    const started = Date.now();
+    const response = await handle(new Request(`http://localhost${base}${path}`));
+    if (!response.ok) throw new Error(`consify build: ${path} answered ${response.status}`);
+    const file = join(cwd, "build", "client", `${base}${path}`);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, Buffer.from(await response.arrayBuffer()));
+    console.log(`Rendered (deferred): ${path} in ${Math.round((Date.now() - started) / 1000)} s`);
+  }
+  return paths;
 }
 
 /**
@@ -98,9 +149,10 @@ export function registerSpawnCommands(program: Command): void {
             return;
           }
         }
-        spawnAndForward(bin(cwd, "@react-router/dev", "react-router"), [sub, ...rest], () => {
+        spawnAndForward(bin(cwd, "@react-router/dev", "react-router"), [sub, ...rest], async () => {
           // a static build: `build/client` is the whole site
           if (sub === "build") {
+            await renderDeferredFiles(cwd);
             try {
               pruneResourceData(join(cwd, "build", "client"));
               addNotFoundPage(join(cwd, "build", "client"));

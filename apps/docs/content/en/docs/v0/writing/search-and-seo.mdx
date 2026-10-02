@@ -7,7 +7,7 @@ description: Search, sitemap, llms.txt and social images
 
 Search is on for every section that has content. Each section searches its own pages: the dialog is the one of the section the reader is on, with the same look everywhere. The field is at the top of the sidebar, and Cmd/Ctrl+K opens the dialog:
 
-- **Docs**: the dialog searches the pages. In `server` mode it asks `/{lang}/docs/search.json`; in `static` mode the same address is an index file that the browser downloads and searches itself.
+- **Docs**: the dialog searches the pages. In `server` mode it asks `/{lang}/docs/search.json`; in `static` mode the same address is an index file that the browser downloads and searches itself. Each language has its own index, with the pages of that language only. A static `consify build` writes the index files after the pre-render, so a large site is not stopped by the 10 s a pre-rendered file gets.
 - **Blog**: on its pages, Cmd/Ctrl+K searches the posts (`/{lang}/blog/search.json`). The list page also has a search box that filters the posts, and a category filter.
 - **API reference**: the field opens the search of Scalar.
 - A section of your own is searched the same way when it has `content`. Without content it has no search unless it brings one (`search: { useSearch, open }`): see [Your own sections](/docs/v0/features).

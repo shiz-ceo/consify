@@ -3,8 +3,9 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { z } from "zod";
+import { deferredPaths } from "../src/build/router/prerender.ts";
 import { defineConfig } from "../src/config/index.ts";
-import { rssText } from "../src/content/collection.ts";
+import { rssText, searchResponse } from "../src/content/collection.ts";
 import { bundledSource, createContent } from "../src/content/files.ts";
 import { siteAddresses } from "../src/feature/addresses.ts";
 import { defineFeature, page } from "../src/feature/define.ts";
@@ -203,6 +204,38 @@ describe("content", () => {
     expect(urls).not.toContain("/en/notes/search.json");
     const built = defineConfig({ ...config, deploy: { mode: "static" } });
     expect((await siteAddresses(built, cwd)).map((a) => a.url)).toContain("/en/notes/search.json");
+  });
+
+  test("a static site writes the search index of each language after the pre-render", async () => {
+    write("content/en/notes/a.mdx", "---\ntitle: A\n---\n");
+    expect(await deferredPaths(config, cwd)).toEqual([]);
+    const built = defineConfig({ ...config, deploy: { mode: "static" } });
+    expect((await deferredPaths(built, cwd)).sort()).toEqual([
+      "/en/notes/search.json",
+      "/ru/notes/search.json",
+    ]);
+  });
+
+  test("the search index of a language has the pages of that language only", async () => {
+    write("content/en/notes/a.mdx", "---\ntitle: Apple\n---\n\nRed fruit.\n");
+    write("content/ru/notes/a.mdx", "---\ntitle: Яблоко\n---\n\nКрасный фрукт.\n");
+    const built = defineConfig({ ...config, deploy: { mode: "static" } });
+    const index = async (lang: string) =>
+      (
+        await searchResponse(
+          notes,
+          content(lang, built),
+          built,
+          lang,
+          new Request(`http://localhost/${lang}/notes/search.json`),
+        )
+      ).text();
+    const en = await index("en");
+    const ru = await index("ru");
+    expect(en).toContain("/en/notes/a");
+    expect(en).not.toContain("/ru/notes/a");
+    expect(ru).toContain("/ru/notes/a");
+    expect(ru).not.toContain("/en/notes/a");
   });
 });
 
