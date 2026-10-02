@@ -5,7 +5,7 @@ description: Интерактивная страница API из схемы Ope
 
 Справочник API является фичей: он включён, если `apiReference()` есть в списке `features` конфигурации. В этой документации он не используется.
 
-## Установка
+## Установка [#install]
 
 ```bash
 bun add @consify/api-reference
@@ -13,7 +13,7 @@ bun add @consify/api-reference
 
 Обновляйте его вместе с ядром (см. [Обновление](/docs/v0/concepts/updating)).
 
-## Опции
+## Опции [#options]
 
 ```ts title="docs.config.ts"
 import { defineConfig } from "@consify/core";
@@ -37,7 +37,7 @@ export default defineConfig({
 
 Ничего из этого не загружается, пока читатель не откроет страницу.
 
-## Несколько API
+## Несколько API [#several-apis]
 
 Каждый вызов со своим `id` — отдельная страница со своей ссылкой:
 

@@ -1,6 +1,7 @@
 // The docs: what they are made of, for `docs.config.ts`. The page is in page.tsx. No JSX here:
 // Node reads this module with `docs.config.ts`.
 import {
+  anchorRules,
   type DocsConfig,
   defineFeature,
   type EntryPage,
@@ -40,6 +41,7 @@ export type DocsMessages = MessagesOf<typeof docsMessages>;
 // --- options ---
 
 const flag = z.boolean().default(true);
+const anchorLevel = z.enum(["error", "warn", "off"]);
 
 const localizedText = z.union([z.string().min(1), z.record(z.string(), z.string().min(1))]);
 
@@ -104,6 +106,28 @@ const docsOptionsSchema = z.strictObject({
    * @default true
    */
   linkPreview: flag,
+  /**
+   * English ids of the headings (`## Быстрый путь [#quick-start]`), the same in every language, and a
+   * registry of them, `anchors.json` in the folder of every version (of the original language):
+   * `{ "page.mdx": ["id", …] }`. `consify check` and `consify build` fail on a heading with no id of
+   * its own, on an id that is not in the registry, and on a link to an id that is not there, and warn
+   * about an id that no page has. `consify anchors sync` writes the registry, `consify anchors add`
+   * makes the ids. Every rule is `"error"`, `"warn"` or `"off"`.
+   *
+   * @default false
+   */
+  anchors: z
+    .union([
+      z.boolean(),
+      z.strictObject({
+        missing: anchorLevel.optional(),
+        unknown: anchorLevel.optional(),
+        unused: anchorLevel.optional(),
+        translated: anchorLevel.optional(),
+        links: anchorLevel.optional(),
+      }),
+    ])
+    .default(false),
   /**
    * The "Edit this page on GitHub" link (it needs `site.github`). `{ contentDir }` sets the folder
    * that holds the language folders in the repository, `content` by default.
@@ -190,6 +214,13 @@ export function docs(input: DocsOptionsInput = {}) {
   const options: DocsOptions = parsed.data;
   const { id } = options;
   const defaultVersion = options.versions.default;
+  const rules = anchorRules(options.anchors);
+  // a version has its own registry: the folder of the version, none when the docs are not versioned
+  const versionIds = new Set(options.versions.list.map((version) => version.id));
+  const anchorScope = (path: string) => {
+    const first = path.split("/")[0] ?? "";
+    return versionIds.has(first) ? first : "";
+  };
 
   return defineFeature({
     id,
@@ -202,6 +233,7 @@ export function docs(input: DocsOptionsInput = {}) {
       llms: options.llmsTxt,
       og: options.og,
       previews: options.linkPreview,
+      ...(rules ? { anchors: { ...rules, scope: anchorScope } } : {}),
     },
     pages: {
       // a versioned docs feature opens its default version

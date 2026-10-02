@@ -14,12 +14,12 @@ description: Соберите раздел примеров демо-сайта 
 
 Нужен работающий сайт на consify (см. [Начало работы](/docs/v0/getting-started)) с двумя языками, `en` и `ru`, в `i18n.languages`. Когда захотите узнать подробности шага, читайте [Контент и записи](/docs/v0/features/content).
 
-## Шаги
+## Шаги [#steps]
 
 <Steps>
 <Step>
 
-### Напишите файлы в content/
+### Напишите файлы в content/ [#write-the-files-in-content]
 
 Пример — это MDX-файл. Создайте три таких в `content/en/examples/`:
 
@@ -108,7 +108,7 @@ Workers take five urgent jobs for every bulk one, so the bulk never starves.
 </Step>
 <Step>
 
-### Создайте пустую фичу и подключите её
+### Создайте пустую фичу и подключите её [#create-an-empty-feature-and-connect-it]
 
 Фича — это один вызов `defineFeature`. Начните с самой маленькой, которая показывает страницу:
 
@@ -147,7 +147,7 @@ export default defineConfig({
 </Step>
 <Step>
 
-### Опишите front matter схемой
+### Опишите front matter схемой [#describe-the-front-matter-with-a-schema]
 
 Расскажите core, как выглядит правильный пример. Тогда core проверит каждый файл:
 
@@ -197,7 +197,7 @@ Invalid content of "examples":
 </Step>
 <Step>
 
-### Выведите список записей
+### Выведите список записей [#list-the-entries]
 
 Главная страница загружает записи и рисует карточку для каждой:
 
@@ -264,7 +264,7 @@ export const examples = defineFeature({
 </Step>
 <Step>
 
-### Фильтр по тегу через параметры адреса
+### Фильтр по тегу через параметры адреса [#filter-by-tag-with-search-params]
 
 Добавьте над списком ряд тегов. Щелчок добавляет к адресу `?tag=jobs`, и список показывает только примеры с этим тегом:
 
@@ -321,7 +321,7 @@ function ExampleList({ data }: PageProps<Entry<Example>[]>) {
 </Step>
 <Step>
 
-### Добавьте страницу для каждой записи
+### Добавьте страницу для каждой записи [#add-a-page-for-every-entry]
 
 Ещё одна страница, с `entry: true`:
 
@@ -360,7 +360,7 @@ function ExamplePage({ data }: PageProps<EntryPage<Example>>) {
 </Step>
 <Step>
 
-### Переведите строки интерфейса
+### Переведите строки интерфейса [#translate-the-interface-strings]
 
 «Examples» и «min» — это текст интерфейса, а не контента. Он идёт в `messages`, по набору на язык, а страница получает его через `t`:
 
@@ -408,7 +408,7 @@ export const examples = defineFeature({
 </Step>
 <Step>
 
-### Сортировка, картинки, лента и поиск
+### Сортировка, картинки, лента и поиск [#sort-and-turn-on-images-feed-and-search]
 
 Четыре строки в `content`:
 
@@ -433,7 +433,7 @@ export const examples = defineFeature({
 </Step>
 <Step>
 
-### Переведите запись и посмотрите на непереведённую
+### Переведите запись и посмотрите на непереведённую [#translate-an-entry-and-see-an-untranslated-one]
 
 Перевод — это файл с тем же именем в папке языка:
 
@@ -503,7 +503,7 @@ import {
 </Step>
 <Step>
 
-### Проверьте
+### Проверьте [#check-it]
 
 Запустите проверку контента:
 
@@ -539,7 +539,7 @@ warning: content/en/examples/priority-lanes.mdx: no "ru" version
 </Step>
 <Step>
 
-### Готовый файл
+### Готовый файл [#the-finished-file]
 
 Вот фича целиком, такая же, как `apps/demo/custom/features/examples.tsx`:
 
@@ -661,7 +661,7 @@ export const examples = defineFeature({
 </Step>
 </Steps>
 
-## Что дальше
+## Что дальше [#where-to-go-next]
 
 - Боковое меню для записей в папках, как в документации: [боковое меню](/docs/v0/features/content-services).
 - Больше данных на странице записи (похожие примеры, авторы): [страница записи с load](/docs/v0/features/content).

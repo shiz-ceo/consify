@@ -5,7 +5,7 @@ description: Настройки блога
 
 Блог является фичей: он включён, если `blog()` есть в списке `features` конфигурации. О том, как писать посты, рассказано в разделе [Блог](/docs/v0/blog).
 
-## Установка
+## Установка [#install]
 
 ```bash
 bun add @consify/blog
@@ -13,7 +13,7 @@ bun add @consify/blog
 
 Обновляйте его вместе с ядром (см. [Обновление](/docs/v0/concepts/updating)).
 
-## Опции
+## Опции [#options]
 
 ```ts title="docs.config.ts"
 import { defineConfig } from "@consify/core";
@@ -57,7 +57,7 @@ export default defineConfig({
 
 Вместе с блогом приходят MDX-компоненты для постов (см. [Компоненты блога](/docs/v0/blog/components)). Его строки, например `backToBlog`, можно переопределить через [`i18n.messages`](/docs/v0/configuration/languages).
 
-## Адреса
+## Адреса [#addresses]
 
 | Адрес | Что это |
 | --- | --- |
@@ -69,7 +69,7 @@ export default defineConfig({
 
 Черновики и посты с датой в будущем не публикуются. `CONSIFY_DRAFTS=1` показывает их, пока вы пишете (см. [Черновики и отложенные посты](/docs/v0/blog/drafts-and-scheduling)).
 
-## Второй блог
+## Второй блог [#a-second-blog]
 
 Каждый вызов `blog()` со своим `id` — отдельный блог со своей папкой, списком, лентой и ссылкой в шапке:
 

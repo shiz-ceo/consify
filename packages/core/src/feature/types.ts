@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import type { DocsConfig } from "../config/schema.ts";
+import type { AnchorsConfig } from "../content/anchor-rules.ts";
 
 /** A text in one language for every language, or one per language code. */
 export type Localized<T = string> = T | Readonly<Record<string, T>>;
@@ -170,6 +171,13 @@ export interface ContentOptions<Data = Record<string, unknown>> {
    * @default false
    */
   llms?: boolean;
+  /**
+   * The ids of the headings of the entries are English words, the same in every language, and are
+   * listed in `anchors.json` of the version (the folder `scope` says). `consify check` and
+   * `consify build` check the headings and the links against that file, `consify anchors` writes it.
+   * The docs set it with their `anchors` option.
+   */
+  anchors?: AnchorsConfig;
   /**
    * A card for a link to an entry: when the pointer is over a link to another entry (or to a
    * heading of it) in the text of a page, the card shows its title and description (or the heading

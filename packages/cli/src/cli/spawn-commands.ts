@@ -6,6 +6,7 @@ import { spawn } from "node:child_process";
 import { copyFileSync, existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { Command } from "commander";
+import { hasAnchors, runAnchorsCheck } from "../anchors.ts";
 import { resolvePackageJson } from "./resolve-package.ts";
 
 /** Resolves `pkg`'s bin script, preferring the project's own installed `consify`, then this package. */
@@ -75,9 +76,22 @@ export function registerSpawnCommands(program: Command): void {
       .description(`Runs @react-router/dev's "${sub}" (every argument forwards to it unexamined)`)
       .allowUnknownOption(true)
       .argument("[args...]", "forwarded to @react-router/dev")
-      .action((args: string[]) => {
+      .action(async (args: string[]) => {
         const cwd = process.cwd();
-        spawnAndForward(bin(cwd, "@react-router/dev", "react-router"), [sub, ...args], () => {
+        // the ids of the headings and their registry are checked before a build: a wrong anchor stops it
+        const skip = args.includes("--no-anchors-check");
+        const rest = args.filter((arg) => arg !== "--no-anchors-check");
+        if (sub === "build" && !skip && (await hasAnchors(cwd))) {
+          const code = await runAnchorsCheck(cwd, true);
+          if (code !== 0) {
+            console.error(
+              "The build is stopped: fix the anchors, or build with --no-anchors-check.",
+            );
+            process.exitCode = code;
+            return;
+          }
+        }
+        spawnAndForward(bin(cwd, "@react-router/dev", "react-router"), [sub, ...rest], () => {
           // a static build: `build/client` is the whole site
           if (sub === "build") {
             try {

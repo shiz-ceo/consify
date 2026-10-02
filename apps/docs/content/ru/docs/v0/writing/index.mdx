@@ -9,9 +9,10 @@ description: Страницы, папки и всё, что можно в них
 - [Блоки кода](/docs/v0/writing/code-blocks): заголовки, подсветка строк, диффы, вкладки и код с проверкой типов.
 - [Математика и диаграммы](/docs/v0/writing/math-and-diagrams): KaTeX (`mdx.math`) и Mermaid.
 - [Языки и версии](/docs/v0/writing/translations-and-versions): перевод и версионирование страниц.
+- [Заголовки и якоря](/docs/v0/writing/headings-and-anchors): английские ид заголовков, одинаковые во всех языках, и их реестр.
 - [Поиск и SEO](/docs/v0/writing/search-and-seo): поиск, sitemap, `llms.txt` и картинки для соцсетей.
 
-## Страница
+## Страница [#a-page]
 
 ```mdx title="content/en/docs/v0/guides/caching.mdx"
 ---
@@ -25,12 +26,12 @@ Write **Markdown**, use `code`, add [links](/docs/v0/getting-started).
 <Callout type="warn">A component, no import needed.</Callout>
 ```
 
-## Ссылки
+## Ссылки [#links]
 
 - Абсолютные пути должны содержать язык и версию: `/en/docs/v0/getting-started`.
 - Относительные ссылки на файлы работают: `[caching](./caching.mdx)`. Они сохраняют язык страницы.
 - Внешние ссылки — обычный Markdown.
 
-## Врезки в стиле GitHub
+## Врезки в стиле GitHub [#github-style-alerts]
 
 Демо-сайт добавляет в `mdx.plugins` плагин, который превращает цитаты вида `> [!NOTE]` во врезки. Это небольшой плагин на `definePlugin` (см. [Плагины](/docs/v0/customizing/plugins)), поэтому по умолчанию он выключен.

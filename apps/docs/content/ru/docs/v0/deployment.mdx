@@ -10,7 +10,7 @@ icon: Cloud
 deploy: { mode: "static" },          // or "server" (default)
 ```
 
-## Перед деплоем
+## Перед деплоем [#before-you-deploy]
 
 ```bash
 consify doctor        # Node version, matching @consify/* versions, a valid config
@@ -19,7 +19,7 @@ consify deploy check  # obvious problems for the mode you picked (a missing site
 
 Обе команды ничего не стоит запускать перед каждым деплоем — особенно `doctor`, который ловит именно ту рассинхронизацию, что потом вылезает загадочной ошибкой, например когда один из пакетов `@consify/*` забыли обновить вместе с остальными.
 
-## Выберите, куда
+## Выберите, куда [#choose-where-it-goes]
 
 ```bash
 consify deploy            # a real terminal: asks which target, then its options
@@ -28,7 +28,7 @@ consify deploy list        # or just see what there is
 
 Каждая цель пишет файлы, которые нужны конкретному хостингу, говорит, что с ними делать дальше, и никогда не перезаписывает существующий файл без `--force`.
 
-### Готовые хостинги (только статика)
+### Готовые хостинги (только статика) [#ready-made-hosts-static-only]
 
 <Tabs items={["GitHub Pages", "Cloudflare Pages", "Netlify", "Vercel"]}>
   <Tab value="GitHub Pages">
@@ -66,7 +66,7 @@ consify deploy vercel
   режимы](/docs/v0/concepts/rendering-modes).
 </Callout>
 
-## Self-host
+## Self-host [#self-hosting]
 
 Рассчитан на то, что сайт документации редко бывает единственным на машине: ничто здесь не забирает себе порт хоста или весь `nginx.conf` целиком, так что уживается рядом со всем остальным, что у вас уже работает.
 
@@ -88,7 +88,7 @@ docker compose up -d --build
 
 Каждый экземпляр consify (или что угодно ещё) на машине подключается к той же сети `web` и получает свой фрагмент — сталкиваться не с чем.
 
-### Nginx без Docker
+### Nginx без Docker [#nginx-no-docker]
 
 ```bash
 consify deploy nginx --name mysite --domain docs.example.com
@@ -110,7 +110,7 @@ consify deploy nginx --name mysite --domain docs.example.com --socket /run/mysit
 
 nginx тогда проксирует прямо на сокет. Сам `consify start` в обычном режиме знает только `PORT`/`HOST`; `--socket` (systemd-юнит задаёт его через `SOCKET_PATH`) запускает собственный маленький сервер consify для этого случая — путь к сокету не выразить номером TCP-порта.
 
-### Автоматизация: пуш, проверка, деплой
+### Автоматизация: пуш, проверка, деплой [#automate-it-push-checks-deploy]
 
 Добавьте `--ci` к любой self-host цели, чтобы дополнительно получить `.github/workflows/deploy.yml`:
 
@@ -131,7 +131,7 @@ consify deploy nginx --name mysite --domain docs.example.com --ci
   `docker --ci` берёт имя образа из GitHub-remote репозитория (`ghcr.io/<owner>/<repo>/<name>`). Вне GitHub-репозитория пишет вместо него заглушку `your-org/your-repo` — замените её и в `docker-compose.yml`, и в workflow перед использованием.
 </Callout>
 
-## Подпуть
+## Подпуть [#sub-path]
 
 Если сайт отдаётся из папки, например `https://example.com/docs`, задайте `basePath`. Он должен начинаться с `/` и не должен заканчиваться на `/`:
 
@@ -141,7 +141,7 @@ deploy: { mode: "static", basePath: "/docs" },
 
 Префикс получают все ссылки, ресурсы и эндпоинт поиска.
 
-## Чек-лист
+## Чек-лист [#checklist]
 
 - `consify doctor` ни на что не жалуется.
 - Задан `site.url` (канонические ссылки, sitemap, RSS и социальные картинки).

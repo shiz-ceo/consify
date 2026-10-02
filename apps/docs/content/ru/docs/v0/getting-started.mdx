@@ -4,7 +4,7 @@ description: От пустой папки до работающего сайта
 icon: Map
 ---
 
-## Требования
+## Требования [#requirements]
 
 - [Bun](https://bun.sh) версии 1.2 или новее.
 - Node.js версии 24 или новее — на нём под капотом работают инструменты сборки.
@@ -14,7 +14,7 @@ icon: Map
   стандартный реестр npm, поэтому менеджеру пакетов нужны и `.npmrc`, указывающий на него для scope
   `@consify`, и этот токен, прежде чем он сможет что-то из них установить.
 
-### Настройка GitHub Packages
+### Настройка GitHub Packages [#github-packages-setup]
 
 Добавьте `.npmrc` в корень проекта (генератор делает это сам — см. ниже):
 
@@ -35,7 +35,7 @@ export NODE_AUTH_TOKEN=ghp_your_token_here
 <Steps>
 <Step>
 
-### Создайте проект
+### Создайте проект [#create-the-project]
 
 ```bash
 bun create @consify my-docs
@@ -62,13 +62,13 @@ bun create @consify my-docs --name "My docs" --languages en,ru --pm bun --yes
 
 На выходе — рабочий проект: `docs.config.ts`, `content/<язык>/docs/`, `custom/`, зависимости уже
 установлены, `.npmrc` уже написан за вас (токен из
-[настройки GitHub Packages](#настройка-github-packages) выше всё равно нужен вам самим). Откройте
+[настройки GitHub Packages](#github-packages-setup) выше всё равно нужен вам самим). Откройте
 `http://localhost:5173`.
 
 </Step>
 <Step>
 
-### Напишите первую страницу
+### Напишите первую страницу [#write-your-first-page]
 
 Каждый `.mdx`-файл в `content/<язык>/docs/<версия>/` — это страница. Отредактируйте
 `content/en/docs/index.mdx`, и страница обновится. Чтобы добавить новую:
@@ -98,7 +98,7 @@ Some **Markdown**, and a component:
 </Step>
 <Step>
 
-### Настройте под себя
+### Настройте под себя [#make-it-yours]
 
 Всё остальное — это `docs.config.ts` и `custom/`, без форка:
 
@@ -146,7 +146,7 @@ Some **Markdown**, and a component:
 </Step>
 <Step>
 
-### Проверьте перед публикацией
+### Проверьте перед публикацией [#check-before-you-ship]
 
 ```bash
 consify doctor
@@ -161,7 +161,7 @@ consify check
 </Step>
 <Step>
 
-### Соберите и задеплойте
+### Соберите и задеплойте [#build-and-deploy]
 
 ```bash
 bun run build
@@ -185,16 +185,16 @@ Unix-сокете вместо порта, если на машине неско
 </Step>
 </Steps>
 
-## Дальше — по кругу
+## Дальше — по кругу [#after-that-it-repeats]
 
 Пишете страницу → проверяете переводы через `consify lang status` → `consify check` и
 `consify doctor` → пуш.
 Обновление самого consify — `bun update @consify/core @consify/docs ...` (и что там ещё у вас есть
 из `@consify/*`) — `doctor` сразу скажет, если версии разъехались.
 
-## Добавление в существующий проект
+## Добавление в существующий проект [#add-it-to-an-existing-project]
 
-Сначала добавьте `.npmrc` из [настройки GitHub Packages](#настройка-github-packages) выше —
+Сначала добавьте `.npmrc` из [настройки GitHub Packages](#github-packages-setup) выше —
 существующему проекту он не пишется автоматически:
 
 ```bash
@@ -258,7 +258,7 @@ Hello from consify.
 
 Добавьте `.consify`, `build` и `.react-router` в `.gitignore`. Эти папки генерируются автоматически.
 
-### Разделы
+### Разделы [#features]
 
 У ядра (`@consify/core`) есть только главная страница. Документация, блог и справочник API —
 отдельные пакеты. Установите нужные и перечислите их в `features` (см.
@@ -289,7 +289,7 @@ export default defineConfig({
   без расширения в конфигурационных файлах.
 </Callout>
 
-## Команды
+## Команды [#the-commands]
 
 | Команда | Что делает |
 | --- | --- |
@@ -297,11 +297,12 @@ export default defineConfig({
 | `consify build` | Продакшен-сборка (вместе с предварительно отрендеренными страницами) |
 | `consify start` | Запускает сборку `server` (`build/server`) |
 | `consify typegen` | Генерирует типы маршрутов, которые использует `typecheck` |
-| `consify check` | Проверяет контент: адреса, front matter, переводы, `meta.json` |
+| `consify check` | Проверяет контент: адреса, front matter, переводы, `meta.json`, якоря |
+| `consify anchors` | `check`, `sync` и `add`: английские ид заголовков и их реестр (`anchors.json`) |
 
 Всё, что идёт после команды, передаётся нижележащему инструменту, например `consify dev --port 3000`.
 
-## Куда дальше за подробностями
+## Куда дальше за подробностями [#where-to-go-for-depth]
 
 <Cards>
   <Card title="Как это работает" description="Что где лежит и почему нет папки app/." href="/docs/v0/concepts" />

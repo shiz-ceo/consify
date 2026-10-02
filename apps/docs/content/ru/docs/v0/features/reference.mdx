@@ -11,7 +11,7 @@ description: Все типы и функции API фич, точки входа
 import type { FeatureInput, LoadContext, PageProps } from "@consify/core";
 ```
 
-## Точки входа
+## Точки входа [#entry-points]
 
 | Импорт | Кто загружает | Что в нём |
 | --- | --- | --- |
@@ -75,7 +75,7 @@ function defineFeature(input: FeatureInput): Feature;
 | `components` | `Record<string, ComponentType>` | `{}`, если не передано |
 | `search` | `FeatureSearch \| undefined` | Как передано, или поиск по контенту по умолчанию |
 
-## Страницы
+## Страницы [#pages]
 
 ### PageInput
 
@@ -137,7 +137,7 @@ function page<Data>(definition: PageDefinition<Data>): PageDefinition<Data>;
 | `params` | `Params` | Параметры адреса |
 | `t` | `Translate` | Строки фичи на языке страницы |
 
-## Данные
+## Данные [#data]
 
 ### LoadContext
 
@@ -197,9 +197,9 @@ function page<Data>(definition: PageDefinition<Data>): PageDefinition<Data>;
 
 `Record<string, string>`: тег `<head>`. `{ name, content }` и `{ property, content }` это теги `<meta>`, `{ tagName: "link", rel, href }` это `<link>`.
 
-## Файлы
+## Файлы [#files]
 
-### FileInput и FileDefinition
+### FileInput и FileDefinition [#fileinput-and-filedefinition]
 
 Файл это функция (его `load`) или `FileDefinition`:
 
@@ -219,7 +219,7 @@ function page<Data>(definition: PageDefinition<Data>): PageDefinition<Data>;
 | `Uint8Array`, `ArrayBuffer` | Байты. Тип берётся из расширения (`.png`, `.jpg`, `.webp`, `.gif`), иначе `application/octet-stream` |
 | любой другой объект | JSON |
 
-## Ссылки
+## Ссылки [#links]
 
 ### LinkOption
 
@@ -244,7 +244,7 @@ function page<Data>(definition: PageDefinition<Data>): PageDefinition<Data>;
 | `t` | `Translate` | Строки фичи |
 | `config` | `DocsConfig` | Конфиг сайта |
 
-### Каталог ссылок
+### Каталог ссылок [#the-link-catalog]
 
 `linkCatalog(config, lang)` возвращает все `LinkOption` сайта в порядке `features`:
 
@@ -257,7 +257,7 @@ function page<Data>(definition: PageDefinition<Data>): PageDefinition<Data>;
 
 `linkIds(config)` возвращает только id. `primaryLinks(config, lang)` возвращает варианты с `primary`.
 
-## Строки
+## Строки [#strings]
 
 | Тип | Определение | |
 | --- | --- | --- |
@@ -270,7 +270,7 @@ function page<Data>(definition: PageDefinition<Data>): PageDefinition<Data>;
 
 `t` сначала читает строки своей фичи, затем строки consify и других фич. Проект может заменить любую из них в `i18n.messages` или `custom/locales/`.
 
-## Контент
+## Контент [#content]
 
 ### ContentOptions
 
@@ -302,7 +302,7 @@ interface Schema<Data> {
 }
 ```
 
-### Content
+### Content [#content-1]
 
 Контент фичи на одном языке: `content` в `LoadContext` и `PathsContext`. Файл без перевода читается из языка по умолчанию, как говорит `i18n.fallback` (с `fallback: true`). При `fallback: "hide"` на других языках его нет.
 
@@ -409,7 +409,7 @@ function lazyComponents<Name extends string>(
 components: lazyComponents(() => import("./mdx.tsx"), ["Authors", "Figure"]),
 ```
 
-## Поиск
+## Поиск [#search]
 
 ### FeatureSearch
 
@@ -460,7 +460,7 @@ search: createFumadocsSearch((lang) => `/${lang}/notes/search.json`),
 
 `FeatureSearch` на основе поискового API Fumadocs, которое отдаётся как файл фичи. На сервере поиск обращается к API. На статическом сайте API пререндерится в один файл, экспортированный индекс Orama, который браузер скачивает и ищет по нему сам. Фича с `content` получает этот поиск сама.
 
-## Функции для тестов и инструментов
+## Функции для тестов и инструментов [#functions-for-tests-and-tools]
 
 ### createLoadContext
 
@@ -521,7 +521,7 @@ function createContent(options: CreateContentOptions): Content;
 | `lang` | `string` | Язык |
 | `source?` | `ContentSource` | Откуда берутся файлы. По умолчанию `diskSource(cwd)` |
 
-### diskSource и bundledSource
+### diskSource и bundledSource [#disksource-and-bundledsource]
 
 `ContentSource` говорит, откуда берутся файлы `content/`, по их пути внутри неё (`en/docs/guide.mdx`).
 
@@ -538,7 +538,7 @@ const source = bundledSource({
 });
 ```
 
-### Другие помощники
+### Другие помощники [#other-helpers]
 
 | Функция | Откуда | |
 | --- | --- | --- |
@@ -554,11 +554,11 @@ const source = bundledSource({
 | `allFeatures(config)` | `@consify/core/node` | Все фичи сайта, первой встроенная главная страница |
 | `loadConfig(cwd)` | `@consify/core/node` | Загружает `docs.config.ts` проекта |
 
-## Адреса, которые создаёт core
+## Адреса, которые создаёт core [#addresses-core-makes]
 
 Для фичи с `path` `status` все адреса лежат под `/{lang}/status`.
 
-### Адреса фичи
+### Адреса фичи [#addresses-of-a-feature]
 
 | Адрес | Вид | Когда |
 | --- | --- | --- |
@@ -572,7 +572,7 @@ const source = bundledSource({
 
 Не занимайте эти адреса своими страницами и файлами.
 
-### Адреса сайта
+### Адреса сайта [#addresses-of-the-site]
 
 | Адрес | Что |
 | --- | --- |

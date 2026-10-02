@@ -34,6 +34,26 @@ either adding it or working around its absence.
    translation reference for the actual translation).
 6. Hand back to **consify** for verification (`bun run build`, `typecheck`, `bunx consify check`, a look with `bun run dev`) and the final report.
 
+## Heading ids
+
+If the project has `anchors` on in `docs()` (look in `docs.config.ts` for `anchors`, or for an
+`anchors.json` in the folder of a version), the address of a heading is an id that is written:
+
+- Every heading gets `[#english-id]` at the end of its line: `## Quick path [#quick-start]` (not
+  `{#…}`: MDX reads that as an expression). The id is short, lowercase English words and digits joined
+  by `-` or `.` (`quick-start`, `model.find`). It is made from the **English** title, in every language.
+- A heading whose own id is already such a word (`## Requirements` → `requirements`, or a heading
+  in code, `` ## `client.start` `` → `clientstart`) needs no mark.
+- An id is a public address: **never change an id that exists**. Rewording a heading keeps its id;
+  removing a heading loses the links to it (the check warns).
+- The ids are listed in `anchors.json` in the folder of the version, of the original language. After
+  you add a heading, run `consify anchors sync`; a new id in the diff of that file is intended. Link to
+  a heading as `[text](./page.mdx#id)` or `[text](#id)`: the check refuses a link to an id that is
+  not in the file.
+- `consify anchors add` writes the ids a page lacks (and fixes the links to them), `--dry-run` shows
+  first. Look at the ids it made and improve them. `consify check` and `bun run build` stop on a
+  heading with no id, an unknown id and a broken link to a heading.
+
 ## Terms
 
 Pick one word for each concept and use it everywhere. Collect the terms from the code and the

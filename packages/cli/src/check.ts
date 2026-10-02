@@ -4,6 +4,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 import { contentDir, loadConfig, siteAddresses, splitFrontmatter } from "@consify/core/node";
 import type { Command } from "commander";
+import { anchorDiagnostics } from "./anchors.ts";
 
 export interface CheckOptions {
   /** A missing translation is an error, not a warning. */
@@ -163,6 +164,11 @@ export async function runCheck(options: CheckOptions, cwd: string): Promise<numb
         warnings.push(`${rel(file)}: "${page}" exists but is not listed in "pages"`);
       }
     }
+  }
+
+  // 5. the English ids of the headings, their registry, and the links to them
+  for (const found of anchorDiagnostics(cwd, config)) {
+    (found.level === "error" ? errors : warnings).push(`${found.where}: ${found.message}`);
   }
 
   for (const warning of warnings) console.warn(`warning: ${warning}`);

@@ -15,7 +15,7 @@ consify skill sync    # writes .claude/skills/ from the consify packages and cus
 consify skill list    # see what would sync, without writing anything
 ```
 
-## Что синхронизируется
+## Что синхронизируется [#what-gets-synced]
 
 - Шесть **базовых скиллов** из `@consify/core`, всегда: **оркестратор** (`consify`), **тема**
   (`consify-theme`), **перевод** (`consify-translate`, с глоссарием, который сохраняется между
@@ -37,7 +37,7 @@ consify skill list    # see what would sync, without writing anything
 нетронутой, пока вы не передадите `--force`: команда никогда не перезаписывает написанное вами
 вручную без спроса.
 
-## Скилл вашего проекта
+## Скилл вашего проекта [#a-skill-of-your-project]
 
 Положите папку в `custom/skills/`. В конфигурации ничего объявлять не нужно:
 
@@ -67,7 +67,7 @@ Code](https://docs.claude.com/en/docs/claude-code/skills): короткий `SKI
 Скилл, установленный из реестра через `consify add`, тоже попадает в `custom/skills/<name>/` — см.
 [Реестр](/docs/v0/customizing/registry).
 
-## Скилл пакета-фичи
+## Скилл пакета-фичи [#a-skill-of-a-feature-package]
 
 [Фича](/docs/v0/features), опубликованная пакетом, поставляет скилл так же, как пакеты
 `@consify/*`, — в `skills/<name>/` в корне пакета:
@@ -84,7 +84,7 @@ skills/
 `custom/skills/`. Собрать целый пакет-фичу для переиспользования или публикации — то же самое, что
 `@consify/blog`, — задача побольше, и под неё есть свой скилл: **consify-extension-engineering**.
 
-## Как написать хороший скилл
+## Как написать хороший скилл [#writing-a-good-one]
 
 - Скажите, когда его использовать, а когда нет, прямо в `description` — именно это решает, обратится
   ли к нему Claude.

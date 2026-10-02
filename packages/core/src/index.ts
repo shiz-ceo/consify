@@ -7,6 +7,12 @@ import { lazy } from "react";
 export { z } from "zod";
 export * from "./config/index.ts";
 export type { Head, HeadInput } from "./config/schema.ts";
+export {
+  type AnchorLevel,
+  type AnchorsConfig,
+  type AnchorsOptions,
+  anchorRules,
+} from "./content/anchor-rules.ts";
 export { Mdx, type MdxProps } from "./content/mdx.ts";
 export { previewsPath } from "./feature/content-files.ts";
 export { defineFeature, isFeature, page } from "./feature/define.ts";

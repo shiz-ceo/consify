@@ -28,7 +28,7 @@ bun run docs:check  # consify check --strict on this site
 
 Каждый пакет собирается командой `bun run build` в его папке. `bun run build:packages` в корне собирает все.
 
-## Устройство ядра
+## Устройство ядра [#the-layout-of-the-core]
 
 ```
 packages/core/src/
@@ -49,7 +49,7 @@ packages/core/src/
 
 Документация, блог и справочник API не входят в ядро. Каждый из них — пакет, который экспортирует функцию (`docs()`, `blog()`, `apiReference()`), возвращающую `defineFeature(...)`, а проект перечисляет её в `features`.
 
-## Добавление раздела
+## Добавление раздела [#adding-a-section]
 
 Раздел, который нужен одному проекту, — это один файл в `custom/features/` этого проекта (см. [Свои разделы](/docs/v0/features)). Чтобы выпустить его пакетом, создайте папку в `integrations/` по образцу `integrations/blog`:
 
@@ -58,13 +58,13 @@ packages/core/src/
 - `skills/<name>/SKILL.md` в корне пакета — для `consify skill sync`.
 - `package.json`, где `@consify/core` указан как peer-зависимость, а `"consify": { "prebundle": [...] }` перечисляет браузерные зависимости, которые Vite должен собрать заранее.
 
-## Тесты
+## Тесты [#tests]
 
 Тесты лежат в папке `test` каждого пакета и запускаются командой `bun test`. В ядре проверяются конфиг, `defineFeature` и его адреса, сайт, ссылки, тема и строки интерфейса. В CLI — `check`, `deploy`, `lang`, скиллы и реестр. У документации, блога (публикация, фильтры, RSS) и справочника API свои тесты в `integrations/docs/test`, `integrations/blog/test` и `integrations/api-reference/test`. Функцию `load` тестируют через `createLoadContext` из `@consify/core/node`.
 
 Перед отправкой изменений запустите `bun run check`, а если меняли страницы этого сайта — ещё и `bun run docs:check`.
 
-## Сквозные тесты
+## Сквозные тесты [#end-to-end-tests]
 
 В воркспейсе `e2e/` лежат браузерные тесты на Playwright. `bun run e2e` собирает демо дважды (серверная сборка, затем статическая с `DEMO_STATIC=1`) и запускает тесты в Chromium: проекты `desktop` (1280x800) и `mobile` (Pixel 7) на серверной сборке и `desktop` на статической.
 
@@ -97,7 +97,7 @@ bun run e2e --skip-build          # reuse the builds
 
 Демо (`apps/demo`) для этих тестов задаёт `head`, `banner` и `deploy.mode` (из `DEMO_STATIC=1`). Скриншоты тем для [галереи](/docs/v0/configuration/themes) пересоздаются командой `bun run e2e:themes` (сначала выполните `bun run build:demo`).
 
-## Непрерывная интеграция
+## Непрерывная интеграция [#continuous-integration]
 
 Задача `e2e` в `.github/workflows/ci.yml` запускает эти тесты и при падении выгружает отчёт и трассировки.
 

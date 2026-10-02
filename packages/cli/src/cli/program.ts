@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { Command } from "commander";
+import { registerAnchorsCommand } from "../anchors.ts";
 import { registerCheckCommand } from "../check.ts";
 import { registerDeployCommand } from "../deploy/command.ts";
 import { consifyPackageFamily, registerDoctorCommand } from "../doctor.ts";
@@ -37,6 +38,7 @@ export function buildProgram(): Command {
   registerDeployCommand(program);
   registerDoctorCommand(program);
   registerCheckCommand(program);
+  registerAnchorsCommand(program);
   registerLangCommand(program);
   registerLinksCommand(program);
   registerLocaleCommand(program);

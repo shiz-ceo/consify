@@ -3,6 +3,24 @@
 export { loadConfig } from "./build/load-config.ts";
 export { prerenderPaths } from "./build/router/prerender.ts";
 export { packageDirs } from "./build/router/scaffold.ts";
+export {
+  type AnchorDiagnostic,
+  type AnchorPage,
+  type AnchorsConfig,
+  type AnchorsInput,
+  anchorRules,
+  checkAnchors,
+  type Heading,
+  headingsOf,
+  idsOf,
+  linksOf,
+  plainHeading,
+  type Registry,
+  registryKey,
+  resolveLink,
+  transliterate,
+  validId,
+} from "./content/anchors.ts";
 export { compileMdx, splitFrontmatter } from "./content/compile.ts";
 export {
   bundledSource,

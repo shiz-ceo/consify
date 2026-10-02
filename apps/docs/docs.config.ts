@@ -23,6 +23,8 @@ export default defineConfig({
   features: [
     docs({
       versions: { list: [{ id: "v0", label: "v0 (latest)", status: "latest" }] },
+      // English ids of the headings, the same in both languages, and the registry of them (anchors.json)
+      anchors: true,
       // the language folders of the docs of consify live in this folder of the repository
       editOnGithub: { contentDir: "apps/docs/content" },
     }),

@@ -298,7 +298,8 @@ export default defineConfig({
 | `consify build` | Production build (and the pre-rendered pages) |
 | `consify start` | Serves a `server` build (`build/server`) |
 | `consify typegen` | Generates route types, used by `typecheck` |
-| `consify check` | Checks the content: addresses, front matter, translations, `meta.json` |
+| `consify check` | Checks the content: addresses, front matter, translations, `meta.json`, anchors |
+| `consify anchors` | `check`, `sync` and `add`: English ids of the headings and their registry (`anchors.json`) |
 
 Anything after the command is passed on to the underlying tool, for example `consify dev --port 3000`.
 

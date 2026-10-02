@@ -15,7 +15,7 @@ consify add pricing-card              # a bare name, from your default registry
 consify add https://acme.dev/r/pricing-card.json   # a full URL, no registry configured needed
 ```
 
-## Три способа назвать элемент
+## Три способа назвать элемент [#the-three-ways-to-name-one]
 
 - **`@namespace/name`** — ищет `@namespace` в `consify.registries.json` и подставляет `name` в
   URL-шаблон этого реестра.
@@ -28,7 +28,7 @@ consify add https://acme.dev/r/pricing-card.json   # a full URL, no registry con
 consify и помеченный как реестр по умолчанию — так что короткое имя заработает сразу, как только в
 этом реестре появится что-то опубликованное.
 
-## Настройка приватного реестра
+## Настройка приватного реестра [#configuring-a-private-registry]
 
 ```bash
 consify registry add-source @acme https://acme.dev/r/{name}.json
@@ -49,7 +49,7 @@ URL обязан содержать буквальный плейсхолдер 
 Удаление источника (`remove-source`) лишь забывает, откуда забирать элементы — оно никак не трогает
 уже установленное из него. Для этого нужен `consify remove`.
 
-## Пять типов элементов
+## Пять типов элементов [#the-five-item-types]
 
 | Тип | Куда попадает | Заметки |
 | --- | --- | --- |
@@ -89,7 +89,7 @@ features: [..., blog()],
 [Скиллы для Claude](/docs/v0/customizing/skills)). Элемент `feature` не приносит своих файлов;
 скиллы его пакета, в `skills/<name>/`, подхватывает тот же `consify skill sync`.
 
-## Что установлено: lock-файл
+## Что установлено: lock-файл [#whats-installed-the-lockfile]
 
 Каждый `consify add` пишет в `consify.registry-lock.json`, рядом с `consify.registries.json`, — хеш
 содержимого каждого файла на момент установки, чтобы позже `consify add`/`consify remove` могли
@@ -108,7 +108,7 @@ consify remove @shiz-ceo/pricing-card
 `--force` и туда тоже. Ни одна из команд не трогает npm-`dependencies`, добавленные элементом —
 подчищать их оставлено вам.
 
-## Что стоит знать об особых случаях
+## Что стоит знать об особых случаях [#edge-cases-worth-knowing]
 
 - **`consify add` дважды для одного и того же спецификатора**: без изменений — это no-op; при
   локальных изменениях — отказ без `--force`; `@ns/name` и эквивалентный полный URL отслеживаются как

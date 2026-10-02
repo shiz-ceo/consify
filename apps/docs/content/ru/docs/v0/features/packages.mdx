@@ -9,7 +9,7 @@ description: Вынести фичу в отдельный npm-пакет, ис�
 
 Эта страница предполагает, что вы знаете, как устроена фича. Если нет, начните с [Фич](/docs/v0/features) и [Страниц](/docs/v0/features/pages).
 
-## Файл или пакет
+## Файл или пакет [#a-file-or-a-package]
 
 | Вопрос | Файл в `custom/features/` | Пакет |
 | --- | --- | --- |
@@ -22,7 +22,7 @@ description: Вынести фичу в отдельный npm-пакет, ис�
 
 Если не уверены, начните с файла. Перенести его в пакет потом просто: вызов `defineFeature` остаётся тем же.
 
-## Структура пакета
+## Структура пакета [#the-layout-of-a-package]
 
 <Files>
   <Folder name="consify-status" defaultOpen>
@@ -60,7 +60,7 @@ description: Вынести фичу в отдельный npm-пакет, ис�
 
 Держите `src/` плоской, один файл на одну задачу. Чистую логику (разбор, сортировку, фильтры) кладите в отдельный `.ts`-файл без React. Тогда тесты смогут импортировать её напрямую.
 
-## Главное правило: в index.ts нет JSX
+## Главное правило: в index.ts нет JSX [#the-main-rule-indexts-has-no-jsx]
 
 Проект импортирует ваш пакет в `docs.config.ts`:
 
@@ -87,7 +87,7 @@ export default defineConfig({
 
 Три инструмента помогают держать `index.ts` чистым.
 
-### Страницы: lazy()
+### Страницы: lazy() [#pages-lazy]
 
 Страница живёт в своём `.tsx`-файле с экспортом по умолчанию. `index.ts` загружает её через `lazy` из React. Импорт выполняется, только когда страница рисуется, поэтому Node никогда не трогает `.tsx`-файл.
 
@@ -122,7 +122,7 @@ export default function ListPage({ data }: PageProps<ListData>) {
 Страница может импортировать из `index.ts`: в этом модуле нет JSX. Проблема в обратном направлении. Статический `import Page from "./list.tsx"` в `index.ts` или в любом модуле, который импортирует `index.ts`, тянет в Node страницу, её JSX и её CSS.
 </Callout>
 
-### MDX-компоненты: lazyComponents()
+### MDX-компоненты: lazyComponents() [#mdx-components-lazycomponents]
 
 Фича может добавить компоненты в каждый `.mdx`-файл сайта (`components` у `defineFeature`). Это тоже JSX, поэтому они живут в своём модуле. `lazyComponents` создаёт по одному ленивому компоненту на каждое имя. Модуль загружается один раз, когда рисуется первый из них.
 
@@ -160,7 +160,7 @@ export function Breaking({ children }: { children: ReactNode }) {
 
 Компоненты это **именованные** экспорты `mdx.tsx`, и каждое имя из списка должно там быть. Имя, которого нет в модуле, при сборке не ловится: страница, где используется компонент, падает при отрисовке.
 
-### Код только для сервера: import.meta.env.SSR
+### Код только для сервера: import.meta.env.SSR [#server-only-code-importmetaenvssr]
 
 `index.ts` попадает и в браузерный бандл: сайту нужны страницы и их функции `load`, чтобы найти маршруты. Код, который использует только `load`, уедет в браузер вместе с ним. Для лёгкого кода это неважно. Для модулей `node:*` или тяжёлого парсера важно: браузерный бандл ломается или раздувается.
 
@@ -228,7 +228,7 @@ Vite заменяет `import.meta.env.SSR` на `true` в серверной с
 
 Прежде чем заводить `server.ts`, посмотрите на контекст загрузки. `readFile` читает файл проекта, `content` читает MDX. Часто больше ничего и не нужно, и это работает везде. См. [Данные и load](/docs/v0/features/data).
 
-## Опции
+## Опции [#options]
 
 Функция-фабрика принимает опции одного сайта. Проверяйте их схемой zod. Останавливайтесь **одной** ошибкой, в которой названа каждая неверная опция: тогда опечатка в `docs.config.ts` остановит запуск сайта с понятным сообщением.
 
@@ -278,7 +278,7 @@ Error: status(): services: list at least one service; : Unrecognized key: "perPa
 - То, что зависит от нескольких опций (повторяющиеся id, значение по умолчанию, которого нет в списке), проверяйте в `.superRefine`. Так делают `@consify/blog` и `@consify/docs`.
 - Начинайте сообщение с имени функции: `status(): ...`. Читатель сразу видит, куда смотреть.
 
-## Несколько экземпляров
+## Несколько экземпляров [#several-instances]
 
 Сайту может понадобиться две копии вашей фичи: два блога, два справочника API. Заложите это с самого начала: примите `id` как опцию со значением по умолчанию и выводите из него **всё**.
 
@@ -303,7 +303,7 @@ features: [
 Страница, которая ссылается на `/${lang}/blog`, ломается во втором экземпляре. Собирайте адреса из `id` и передавайте их странице в `data`, как пример ниже делает с `base`. `url` у записи уже правильный.
 </Callout>
 
-## Строки
+## Строки [#strings]
 
 Кладите строки фичи в `messages`, по объекту на язык. Английский служит эталоном: для недостающего ключа другой язык берёт английскую строку. Сайт может заменить любую строку в своём `i18n.messages`.
 
@@ -381,7 +381,7 @@ export type StatusMessages = MessagesOf<typeof statusMessages>;
 | `dependencies` | Библиотеки, которые нужны только вашей фиче: графики, иконки, парсер |
 | `consify.prebundle` | Зависимости, которые ваши страницы загружают **в браузере**. См. ниже |
 
-### Имя
+### Имя [#the-name]
 
 Проект находит свои пакеты consify по имени. Находятся только те зависимости, чьё имя начинается с `@consify/` или `consify-`. Для такого пакета consify делает три вещи:
 
@@ -409,7 +409,7 @@ Vite заранее готовит (пребандлит) браузерные �
 | `@consify/blog` | `fumadocs-ui/components/inline-toc`, `fumadocs-ui/components/toc`, `fumadocs-ui/components/toc/default`, `lucide-react` |
 | `@consify/docs` | `fumadocs-core/source/client`, `fumadocs-core/search/client`, `fumadocs-core/search/client/fetch`, `fumadocs-core/search/client/orama-static` |
 
-## Страницы и @consify/core/ui
+## Страницы и @consify/core/ui [#pages-and-consifycoreui]
 
 Страница это React-компонент, который получает `data`, `lang`, `params` и `t`. `layout` страницы говорит, что core рисует вокруг неё:
 
@@ -462,13 +462,13 @@ export default function Page({ data, lang }: PageProps<{ tree: never }>) {
 }
 ```
 
-## Стили
+## Стили [#styles]
 
 - Используйте классы Tailwind и токены темы Fumadocs: `bg-fd-accent`, `text-fd-muted-foreground`, `border-fd-border`. Они следуют теме, светлому и тёмному режиму сайта.
 - Свой CSS кладите в `.css`-файл и импортируйте из модуля страницы. Начинайте каждый класс с имени пакета (`.consify-status-up`), чтобы он не столкнулся с классами сайта.
 - Tailwind находит ваши классы только потому, что имя пакета начинается с `consify-` или `@consify/`.
 
-## Скилл для ИИ-агентов
+## Скилл для ИИ-агентов [#a-skill-for-ai-agents]
 
 Пакет может научить ИИ-агента (Claude Code) пользоваться собой. Положите `skills/<name>/SKILL.md` в корень пакета:
 
@@ -495,7 +495,7 @@ The status page is `status()` in `features` of `docs.config.ts`.
 
 `consify skill sync` в проекте копирует скиллы его пакетов consify в `.claude/skills/`. См. [Скиллы для Claude](/docs/v0/customizing/skills).
 
-## Сборка и публикация
+## Сборка и публикация [#build-and-publish]
 
 В монорепозитории пакет может экспортировать исходники на TypeScript (`"./src/index.ts"`). Опубликованный пакет так не может: Node не выполняет TypeScript из `node_modules`, а `docs.config.ts` читает Node. Поэтому опубликованный пакет поставляет JavaScript.
 
@@ -556,7 +556,7 @@ cd out && npm publish
 
 Перед публикацией проверьте пакет на настоящем сайте: подключите его через `bun link` (или установите архив из `npm pack`), добавьте в `features` и запустите `consify check`, `consify build` и `consify dev`.
 
-## Полный пример
+## Полный пример [#a-complete-example]
 
 `consify-status`: список сервисов, страница на каждый сервис и JSON-файл, на каждом языке сайта. Он повторяет устройство `@consify/api-reference`, самого маленького настоящего пакета.
 
@@ -688,7 +688,7 @@ export function status(input: StatusOptionsInput) {
 </Step>
 <Step>
 
-### Страницы
+### Страницы [#the-pages]
 
 ```tsx title="src/list.tsx"
 import "./status.css";
@@ -765,7 +765,7 @@ function State({ state }: { state: Service["state"] }) {
 </Step>
 <Step>
 
-### package.json и tsconfig.json
+### package.json и tsconfig.json [#packagejson-and-tsconfigjson]
 
 `package.json` тот же, что [выше](#packagejson). `tsconfig.json` нужен `vite/client` для `import.meta.env` и импортов CSS:
 
@@ -791,7 +791,7 @@ function State({ state }: { state: Service["state"] }) {
 </Step>
 <Step>
 
-### Тесты
+### Тесты [#tests]
 
 Опции, ссылка, все адреса, `load`, 404, файл и второй экземпляр. Файл целиком на странице [Тестирование фич](/docs/v0/features/testing).
 
@@ -803,7 +803,7 @@ bun test
 </Step>
 <Step>
 
-### Подключение к сайту
+### Подключение к сайту [#use-it-in-a-site]
 
 ```bash
 bun add consify-status
@@ -836,7 +836,7 @@ export default defineConfig({
 </Step>
 </Steps>
 
-## Подводные камни
+## Подводные камни [#pitfalls]
 
 | Симптом | Причина | Решение |
 | --- | --- | --- |
@@ -850,7 +850,7 @@ export default defineConfig({
 | `node:fs` в браузерном бандле | `load` импортирует серверный код без `import.meta.env.SSR` | Вынесите его в `server.ts` или используйте `readFile` |
 | Страница с MDX-компонентом падает при отрисовке | Имя есть в `lazyComponents`, но модуль его не экспортирует | Экспортируйте компонент под этим именем |
 
-## Чеклист
+## Чеклист [#checklist]
 
 - `index.ts` экспортирует функцию-фабрику с опцией `id` и значением по умолчанию для неё.
 - В `index.ts` нет JSX, CSS и `@consify/core/ui`, и он не импортирует их статически.

@@ -33,6 +33,12 @@ asks to translate something you are not starting from zero.
   The `meta.json` of a language folder translates titles and the text of separators, nothing else.
 - The structure is identical in every language: the same headings in the same order, the same
   blocks, the same blank lines. Convey the meaning; do not translate word by word.
+- When the site has `anchors` on (`anchors` in `docs()`, an `anchors.json` in the folder of the version),
+  every heading has an English id written after it, `## Heading [#english-id]`, and a translation
+  has the **same ids as the original**, heading for heading. Copy the `[#id]` of each original heading
+  onto its translation; never translate or reword an id. The ids are the addresses that links hold.
+  `consify anchors add` copies them by position for a translation that has none (the number of
+  headings must match the original). Run `consify check` after: it names an id that is wrong.
 - A missing translation does not break the site (the main language is shown as a fallback via
   `i18n.fallback`), but it must be named in the report — never leave it unsaid.
 
@@ -52,6 +58,7 @@ asks to translate something you are not starting from zero.
 - Paths, URLs, link targets (`/docs/<version>/...`), component and prop names, identifiers, commands.
 - Mermaid source, formulas, code fence info (`title="..."`, `{2,4-5}`, `tab="..."`, `twoslash`).
 - `date`, `categories`, `tags`, `authors`, `cover`, `icon`.
+- The id of a heading, `[#id]`, and the id in a link to a heading (`./page.mdx#id`).
 - The `value` of every `<Tab>` and the `items` of `Tabs` (they must match each other).
 - Names of products and of the user's own API.
 

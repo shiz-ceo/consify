@@ -49,6 +49,11 @@ Run the existing check for free, it catches a different (but related) class of p
 bunx consify check
 ```
 
+When the docs use `anchors`, it also tells a heading with no English id, an id that is not in
+`anchors.json`, a registry id that no page has any more (a heading was removed or renamed: links to it
+are lost, worth a human look) and a link to an id that does not exist. `consify anchors check` is that
+part alone.
+
 ## Report
 
 One list, ranked by confidence, not by anything else:

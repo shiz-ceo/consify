@@ -55,6 +55,7 @@ Every option is optional.
     llmsTxt: { description: "`/{lang}/docs/llms.txt` and `llms-full.txt`, the docs as plain text for language models, and the link `docs:llms`.", type: "boolean", default: "true" },
     og: { description: "A generated image for social networks per page, `/{lang}/docs/og/<page>.png`.", type: "boolean", default: "true" },
     linkPreview: { description: "A card for a link to another page of the docs (or to a heading of it) in the text of a page. See [Link cards](#link-cards).", type: "boolean", default: "true" },
+    anchors: { description: "English ids of the headings (`## Heading [#id]`) and a registry of them, `anchors.json` in the folder of every version of the original language. The build and `consify check` fail on a heading with no id, an id that is not in the registry and a link to an id that is not there, and warn about an id that no page has. Every rule (`missing`, `unknown`, `unused`, `translated`, `links`) is `\"error\"`, `\"warn\"` or `\"off\"`. See [Headings and anchors](/docs/v0/writing/headings-and-anchors).", type: "boolean | { missing?, unknown?, unused?, translated?, links? }", default: "false" },
     editOnGithub: { description: "An Edit this page link. Needs `site.github`. The link is `<contentDir>/<language>/docs/<page path>`. Pass `{ contentDir }` when the folder with the language folders is not `content` in the repository.", type: "boolean | { contentDir?: string }", default: "true" },
   }}
 />

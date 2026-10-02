@@ -1,0 +1,61 @@
+---
+title: Headings and anchors
+description: English ids of the headings, the same in every language, and a registry of them
+---
+
+The address of a heading (`/docs/v0/guide#quick-start`) is its **id**. By default the id is made of the text of the heading, so a Russian heading gives a Russian id (`#быстрый-путь`), the id changes when the heading is reworded, and a translation has other ids than the original. Links from outside the site break with every edit.
+
+With `anchors` on, every heading has an id that is written, in English, the same in every language, and the ids are listed in a file that the build checks.
+
+## Write the id
+
+The id goes at the end of the line of the heading, in `[#…]` (not in `{#…}`: MDX reads that as an expression):
+
+```md
+## Быстрый путь [#quick-start]
+```
+
+An id is lowercase English words and digits joined by `-` or `.` (`quick-start`, `model.find`, `v2`): the dot is for the name of a method. Keep it short, make it from the English heading, and **do not change it later**: it is what the links to the heading hold.
+
+A heading in English whose own id is already such a word (`## Requirements` makes `requirements`) needs no mark, and the id of a heading in code (`` ## `client.transaction` ``) is made of the code. A translation has the same ids as the original, heading for heading: the ids are not translated.
+
+## The registry
+
+The ids of a version are listed in `anchors.json` in the folder of that version, **of the original language** (`content/en/docs/v0/anchors.json`); the pages are by their path inside the folder:
+
+```json
+{
+  "getting-started.mdx": ["requirements", "create-the-project"],
+  "writing/index.mdx": ["what-you-can-write"]
+}
+```
+
+A new version starts as a copy of the folder of the previous one, the registry with it. The file is made by `consify anchors sync` and is read by people in the diff: a new id in it is a decision to have this address.
+
+## What is checked
+
+`consify check` and `consify build` (the build stops on an error; `--no-anchors-check` skips it) tell:
+
+| What | Result |
+| --- | --- |
+| A heading with no id of its own that is not a plain English word | error (`missing`) |
+| An id that is not in the registry, is not in the form above, or is on a page twice | error (`unknown`) |
+| A link (`./page.mdx#id`, `#id`) to an id that is not in the registry of that page | error (`links`) |
+| An id of the registry that no page of the original has | warning (`unused`): a heading was removed or renamed, the links to it are lost |
+| An id of the registry that a translation does not have | warning (`translated`) |
+
+Every rule is `"error"`, `"warn"` or `"off"` in `anchors` of `docs()`; `anchors: true` is the defaults of the table. Only links to a page by its file (`./page.mdx#id`) and to the same page (`#id`) are checked; an address of the site (`/en/docs/page#id`) is not.
+
+## The commands
+
+`consify anchors add` writes `[#id]` on the headings that need it: the original language gets the heading in English letters (`Быстрый путь` → `bystryy-put`), a translation gets the id of the heading at the same place of the original (the number of headings must be the same). It also changes the links to the old ids. Look at the result and improve the ids: `consify anchors add --dry-run` only shows it, `--lang ru` is one language.
+
+`consify anchors sync` writes the registry from the headings of the original (`--prune` also removes the ids that are on no page, `--dry-run` shows). The file is written the way Biome and Prettier write JSON (the line width is from `biome.json`), so a formatter changes nothing in it. `consify anchors check` is the check alone.
+
+## Turn it on
+
+```ts title="docs.config.ts"
+docs({ anchors: true });
+```
+
+Then `consify anchors add`, `consify anchors sync` and `consify check`. A new heading from then on is a new id in the registry: write `[#id]`, run `consify anchors sync`, and the diff shows the new address.
